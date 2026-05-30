@@ -5,6 +5,7 @@ import { isSameDay, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import { MonthCalendar } from "@/components/calendar/MonthCalendar";
 import { FilterDrawer } from "@/components/dashboard/FilterDrawer";
+import { FilterPanel } from "@/components/dashboard/FilterPanel";
 import { ItemList } from "@/components/dashboard/ItemList";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -71,19 +72,24 @@ export default function DashboardPage() {
 
   const activeFilterCount = selectedStatuses.length + selectedProjects.length + selectedAssignees.length;
 
-  function toggleProject(p: string) {
-    setSelectedProjects((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]);
-  }
-  function toggleAssignee(a: string) {
-    setSelectedAssignees((prev) => prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]);
-  }
+  const filterProps = {
+    selectedStatuses, onStatusChange: setSelectedStatuses,
+    selectedProjects, onProjectToggle: (p: string) => setSelectedProjects((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]),
+    onProjectClear: () => setSelectedProjects([]),
+    selectedAssignees, onAssigneeToggle: (a: string) => setSelectedAssignees((prev) => prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]),
+    onAssigneeClear: () => setSelectedAssignees([]),
+    uniqueProjects, uniqueAssignees,
+    onClearAll: () => { setSelectedStatuses([]); setSelectedProjects([]); setSelectedAssignees([]); },
+    activeCount: activeFilterCount,
+  };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    // xl+ → wider container for 3 columns
+    <div className="mx-auto max-w-5xl xl:max-w-[1340px] px-4 py-8">
       <div className="flex flex-col lg:flex-row lg:items-start gap-6">
 
         {/* LEFT: Calendar + Stats — sticky */}
-        <div className="lg:sticky lg:top-[68px] lg:self-start lg:w-[380px] lg:flex-shrink-0 flex flex-col gap-4 animate-fade-in-up stagger-2">
+        <div className="lg:sticky lg:top-[68px] lg:self-start lg:w-[360px] lg:flex-shrink-0 flex flex-col gap-4 animate-fade-in-up stagger-2">
           <MonthCalendar
             items={items}
             selectedDay={selectedDay}
@@ -94,11 +100,11 @@ export default function DashboardPage() {
           <StatsPanel items={displayedItems} />
         </div>
 
-        {/* RIGHT: List */}
+        {/* CENTER: Task list */}
         <div className="flex-1 min-w-0 flex flex-col gap-4">
 
-          {/* List header: filter button */}
-          <div className="flex items-center justify-between animate-fade-in-up stagger-3">
+          {/* Filter button — only on < xl */}
+          <div className="xl:hidden flex items-center justify-between animate-fade-in-up stagger-3">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
               {locale === "uk" ? "Задачі" : "Tasks"}
             </span>
@@ -125,45 +131,28 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Error state */}
+          {/* Error */}
           {error && (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-500/30 px-4 py-3 text-sm text-rose-700 dark:text-rose-300 flex items-center gap-3 animate-fade-in">
               <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
               <span className="flex-1">{error}</span>
-              <button onClick={refresh} className="font-semibold underline underline-offset-2 hover:no-underline cursor-pointer" type="button">
-                {t("retry")}
-              </button>
+              <button onClick={refresh} className="font-semibold underline underline-offset-2 hover:no-underline cursor-pointer" type="button">{t("retry")}</button>
             </div>
           )}
 
-          <ItemList
-            items={displayedItems}
-            loading={loading}
-            onDelete={handleDelete}
-            onStatusChange={handleStatusChange}
-          />
+          <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+        </div>
+
+        {/* RIGHT: Inline filter panel — only on xl+ */}
+        <div className="hidden xl:block xl:sticky xl:top-[68px] xl:self-start xl:w-[240px] xl:flex-shrink-0 animate-fade-in-up stagger-3">
+          <FilterPanel {...filterProps} />
         </div>
       </div>
 
-      {/* Filter drawer */}
-      <FilterDrawer
-        open={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        selectedStatuses={selectedStatuses}
-        onStatusChange={setSelectedStatuses}
-        selectedProjects={selectedProjects}
-        onProjectToggle={toggleProject}
-        onProjectClear={() => setSelectedProjects([])}
-        selectedAssignees={selectedAssignees}
-        onAssigneeToggle={toggleAssignee}
-        onAssigneeClear={() => setSelectedAssignees([])}
-        uniqueProjects={uniqueProjects}
-        uniqueAssignees={uniqueAssignees}
-        onClearAll={() => { setSelectedStatuses([]); setSelectedProjects([]); setSelectedAssignees([]); }}
-        activeCount={activeFilterCount}
-      />
+      {/* Drawer — only on < xl */}
+      <FilterDrawer open={filterOpen} onClose={() => setFilterOpen(false)} {...filterProps} />
     </div>
   );
 }
