@@ -75,6 +75,7 @@ export const translations = {
     // Months
     months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
     monthsShort: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    monthsGenitive: ['January','February','March','April','May','June','July','August','September','October','November','December'],
     weekDays: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
     // Date labels
     today: 'Today',
@@ -151,6 +152,7 @@ export const translations = {
     noDateDetected: 'Дата не виявлена — встановіть вручну нижче.',
     months: ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'],
     monthsShort: ['Січ','Лют','Бер','Кві','Тра','Чер','Лип','Сер','Вер','Жов','Лис','Гру'],
+    monthsGenitive: ['Січня','Лютого','Березня','Квітня','Травня','Червня','Липня','Серпня','Вересня','Жовтня','Листопада','Грудня'],
     weekDays: ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'],
     today: 'Сьогодні',
     tomorrow: 'Завтра',

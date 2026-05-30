@@ -22,14 +22,17 @@ interface ItemCardProps {
   animationIndex?: number;
 }
 
-function formatDateLocale(date: Date, months: readonly string[]): string {
-  return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+function formatDateLocale(date: Date, locale: string, monthsEn: readonly string[], monthsUkGen: readonly string[]): string {
+  if (locale === "uk") {
+    return `${date.getDate()} ${monthsUkGen[date.getMonth()]}, ${date.getFullYear()}`;
+  }
+  return `${monthsEn[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
-function formatDeadlineRelative(date: Date, today: string, tomorrow: string, months: readonly string[]): string {
+function formatDeadlineRelative(date: Date, today: string, tomorrow: string, locale: string, monthsEn: readonly string[], monthsUkGen: readonly string[]): string {
   if (isToday(date)) return today;
   if (isTomorrow(date)) return tomorrow;
-  return formatDateLocale(date, months);
+  return formatDateLocale(date, locale, monthsEn, monthsUkGen);
 }
 
 function getAvatarColor(name: string): string {
@@ -85,7 +88,8 @@ export function ItemCard({
 }: ItemCardProps) {
   const router = useRouter();
   const { t, locale } = useLanguage();
-  const monthsShort = translations[locale].monthsShort;
+  const monthsEn = translations.en.months;
+  const monthsUkGen = translations.uk.monthsGenitive;
   const { toast } = useToast();
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
@@ -108,7 +112,7 @@ export function ItemCard({
   const isPastDeadline = isPast(deadline) && item.status !== "DONE";
   const daysUntil = differenceInDays(deadline, new Date());
   const isNearDeadline = !isOverdue && !isPastDeadline && daysUntil >= 0 && daysUntil <= 3;
-  const deadlineLabel = formatDeadlineRelative(deadline, t("today"), t("tomorrow"), monthsShort);
+  const deadlineLabel = formatDeadlineRelative(deadline, t("today"), t("tomorrow"), locale, monthsEn, monthsUkGen);
   const staggerClass = `stagger-${Math.min(animationIndex + 1, 10)}`;
   const avatarColor = getAvatarColor(item.creator_name);
   const avatarInitial = item.creator_name.charAt(0).toUpperCase();
@@ -315,7 +319,7 @@ export function ItemCard({
             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>{formatDateLocale(new Date(item.created_at), monthsShort)}</span>
+            <span>{formatDateLocale(new Date(item.created_at), locale, monthsEn, monthsUkGen)}</span>
           </span>
         </div>
       </div>

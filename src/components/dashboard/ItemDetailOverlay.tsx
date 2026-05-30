@@ -17,16 +17,19 @@ interface ItemDetailOverlayProps {
   onDelete?: (id: string) => Promise<void>
 }
 
-function formatDateLocale(date: Date, months: readonly string[]): string {
+function formatDateLocale(date: Date, locale: string, monthsEn: readonly string[], monthsUkGen: readonly string[]): string {
   const h = date.getHours().toString().padStart(2, '0')
   const m = date.getMinutes().toString().padStart(2, '0')
-  return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} · ${h}:${m}`
+  if (locale === 'uk') {
+    return `${date.getDate()} ${monthsUkGen[date.getMonth()]}, ${date.getFullYear()} · ${h}:${m}`
+  }
+  return `${monthsEn[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} · ${h}:${m}`
 }
 
-function formatDeadlineLocale(date: Date, today: string, tomorrow: string, months: readonly string[]): string {
+function formatDeadlineLocale(date: Date, today: string, tomorrow: string, locale: string, monthsEn: readonly string[], monthsUkGen: readonly string[]): string {
   if (isToday(date)) return today
   if (isTomorrow(date)) return tomorrow
-  return formatDateLocale(date, months)
+  return formatDateLocale(date, locale, monthsEn, monthsUkGen)
 }
 
 function getAvatarColor(name: string): string {
@@ -51,7 +54,8 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
   const isClosingRef = useRef(false)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const monthsShort = translations[locale].monthsShort
+  const monthsEn = translations.en.months
+  const monthsUkGen = translations.uk.monthsGenitive
 
   useEffect(() => setMounted(true), [])
 
@@ -100,7 +104,7 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
   const deadline = new Date(item.deadline)
   const isOverdue = item.status === 'OVERDUE'
   const isPastDeadline = isPast(deadline) && item.status !== 'DONE'
-  const deadlineLabel = formatDeadlineLocale(deadline, t('today'), t('tomorrow'), monthsShort)
+  const deadlineLabel = formatDeadlineLocale(deadline, t('today'), t('tomorrow'), locale, monthsEn, monthsUkGen)
   const avatarColor = getAvatarColor(item.creator_name)
   const avatarInitial = item.creator_name.charAt(0).toUpperCase()
 
@@ -175,7 +179,7 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
                   {t('createdAt')}
                 </p>
                 <span className="text-sm font-medium text-foreground">
-                  {formatDateLocale(new Date(item.created_at), monthsShort)}
+                  {formatDateLocale(new Date(item.created_at), locale, monthsEn, monthsUkGen)}
                 </span>
               </div>
 
