@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
     if (!name?.trim() || !email?.trim() || !password) {
       return NextResponse.json({ error: "All fields required" }, { status: 400 });
     }
-    if (password.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+    if (password.length < 8) {
+      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
     }
 
     const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     const token = await signToken({ userId: user.id, name: user.name, email: user.email });
     const res = NextResponse.json({ id: user.id, name: user.name, email: user.email }, { status: 201 });
-    res.cookies.set(cookieName(), token, { httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 30, path: "/" });
+    res.cookies.set(cookieName(), token, { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 30, path: "/" });
     return res;
   } catch (e) {
     console.error(e);

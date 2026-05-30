@@ -21,7 +21,7 @@ export default function RegisterPage() {
     name:     locale === "uk" ? "Ваше ім'я" : "Your name",
     email:    locale === "uk" ? "Електронна пошта" : "Email",
     password: locale === "uk" ? "Пароль" : "Password",
-    hint:     locale === "uk" ? "Мінімум 6 символів" : "At least 6 characters",
+    hint:     locale === "uk" ? "Мінімум 8 символів" : "At least 8 characters",
     submit:   locale === "uk" ? "Зареєструватись" : "Create account",
     hasAcc:   locale === "uk" ? "Вже є акаунт?" : "Already have an account?",
     login:    locale === "uk" ? "Увійти" : "Sign in",

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 
 export async function GET() {
+  if (!await getSession()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const projects = await prisma.project.findMany({
       select: { id: true, name: true },
@@ -15,6 +17,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!await getSession()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { name } = await req.json();
     if (!name?.trim()) return NextResponse.json({ error: "Name required" }, { status: 400 });
