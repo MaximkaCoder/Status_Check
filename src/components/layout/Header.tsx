@@ -57,27 +57,6 @@ export function Header() {
 
         {/* Nav */}
         <nav className="flex items-center gap-2" aria-label="Main navigation">
-          {!isHome && (
-            <Link
-              href="/"
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium",
-                "bg-white/40 dark:bg-white/[0.06]",
-                "border border-white/70 dark:border-white/[0.10]",
-                "text-slate-600 dark:text-white/70",
-                "hover:bg-white/60 dark:hover:bg-white/[0.10] hover:text-slate-800 dark:hover:text-white",
-                "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none",
-                "transition-all duration-150 cursor-pointer"
-              )}
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              <span className="hidden sm:inline">{t("dashboard")}</span>
-            </Link>
-          )}
-
           <ThemeToggle />
           <LanguageSwitcher />
 
