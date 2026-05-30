@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const { t, locale } = useLanguage();
   const { toast } = useToast();
 
-  const { items, loading, error, refresh, removeItem, changeStatus } = useItems({
+  const { items, loading, error, refresh, silentRefresh, removeItem, changeStatus } = useItems({
     month: currentMonth,
     statuses: selectedStatuses,
   });
@@ -52,7 +52,7 @@ export default function DashboardPage() {
     status: "PENDING" | "IN_PROGRESS" | "DONE"
   ) {
     await changeStatus(id, status);
-    refresh();
+    silentRefresh();
   }
 
   const displayedItems = useMemo(

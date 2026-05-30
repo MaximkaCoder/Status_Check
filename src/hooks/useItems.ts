@@ -22,6 +22,7 @@ interface UseItemsReturn {
   loading: boolean;
   error: string | null;
   refresh: () => void;
+  silentRefresh: () => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   changeStatus: (id: string, status: "PENDING" | "IN_PROGRESS" | "DONE") => Promise<void>;
   addItemOptimistic: (item: StatusItem) => void;
@@ -105,6 +106,16 @@ export function useItems({ month, statuses }: UseItemsOptions): UseItemsReturn {
     [items]
   );
 
+  // Re-fetch without showing loading state (preserves scroll position)
+  const silentRefresh = useCallback(async () => {
+    const params: GetItemsParams = { month: format(month, "yyyy-MM") };
+    if (statuses.length > 0) params.status = statuses.join(",");
+    try {
+      const data = await getItems(params);
+      setItems(data);
+    } catch {}
+  }, [month, statuses]);
+
   // Prepend a newly created item (optimistic add)
   const addItemOptimistic = useCallback((item: StatusItem) => {
     setItems((prev) => {
@@ -121,6 +132,7 @@ export function useItems({ month, statuses }: UseItemsOptions): UseItemsReturn {
     loading,
     error,
     refresh: fetchItems,
+    silentRefresh,
     removeItem,
     changeStatus,
     addItemOptimistic,
