@@ -16,12 +16,12 @@ export function ThemeToggle() {
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       className={cn(
         "flex h-8 w-8 items-center justify-center rounded-xl",
-        "bg-white/40 dark:bg-white/[0.06] backdrop-blur-sm",
+        "bg-white/40 dark:bg-white/[0.06]",
         "border border-white/70 dark:border-white/[0.10]",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none",
         "text-slate-500 dark:text-white/60",
         "hover:bg-white/60 dark:hover:bg-white/[0.10] hover:text-slate-700 dark:hover:text-white",
-        "transition-all duration-150 cursor-pointer"
+        "transition-all duration-150 cursor-pointer outline-none"
       )}
       aria-label="Toggle theme"
       type="button"

@@ -16,11 +16,11 @@ const CHIP_ACTIVE: Record<Status, string> = {
 };
 
 const CHIP_INACTIVE: Record<Status, string> = {
-  TO_CHECK:      "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-indigo-200/80 text-indigo-600 hover:bg-white/70 hover:border-indigo-300 dark:border-indigo-400/20 dark:text-white/60 dark:hover:border-indigo-400/40 dark:hover:text-white/80",
-  EXPIRED:       "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-rose-200/80 text-rose-600 hover:bg-white/70 hover:border-rose-300 dark:border-rose-400/20 dark:text-white/60 dark:hover:border-rose-400/40 dark:hover:text-white/80",
-  DONE:          "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-emerald-200/80 text-emerald-600 hover:bg-white/70 hover:border-emerald-300 dark:border-emerald-400/20 dark:text-white/60 dark:hover:border-emerald-400/40 dark:hover:text-white/80",
-  NOT_ACTUAL:    "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-slate-200/80 text-slate-500 hover:bg-white/70 hover:border-slate-300 dark:border-slate-400/20 dark:text-white/60 dark:hover:border-slate-400/40 dark:hover:text-white/80",
-  IDEAS_BACKLOG: "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-violet-200/80 text-violet-600 hover:bg-white/70 hover:border-violet-300 dark:border-violet-400/20 dark:text-white/60 dark:hover:border-violet-400/40 dark:hover:text-white/80",
+  TO_CHECK:      "bg-white/50 dark:bg-white/[0.04] border-indigo-200/80 text-indigo-600 hover:bg-white/70 hover:border-indigo-300 dark:border-indigo-400/20 dark:text-white/60 dark:hover:border-indigo-400/40 dark:hover:text-white/80",
+  EXPIRED:       "bg-white/50 dark:bg-white/[0.04] border-rose-200/80 text-rose-600 hover:bg-white/70 hover:border-rose-300 dark:border-rose-400/20 dark:text-white/60 dark:hover:border-rose-400/40 dark:hover:text-white/80",
+  DONE:          "bg-white/50 dark:bg-white/[0.04] border-emerald-200/80 text-emerald-600 hover:bg-white/70 hover:border-emerald-300 dark:border-emerald-400/20 dark:text-white/60 dark:hover:border-emerald-400/40 dark:hover:text-white/80",
+  NOT_ACTUAL:    "bg-white/50 dark:bg-white/[0.04] border-slate-200/80 text-slate-500 hover:bg-white/70 hover:border-slate-300 dark:border-slate-400/20 dark:text-white/60 dark:hover:border-slate-400/40 dark:hover:text-white/80",
+  IDEAS_BACKLOG: "bg-white/50 dark:bg-white/[0.04] border-violet-200/80 text-violet-600 hover:bg-white/70 hover:border-violet-300 dark:border-violet-400/20 dark:text-white/60 dark:hover:border-violet-400/40 dark:hover:text-white/80",
 };
 
 interface StatusFilterChipsProps {
@@ -52,10 +52,10 @@ export function StatusFilterChips({ selected, onChange }: StatusFilterChipsProps
         type="button"
         aria-pressed={isAll}
         className={cn(
-          "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border-2 transition-all duration-200 cursor-pointer",
+          "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border-2 transition-all duration-200 cursor-pointer outline-none",
           isAll
             ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-            : "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-white/80 text-muted-foreground hover:bg-white/70 hover:border-white dark:border-white/20 dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white/80"
+            : "bg-white/50 dark:bg-white/[0.04] border-white/80 text-muted-foreground hover:bg-white/70 hover:border-white dark:border-white/20 dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white/80"
         )}
       >
         {t("all")}
@@ -65,7 +65,7 @@ export function StatusFilterChips({ selected, onChange }: StatusFilterChipsProps
         return (
           <button key={status} onClick={() => toggle(status)} type="button" aria-pressed={isActive}
             className={cn(
-              "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border-2 transition-all duration-200 cursor-pointer",
+              "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border-2 transition-all duration-200 cursor-pointer outline-none",
               isActive ? CHIP_ACTIVE[status] : CHIP_INACTIVE[status]
             )}
           >

@@ -62,7 +62,7 @@ export function Header() {
               href="/"
               className={cn(
                 "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium",
-                "bg-white/40 dark:bg-white/[0.06] backdrop-blur-sm",
+                "bg-white/40 dark:bg-white/[0.06]",
                 "border border-white/70 dark:border-white/[0.10]",
                 "text-slate-600 dark:text-white/70",
                 "hover:bg-white/60 dark:hover:bg-white/[0.10] hover:text-slate-800 dark:hover:text-white",
@@ -86,7 +86,7 @@ export function Header() {
             <div className="flex items-center gap-1.5">
               <div className={cn(
                 "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium",
-                "bg-white/40 dark:bg-white/[0.06] backdrop-blur-sm",
+                "bg-white/40 dark:bg-white/[0.06]",
                 "border border-white/70 dark:border-white/[0.10]",
                 "text-slate-700 dark:text-white/80",
                 "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none"
@@ -101,12 +101,12 @@ export function Header() {
                 onClick={logout}
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-xl",
-                  "bg-white/40 dark:bg-white/[0.06] backdrop-blur-sm",
+                  "bg-white/40 dark:bg-white/[0.06]",
                   "border border-white/70 dark:border-white/[0.10]",
                   "text-slate-500 dark:text-white/50",
                   "hover:bg-white/60 dark:hover:bg-white/[0.10] hover:text-rose-500 dark:hover:text-rose-400",
                   "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none",
-                  "transition-all duration-150 cursor-pointer"
+                  "transition-all duration-150 cursor-pointer outline-none"
                 )}
               >
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
