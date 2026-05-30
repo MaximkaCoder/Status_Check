@@ -154,30 +154,6 @@ export default function DashboardPage() {
         <div className="flex-1">
           <StatusFilterChips selected={selectedStatuses} onChange={setSelectedStatuses} />
         </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground flex-shrink-0">
-          {(["PENDING", "IN_PROGRESS", "DONE", "OVERDUE"] as const).map((s) => (
-            <span key={s} className="flex items-center gap-1.5">
-              <span
-                className={
-                  s === "PENDING"
-                    ? "h-2 w-2 rounded-full bg-indigo-500 inline-block flex-shrink-0"
-                    : s === "IN_PROGRESS"
-                    ? "h-2 w-2 rounded-full bg-amber-500 inline-block flex-shrink-0"
-                    : s === "DONE"
-                    ? "h-2 w-2 rounded-full bg-emerald-500 inline-block flex-shrink-0"
-                    : "h-2 w-2 rounded-full bg-rose-500 inline-block flex-shrink-0"
-                }
-              />
-              {s === "PENDING"
-                ? t("pending")
-                : s === "IN_PROGRESS"
-                ? t("inProgress")
-                : s === "DONE"
-                ? t("done")
-                : t("overdue")}
-            </span>
-          ))}
-        </div>
         </div>
       </div>
 
