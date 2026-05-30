@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { locale } = useLanguage();
+  const { refreshUser } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,8 +41,8 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error); return; }
+      await refreshUser();
       router.push("/");
-      router.refresh();
     } catch {
       setError(locale === "uk" ? "Помилка мережі" : "Network error");
     } finally {

@@ -13,12 +13,14 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   loading: true,
   logout: async () => {},
+  refreshUser: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -26,13 +28,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setUser(data))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
-  }, []);
+  async function refreshUser() {
+    try {
+      const data = await fetch("/api/auth/me").then((r) => r.ok ? r.json() : null);
+      setUser(data);
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { refreshUser(); }, []);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -41,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout }}>
+    <AuthContext.Provider value={{ user, loading, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
