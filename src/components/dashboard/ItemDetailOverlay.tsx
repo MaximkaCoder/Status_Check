@@ -139,9 +139,9 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
         aria-label={item.title}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "bg-card flex flex-col z-[101]",
+          "bg-card flex flex-col",
           isClosing ? "animate-overlay-out" : "animate-overlay-in",
-          !isMobile && "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-lg rounded-2xl shadow-2xl max-h-[85dvh]"
+          !isMobile && "rounded-2xl shadow-2xl overflow-hidden"
         )}
         style={isMobile ? {
           position: 'fixed',
@@ -150,7 +150,17 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-        } : {}}
+        } : {
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 101,
+          width: 'min(calc(100vw - 2rem), 512px)',
+          maxHeight: '85dvh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
 
           {/* Header */}
