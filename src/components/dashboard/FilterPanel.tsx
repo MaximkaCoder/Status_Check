@@ -98,9 +98,12 @@ export function FilterPanel({
 
         {/* Status */}
         <section>
-          <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest mb-2">
-            {t("status")}
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest">{t("status")}</p>
+            {selectedStatuses.length > 0 && (
+              <button type="button" onClick={() => onStatusChange([])} className="text-[9px] text-muted-foreground hover:text-rose-500 cursor-pointer transition-colors">{locale === "uk" ? "Очистити" : "Clear"}</button>
+            )}
+          </div>
           <div className="flex flex-col gap-0.5">
             {(["TO_CHECK","EXPIRED","DONE","NOT_ACTUAL","IDEAS_BACKLOG"] as Status[]).map((s) => {
               const active = selectedStatuses.includes(s);

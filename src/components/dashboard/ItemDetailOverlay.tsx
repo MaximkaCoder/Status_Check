@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback, useState, useRef } from 'react'
+import { useEffect, useCallback, useState, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { isPast, isToday, isTomorrow } from 'date-fns'
@@ -56,6 +56,15 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
 
   const monthsEn = translations.en.months
   const monthsUkGen = translations.uk.monthsGenitive
+
+  const [windowWidth, setWindowWidth] = useState(0)
+  useEffect(() => {
+    const update = () => setWindowWidth(window.innerWidth)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+  const isMobile = windowWidth > 0 && windowWidth < 640
 
   useEffect(() => setMounted(true), [])
 
@@ -123,20 +132,25 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
         aria-hidden="true"
       />
 
-      {/* Panel — mobile: fixed inset-0 fullscreen, desktop: centered dialog */}
+      {/* Panel */}
       <div
-        className={cn(
-          // mobile: fixed fullscreen
-          "fixed inset-0 z-[101] bg-card flex flex-col",
-          // desktop: centered modal
-          "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2",
-          "sm:w-[calc(100vw-2rem)] sm:max-w-lg sm:rounded-2xl sm:shadow-2xl sm:max-h-[85dvh]",
-          isClosing ? "animate-overlay-out" : "animate-overlay-in"
-        )}
         role="dialog"
         aria-modal="true"
         aria-label={item.title}
         onClick={(e) => e.stopPropagation()}
+        className={cn(
+          "bg-card flex flex-col z-[101]",
+          isClosing ? "animate-overlay-out" : "animate-overlay-in",
+          !isMobile && "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-lg rounded-2xl shadow-2xl max-h-[85dvh]"
+        )}
+        style={isMobile ? {
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          zIndex: 101,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        } : {}}
       >
 
           {/* Header */}
