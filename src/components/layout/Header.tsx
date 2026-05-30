@@ -99,7 +99,6 @@ export function Header() {
               <button
                 type="button"
                 onClick={logout}
-                title="Logout"
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-xl",
                   "bg-white/40 dark:bg-white/[0.06] backdrop-blur-sm",

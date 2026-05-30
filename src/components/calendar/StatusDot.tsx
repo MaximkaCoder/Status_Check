@@ -34,7 +34,6 @@ export function StatusDot({ status, className }: StatusDotProps) {
         STATUS_DOT_GLOW[status],
         className
       )}
-      title={status}
     />
   );
 }
