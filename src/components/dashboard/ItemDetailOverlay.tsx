@@ -123,62 +123,56 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
         aria-hidden="true"
       />
 
-      {/* Panel */}
+      {/* Panel — mobile: bottom sheet, desktop: centered modal */}
       <div
-        className="fixed inset-0 flex items-center justify-center z-[101] p-4"
+        className="fixed inset-0 z-[101] flex items-end sm:items-center justify-center sm:p-4"
         role="dialog"
         aria-modal="true"
         aria-label={item.title}
       >
         <div
           className={cn(
-            "bg-card rounded-2xl shadow-2xl w-full max-w-lg",
+            "bg-card w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl",
+            "flex flex-col max-h-[90dvh] sm:max-h-[85dvh]",
             isClosing ? "animate-overlay-out" : "animate-overlay-in"
           )}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Drag handle (mobile) */}
+          <div className="flex justify-center pt-3 pb-1 sm:hidden">
+            <div className="h-1 w-10 rounded-full bg-border/60" />
+          </div>
+
           {/* Header */}
-          <div className="flex items-start justify-between gap-3 p-5 pb-0">
+          <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border/60 flex-shrink-0">
             <div className="flex-1 min-w-0">
-              <h2 className="text-base font-bold text-foreground leading-snug break-words">
-                {item.title}
-              </h2>
+              <h2 className="text-base font-bold text-foreground leading-snug break-words">{item.title}</h2>
+              <div className="mt-1.5">
+                <StatusBadge status={item.status} />
+              </div>
             </div>
-            <button
-              onClick={close}
-              className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
-              type="button"
-              aria-label="Close"
-            >
+            <button onClick={close} className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer" type="button" aria-label="Close">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          {/* Body */}
-          <div className="p-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <StatusBadge status={item.status} />
-            </div>
+          {/* Scrollable body */}
+          <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
 
+            {/* Description */}
             {item.description && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                  {t('description')}
-                </p>
-                <p className="text-sm text-foreground leading-relaxed">
-                  {item.description}
-                </p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('description')}</p>
+                <p className="text-sm text-foreground leading-relaxed">{item.description}</p>
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               {/* Created at */}
               <div className="rounded-xl bg-muted/50 p-3 col-span-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  {t('createdAt')}
-                </p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('createdAt')}</p>
                 <span className="text-sm font-medium text-foreground">
                   {formatDateLocale(new Date(item.created_at), locale, monthsEn, monthsUkGen)}
                 </span>
@@ -186,71 +180,73 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
 
               {/* Deadline */}
               <div className="rounded-xl bg-muted/50 p-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  {t('deadline')}
-                </p>
-                <span className={cn(
-                  'text-sm font-medium',
-                  isPastDeadline ? 'text-rose-600' : 'text-foreground'
-                )}>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('deadline')}</p>
+                <span className={cn('text-sm font-medium', isPastDeadline ? 'text-rose-600' : 'text-foreground')}>
                   {deadlineLabel}
-                  {isPastDeadline && (
-                    <span className="ml-1.5 text-xs font-normal text-rose-500/80">· {t('expired')}</span>
-                  )}
+                  {isPastDeadline && <span className="block text-[10px] font-normal text-rose-500/80">{t('expired')}</span>}
                 </span>
               </div>
 
-              {/* Creator */}
+              {/* Author */}
               <div className="rounded-xl bg-muted/50 p-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  {t('by')}
-                </p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('by')}</p>
                 <div className="flex items-center gap-1.5">
-                  <span
-                    className={cn(
-                      'inline-flex h-5 w-5 items-center justify-center rounded-full text-white flex-shrink-0',
-                      'text-[10px] font-bold leading-none',
-                      avatarColor
-                    )}
-                    aria-hidden="true"
-                  >
+                  <span className={cn('inline-flex h-5 w-5 items-center justify-center rounded-full text-white flex-shrink-0 text-[10px] font-bold leading-none', avatarColor)}>
                     {avatarInitial}
                   </span>
-                  <span className="text-sm font-medium text-foreground truncate">
-                    {item.creator_name}
-                  </span>
+                  <span className="text-sm font-medium text-foreground truncate">{item.creator_name}</span>
                 </div>
               </div>
+
+              {/* Project */}
+              {item.project && (
+                <div className="rounded-xl bg-muted/50 p-3">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('project')}</p>
+                  <span className="text-sm font-medium text-foreground">{item.project}</span>
+                </div>
+              )}
+
+              {/* Assignee */}
+              {item.assignee && (
+                <div className="rounded-xl bg-muted/50 p-3">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('assignee')}</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white flex-shrink-0 text-[10px] font-bold leading-none">
+                      {item.assignee.charAt(0)}
+                    </span>
+                    <span className="text-sm font-medium text-foreground truncate">{item.assignee}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Reviewer */}
+              {item.reviewer && (
+                <div className="rounded-xl bg-muted/50 p-3">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('reviewer')}</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white flex-shrink-0 text-[10px] font-bold leading-none">
+                      {item.reviewer.charAt(0)}
+                    </span>
+                    <span className="text-sm font-medium text-foreground truncate">{item.reviewer}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border/60">
+          <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border/60 flex-shrink-0">
             {onDelete && (
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(true)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium',
-                  'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50',
-                  'transition-all duration-150 cursor-pointer'
-                )}
-              >
+              <button type="button" onClick={() => setConfirmDelete(true)}
+                className={cn('inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium', 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50', 'transition-all duration-150 cursor-pointer')}>
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
                 {t('deleteItem')}
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => router.push(`/items/${item.id}/edit`)}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold',
-                'bg-indigo-600 text-white hover:bg-indigo-700',
-                'shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer'
-              )}
-            >
+            <button type="button" onClick={() => router.push(`/items/${item.id}/edit`)}
+              className={cn('inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold', 'bg-indigo-600 text-white hover:bg-indigo-700', 'shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer')}>
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
