@@ -99,7 +99,7 @@ export function FilterPanel({
         {/* Status */}
         <section>
           <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest mb-2">
-            {t("filter")}
+            {t("status")}
           </p>
           <div className="flex flex-col gap-0.5">
             {(["TO_CHECK","EXPIRED","DONE","NOT_ACTUAL","IDEAS_BACKLOG"] as Status[]).map((s) => {
@@ -147,9 +147,7 @@ export function FilterPanel({
                 <button type="button" onClick={onProjectClear} className="text-[9px] text-muted-foreground hover:text-rose-500 cursor-pointer transition-colors">{uk ? "Очистити" : "Clear"}</button>
               )}
             </div>
-            {uniqueProjects.length > 5 && (
-              <SearchInput value={projectSearch} onChange={setProjectSearch} placeholder={uk ? "Пошук..." : "Search..."} />
-            )}
+            <SearchInput value={projectSearch} onChange={setProjectSearch} placeholder={uk ? "Пошук проєкту..." : "Search project..."} />
             <div className="flex flex-col gap-0.5">
               {filteredProjects.length === 0 ? (
                 <p className="text-[11px] text-muted-foreground/40 py-1.5 text-center">{uk ? "Нічого" : "Nothing found"}</p>
@@ -181,9 +179,7 @@ export function FilterPanel({
                 <button type="button" onClick={onAssigneeClear} className="text-[9px] text-muted-foreground hover:text-rose-500 cursor-pointer transition-colors">{uk ? "Очистити" : "Clear"}</button>
               )}
             </div>
-            {uniqueAssignees.length > 5 && (
-              <SearchInput value={assigneeSearch} onChange={setAssigneeSearch} placeholder={uk ? "Пошук..." : "Search..."} />
-            )}
+            <SearchInput value={assigneeSearch} onChange={setAssigneeSearch} placeholder={uk ? "Пошук виконавця..." : "Search assignee..."} />
             <div className="flex flex-col gap-0.5">
               {filteredAssignees.length === 0 ? (
                 <p className="text-[11px] text-muted-foreground/40 py-1.5 text-center">{uk ? "Нічого" : "Nothing found"}</p>

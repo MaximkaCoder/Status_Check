@@ -149,7 +149,7 @@ export function FilterDrawer({
           {/* Status */}
           <section>
             <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-2.5">
-              {t("filter")}
+              {t("status")}
             </p>
             <StatusFilterChips selected={selectedStatuses} onChange={onStatusChange} />
           </section>
@@ -168,13 +168,11 @@ export function FilterDrawer({
                   </button>
                 )}
               </div>
-              {uniqueProjects.length > 4 && (
-                <SearchInput
-                  value={projectSearch}
-                  onChange={setProjectSearch}
-                  placeholder={uk ? "Пошук проєкту..." : "Search project..."}
-                />
-              )}
+              <SearchInput
+                value={projectSearch}
+                onChange={setProjectSearch}
+                placeholder={uk ? "Пошук проєкту..." : "Search project..."}
+              />
               <div className="flex flex-col gap-0.5">
                 {filteredProjects.length === 0 ? (
                   <p className="text-xs text-muted-foreground/50 py-2 text-center">{uk ? "Нічого не знайдено" : "Nothing found"}</p>
@@ -217,13 +215,11 @@ export function FilterDrawer({
                   </button>
                 )}
               </div>
-              {uniqueAssignees.length > 4 && (
-                <SearchInput
-                  value={assigneeSearch}
-                  onChange={setAssigneeSearch}
-                  placeholder={uk ? "Пошук виконавця..." : "Search assignee..."}
-                />
-              )}
+              <SearchInput
+                value={assigneeSearch}
+                onChange={setAssigneeSearch}
+                placeholder={uk ? "Пошук виконавця..." : "Search assignee..."}
+              />
               <div className="flex flex-col gap-0.5">
                 {filteredAssignees.length === 0 ? (
                   <p className="text-xs text-muted-foreground/50 py-2 text-center">{uk ? "Нічого не знайдено" : "Nothing found"}</p>
