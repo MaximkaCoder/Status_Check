@@ -1,14 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 import { UpdateStatusSchema } from "@/lib/validations";
 
 type RouteParams = { params: { id: string } };
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
+
     const existing = await prisma.statusItem.findUnique({ where: { id: params.id } });
     if (!existing) {
       return NextResponse.json({ error: "Item not found", code: "NOT_FOUND" }, { status: 404 });
+    }
+
+    const isAdmin = session.isAdmin ?? false;
+    const canModify = isAdmin ||
+      existing.creator_name === session.name ||
+      existing.assignee === session.name ||
+      existing.reviewer === session.name;
+    if (!canModify) {
+      return NextResponse.json({ error: "You do not have permission to change this item's status", code: "FORBIDDEN" }, { status: 403 });
     }
 
     let body: unknown;

@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { translations } from "@/lib/i18n";
 import type { StatusItem } from "@/lib/types";
 
@@ -75,6 +76,14 @@ export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animat
   const router = useRouter();
   const { t, locale } = useLanguage();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  const canEdit = !!user && (
+    (user.isAdmin) ||
+    item.creator_name === user.name ||
+    item.assignee === user.name ||
+    item.reviewer === user.name
+  );
   const monthsEn = translations.en.months;
   const monthsUkGen = translations.uk.monthsGenitive;
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -171,8 +180,8 @@ export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animat
           <div className="relative flex-shrink-0" ref={menuRef}>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setStatusMenuOpen((v) => !v); }}
-              disabled={changingStatus || !onStatusChange}
+              onClick={(e) => { e.stopPropagation(); if (canEdit) setStatusMenuOpen((v) => !v); }}
+              disabled={changingStatus || !onStatusChange || !canEdit}
               className={cn(
                 "transition-opacity duration-150",
                 onStatusChange ? "cursor-pointer hover:opacity-75" : "cursor-default",
@@ -224,8 +233,8 @@ export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animat
             )}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity duration-150 flex-shrink-0">
+          {/* Action buttons — only for users with permission */}
+          <div className={cn("flex gap-1 transition-opacity duration-150 flex-shrink-0", canEdit ? "opacity-0 group-hover/card:opacity-100" : "hidden")}>
             <button
               onClick={(e) => { e.stopPropagation(); router.push(`/items/${item.id}/edit`); }}
               className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-indigo-50 dark:hover:bg-indigo-900/40 hover:text-indigo-600 dark:hover:text-indigo-300 transition-all duration-150 cursor-pointer"

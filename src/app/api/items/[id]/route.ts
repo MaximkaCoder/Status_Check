@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 import { UpdateItemSchema } from "@/lib/validations";
+import type { StatusItem } from "@prisma/client";
+
+function canModify(userName: string, isAdmin: boolean, item: StatusItem): boolean {
+  if (isAdmin) return true;
+  return item.creator_name === userName ||
+         item.assignee === userName ||
+         item.reviewer === userName;
+}
 
 // ---------------------------------------------------------------------------
 // Resolve segment params — Next.js 14 App Router
@@ -29,10 +38,16 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 // ---------------------------------------------------------------------------
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    // Check existence first
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
+
     const existing = await prisma.statusItem.findUnique({ where: { id: params.id } });
     if (!existing) {
       return NextResponse.json({ error: "Item not found", code: "NOT_FOUND" }, { status: 404 });
+    }
+
+    if (!canModify(session.name, session.isAdmin ?? false, existing)) {
+      return NextResponse.json({ error: "You do not have permission to edit this item", code: "FORBIDDEN" }, { status: 403 });
     }
 
     let body: unknown;
@@ -87,9 +102,16 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
 // ---------------------------------------------------------------------------
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
+
     const existing = await prisma.statusItem.findUnique({ where: { id: params.id } });
     if (!existing) {
       return NextResponse.json({ error: "Item not found", code: "NOT_FOUND" }, { status: 404 });
+    }
+
+    if (!canModify(session.name, session.isAdmin ?? false, existing)) {
+      return NextResponse.json({ error: "You do not have permission to delete this item", code: "FORBIDDEN" }, { status: 403 });
     }
 
     await prisma.statusItem.delete({ where: { id: params.id } });
