@@ -156,13 +156,11 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
 
   function validate(): boolean {
     const newErrors: Record<string, string> = {};
-    if (!title.trim()) newErrors.title = `${t("title")} is required`;
-    if (title.trim().length > 200)
-      newErrors.title = `${t("title")} must be 200 characters or fewer`;
-    if (!deadline) newErrors.deadline = `${t("deadline")} is required`;
-    if (!creatorName.trim()) newErrors.creator_name = `${t("yourName")} is required`;
-    if (creatorName.trim().length > 100)
-      newErrors.creator_name = `${t("yourName")} must be 100 characters or fewer`;
+    if (!title.trim()) newErrors.title = t("errorTitleRequired");
+    if (title.trim().length > 200) newErrors.title = t("errorTitleLength");
+    if (!deadline) newErrors.deadline = t("errorDeadlineRequired");
+    if (!creatorName.trim()) newErrors.creator_name = t("errorNameRequired");
+    if (creatorName.trim().length > 100) newErrors.creator_name = t("errorNameLength");
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }

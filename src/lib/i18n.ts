@@ -81,6 +81,11 @@ export const translations = {
     tomorrow: 'Tomorrow',
     createdAt: 'Created',
     tasks: 'tasks',
+    errorTitleRequired: 'Title is required',
+    errorTitleLength: 'Title must be 200 characters or fewer',
+    errorDeadlineRequired: 'Deadline is required',
+    errorNameRequired: 'Name is required',
+    errorNameLength: 'Name must be 100 characters or fewer',
   },
   uk: {
     appName: 'Status Check',
@@ -151,6 +156,11 @@ export const translations = {
     tomorrow: 'Завтра',
     createdAt: 'Створено',
     tasks: 'задач',
+    errorTitleRequired: "Назва обов'язкова",
+    errorTitleLength: 'Назва не може перевищувати 200 символів',
+    errorDeadlineRequired: 'Дедлайн обов\'язковий',
+    errorNameRequired: "Ім'я обов'язкове",
+    errorNameLength: "Ім'я не може перевищувати 100 символів",
   },
 } as const
 

@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect, useCallback, useState } from 'react'
+import { useEffect, useCallback, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { format, isPast, isToday, isTomorrow } from 'date-fns'
+import { isPast, isToday, isTomorrow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { translations } from '@/lib/i18n'
 import type { StatusItem } from '@/lib/types'
 
 interface ItemDetailOverlayProps {
@@ -16,13 +17,18 @@ interface ItemDetailOverlayProps {
   onDelete?: (id: string) => Promise<void>
 }
 
-function formatDeadline(date: Date, today: string, tomorrow: string): string {
-  if (isToday(date)) return today
-  if (isTomorrow(date)) return tomorrow
-  return format(date, 'MMM d, yyyy HH:mm')
+function formatDateLocale(date: Date, months: readonly string[]): string {
+  const h = date.getHours().toString().padStart(2, '0')
+  const m = date.getMinutes().toString().padStart(2, '0')
+  return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} · ${h}:${m}`
 }
 
-// Deterministic color from name string
+function formatDeadlineLocale(date: Date, today: string, tomorrow: string, months: readonly string[]): string {
+  if (isToday(date)) return today
+  if (isTomorrow(date)) return tomorrow
+  return formatDateLocale(date, months)
+}
+
 function getAvatarColor(name: string): string {
   const colors = [
     'bg-indigo-500', 'bg-violet-500', 'bg-pink-500', 'bg-rose-500',
@@ -38,27 +44,39 @@ function getAvatarColor(name: string): string {
 
 export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlayProps) {
   const router = useRouter()
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const [mounted, setMounted] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  useEffect(() => setMounted(true), [])
-  const deadline = new Date(item.deadline)
-  const isOverdue = item.status === 'OVERDUE'
-  const isPastDeadline = isPast(deadline) && item.status !== 'DONE'
-  const deadlineLabel = formatDeadline(deadline, t('today'), t('tomorrow'))
-  const avatarColor = getAvatarColor(item.creator_name)
-  const avatarInitial = item.creator_name.charAt(0).toUpperCase()
+  const [isClosing, setIsClosing] = useState(false)
+  const isClosingRef = useRef(false)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Escape key handler
+  const monthsShort = translations[locale].monthsShort
+
+  useEffect(() => setMounted(true), [])
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current)
+    }
+  }, [])
+
+  function close() {
+    if (isClosingRef.current) return
+    isClosingRef.current = true
+    setIsClosing(true)
+    closeTimer.current = setTimeout(onClose, 180)
+  }
+
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose()
-  }, [onClose])
+    if (e.key === 'Escape') close()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown)
     document.body.style.overflow = 'hidden'
 
-    // Blur the content directly — avoids backdrop-filter compositing conflicts
     const header = document.querySelector('header') as HTMLElement | null
     const main = document.querySelector('main') as HTMLElement | null
     const transition = 'filter 0.15s ease'
@@ -79,17 +97,28 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
     onClose()
   }
 
+  const deadline = new Date(item.deadline)
+  const isOverdue = item.status === 'OVERDUE'
+  const isPastDeadline = isPast(deadline) && item.status !== 'DONE'
+  const deadlineLabel = formatDeadlineLocale(deadline, t('today'), t('tomorrow'), monthsShort)
+  const avatarColor = getAvatarColor(item.creator_name)
+  const avatarInitial = item.creator_name.charAt(0).toUpperCase()
+
   if (!mounted) return null
+
   const overlay = createPortal(
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 z-[100] animate-backdrop-in"
-        onClick={onClose}
+        className={cn(
+          "fixed inset-0 bg-black/50 z-[100]",
+          isClosing ? "animate-fade-out" : "animate-backdrop-in"
+        )}
+        onClick={close}
         aria-hidden="true"
       />
 
-      {/* Panel container */}
+      {/* Panel */}
       <div
         className="fixed inset-0 flex items-center justify-center z-[101] p-4"
         role="dialog"
@@ -97,7 +126,10 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
         aria-label={item.title}
       >
         <div
-          className="bg-card rounded-2xl shadow-2xl w-full max-w-lg animate-overlay-in"
+          className={cn(
+            "bg-card rounded-2xl shadow-2xl w-full max-w-lg",
+            isClosing ? "animate-overlay-out" : "animate-overlay-in"
+          )}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -108,7 +140,7 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
               </h2>
             </div>
             <button
-              onClick={onClose}
+              onClick={close}
               className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
               type="button"
               aria-label="Close"
@@ -121,16 +153,14 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
 
           {/* Body */}
           <div className="p-5 space-y-4">
-            {/* Status */}
             <div className="flex items-center gap-2">
               <StatusBadge status={item.status} />
             </div>
 
-            {/* Description */}
             {item.description && (
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                  Description
+                  {t('description')}
                 </p>
                 <p className="text-sm text-foreground leading-relaxed">
                   {item.description}
@@ -138,29 +168,26 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
               </div>
             )}
 
-            {/* Meta grid */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Created at — full width */}
+              {/* Created at */}
               <div className="rounded-xl bg-muted/50 p-3 col-span-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   {t('createdAt')}
                 </p>
                 <span className="text-sm font-medium text-foreground">
-                  {format(new Date(item.created_at), 'MMM d, yyyy · HH:mm')}
+                  {formatDateLocale(new Date(item.created_at), monthsShort)}
                 </span>
               </div>
 
               {/* Deadline */}
               <div className="rounded-xl bg-muted/50 p-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Deadline
+                  {t('deadline')}
                 </p>
-                <span
-                  className={cn(
-                    'text-sm font-medium',
-                    (isOverdue || isPastDeadline) ? 'text-rose-600' : 'text-foreground'
-                  )}
-                >
+                <span className={cn(
+                  'text-sm font-medium',
+                  (isOverdue || isPastDeadline) ? 'text-rose-600' : 'text-foreground'
+                )}>
                   {deadlineLabel}
                   {(isOverdue || isPastDeadline) && (
                     <span className="ml-1.5 text-xs font-normal text-rose-500/80">· {t('overdue')}</span>
@@ -192,7 +219,7 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
             </div>
           </div>
 
-          {/* Footer actions */}
+          {/* Footer */}
           <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border/60">
             {onDelete && (
               <button

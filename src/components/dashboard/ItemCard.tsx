@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { format, isPast, isToday, isTomorrow, differenceInDays } from "date-fns";
+import { isPast, isToday, isTomorrow, differenceInDays } from "date-fns";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
+import { translations } from "@/lib/i18n";
 import type { StatusItem } from "@/lib/types";
 
 type Status = "PENDING" | "IN_PROGRESS" | "DONE" | "OVERDUE";
@@ -21,10 +22,14 @@ interface ItemCardProps {
   animationIndex?: number;
 }
 
-function formatDeadlineRelative(date: Date, today: string, tomorrow: string): string {
+function formatDateLocale(date: Date, months: readonly string[]): string {
+  return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}
+
+function formatDeadlineRelative(date: Date, today: string, tomorrow: string, months: readonly string[]): string {
   if (isToday(date)) return today;
   if (isTomorrow(date)) return tomorrow;
-  return format(date, "MMM d, yyyy");
+  return formatDateLocale(date, months);
 }
 
 function getAvatarColor(name: string): string {
@@ -79,7 +84,8 @@ export function ItemCard({
   animationIndex = 0,
 }: ItemCardProps) {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const monthsShort = translations[locale].monthsShort;
   const { toast } = useToast();
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
@@ -102,7 +108,7 @@ export function ItemCard({
   const isPastDeadline = isPast(deadline) && item.status !== "DONE";
   const daysUntil = differenceInDays(deadline, new Date());
   const isNearDeadline = !isOverdue && !isPastDeadline && daysUntil >= 0 && daysUntil <= 3;
-  const deadlineLabel = formatDeadlineRelative(deadline, t("today"), t("tomorrow"));
+  const deadlineLabel = formatDeadlineRelative(deadline, t("today"), t("tomorrow"), monthsShort);
   const staggerClass = `stagger-${Math.min(animationIndex + 1, 10)}`;
   const avatarColor = getAvatarColor(item.creator_name);
   const avatarInitial = item.creator_name.charAt(0).toUpperCase();
@@ -145,7 +151,6 @@ export function ItemCard({
       className={cn(
         "group/card relative rounded-2xl overflow-visible",
         "bg-white/80 dark:bg-white/[0.04]",
-        "backdrop-blur-[2px]",
         "border border-slate-200/80 dark:border-white/[0.08]",
         "shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_16px_rgba(0,0,0,0.04)]",
         "dark:shadow-[0_2px_16px_rgba(0,0,0,0.5)]",
@@ -310,7 +315,7 @@ export function ItemCard({
             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>{format(new Date(item.created_at), "MMM d, yyyy")}</span>
+            <span>{formatDateLocale(new Date(item.created_at), monthsShort)}</span>
           </span>
         </div>
       </div>
