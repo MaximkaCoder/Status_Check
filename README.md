@@ -9,13 +9,13 @@ A shared commitment and deadline tracker built as an MVP for an AI Engineer assi
 ## Screenshots
 
 ### Dashboard — Light mode
-![Dashboard light](public/ss-dashboard-light.png)
+![Dashboard light](screenshots/ss-dashboard-light.png)
 
 ### Dashboard — Dark mode
-![Dashboard dark](public/ss-dashboard-dark.png)
+![Dashboard dark](screenshots/ss-dashboard-dark.png)
 
 ### Create new item
-![New item](public/ss-new-item.png)
+![New item](screenshots/ss-new-item.png)
 
 ---
 
