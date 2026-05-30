@@ -123,25 +123,21 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
         aria-hidden="true"
       />
 
-      {/* Panel — mobile: bottom sheet, desktop: centered modal */}
+      {/* Panel — mobile: full-screen, desktop: centered modal */}
       <div
-        className="fixed inset-0 z-[101] flex items-end sm:items-center justify-center sm:p-4"
+        className="fixed inset-0 z-[101] flex flex-col sm:items-center sm:justify-center sm:p-4"
         role="dialog"
         aria-modal="true"
         aria-label={item.title}
       >
         <div
           className={cn(
-            "bg-card w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl",
-            "flex flex-col max-h-[90dvh] sm:max-h-[85dvh]",
+            "bg-card w-full h-full sm:h-auto sm:max-w-lg sm:rounded-2xl shadow-2xl",
+            "flex flex-col sm:max-h-[85dvh]",
             isClosing ? "animate-overlay-out" : "animate-overlay-in"
           )}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Drag handle (mobile) */}
-          <div className="flex justify-center pt-3 pb-1 sm:hidden">
-            <div className="h-1 w-10 rounded-full bg-border/60" />
-          </div>
 
           {/* Header */}
           <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border/60 flex-shrink-0">
