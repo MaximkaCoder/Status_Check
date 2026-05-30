@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { isSameDay, startOfMonth } from "date-fns";
-import Link from "next/link";
 import { MonthCalendar } from "@/components/calendar/MonthCalendar";
 import { StatusFilterChips } from "@/components/dashboard/StatusFilterChips";
 import { ItemList } from "@/components/dashboard/ItemList";
@@ -77,11 +76,10 @@ export default function DashboardPage() {
     : null;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
-      {/* Page header */}
-      <div className="animate-fade-in-up stagger-1">
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      {/* Stats pills — full width, always on top */}
+      <div className="mb-6 animate-fade-in-up stagger-1">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          {/* Stats pills */}
           {!loading && items.length > 0 && (
             <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/50 backdrop-blur-sm text-slate-600 text-xs font-semibold border border-white/80 dark:bg-white/5 dark:text-slate-300 dark:border-white/10">
@@ -109,7 +107,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Selected day filter hint */}
           {selectedDay && selectedMonthShort && (
             <p className="text-sm text-muted-foreground">
               <span className="font-semibold text-indigo-600 dark:text-indigo-400">
@@ -128,96 +125,90 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Calendar + Stats */}
-      <div className="animate-fade-in-up stagger-2 grid grid-cols-1 lg:grid-cols-[1fr_200px] gap-4 items-stretch">
-        <MonthCalendar
-          items={items}
-          selectedDay={selectedDay}
-          onDayClick={handleDayClick}
-          currentMonth={currentMonth}
-          onMonthChange={handleMonthChange}
-        />
-        <StatsPanel
-          items={displayedItems}
-          label={selectedDay && selectedMonthShort
-            ? `${selectedMonthShort} ${selectedDay.getDate()}`
-            : undefined}
-        />
-      </div>
+      {/* Two-column on landscape (lg+), single column on portrait */}
+      <div className="flex flex-col lg:flex-row lg:items-start gap-6">
 
-      {/* Filters + legend row */}
-      <div className="flex flex-col gap-2 animate-fade-in-up stagger-3">
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-          {t("filter")}
-        </span>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex-1">
-          <StatusFilterChips selected={selectedStatuses} onChange={setSelectedStatuses} />
+        {/* LEFT: Calendar + Stats — sticky on wide screens */}
+        <div className="lg:sticky lg:top-[68px] lg:self-start lg:w-[380px] lg:flex-shrink-0 flex flex-col gap-4 animate-fade-in-up stagger-2">
+          <MonthCalendar
+            items={items}
+            selectedDay={selectedDay}
+            onDayClick={handleDayClick}
+            currentMonth={currentMonth}
+            onMonthChange={handleMonthChange}
+          />
+          <StatsPanel
+            items={displayedItems}
+            label={selectedDay && selectedMonthShort
+              ? `${selectedMonthShort} ${selectedDay.getDate()}`
+              : undefined}
+          />
         </div>
-        </div>
-      </div>
 
-      {/* Error state */}
-      {error && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-500/30 px-4 py-3 text-sm text-rose-700 dark:text-rose-300 flex items-center gap-3 animate-fade-in">
-          <svg
-            className="h-4 w-4 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-            />
-          </svg>
-          <span className="flex-1">{error}</span>
-          <button
-            onClick={refresh}
-            className="font-semibold underline underline-offset-2 hover:no-underline cursor-pointer"
-            type="button"
-          >
-            {t("retry")}
-          </button>
-        </div>
-      )}
+        {/* RIGHT: Filters + list — scrollable */}
+        <div className="flex-1 min-w-0 flex flex-col gap-4">
 
-      {/* Item count + add link */}
-      {!loading && !error && (
-        <div className="flex items-center justify-between animate-fade-in-up stagger-4">
-          <p className="flex items-baseline gap-1.5">
-            {displayedItems.length === 0 ? (
-              <span className="text-sm font-semibold text-foreground">{t("noItems")}</span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-500/20">
-                <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 dark:bg-indigo-400 inline-block" />
-                {displayedItems.length} {t("items")}
-                {selectedDay && selectedMonthShort && (
-                  <span className="text-indigo-400 dark:text-indigo-500">· {selectedMonthShort} {selectedDay.getDate()}</span>
-                )}
-              </span>
-            )}
-          </p>
-          {displayedItems.length > 0 && (
-            <Link
-              href="/items/new"
-              className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200 font-semibold transition-colors cursor-pointer hover:underline underline-offset-2"
-            >
-              {t("addItem")}
-            </Link>
+          {/* Filter chips */}
+          <div className="flex flex-col gap-2 animate-fade-in-up stagger-3">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              {t("filter")}
+            </span>
+            <StatusFilterChips selected={selectedStatuses} onChange={setSelectedStatuses} />
+          </div>
+
+          {/* Error state */}
+          {error && (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-500/30 px-4 py-3 text-sm text-rose-700 dark:text-rose-300 flex items-center gap-3 animate-fade-in">
+              <svg
+                className="h-4 w-4 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+              <span className="flex-1">{error}</span>
+              <button
+                onClick={refresh}
+                className="font-semibold underline underline-offset-2 hover:no-underline cursor-pointer"
+                type="button"
+              >
+                {t("retry")}
+              </button>
+            </div>
           )}
-        </div>
-      )}
 
-      <ItemList
-        items={displayedItems}
-        loading={loading}
-        onDelete={handleDelete}
-        onStatusChange={handleStatusChange}
-      />
+          {/* Item count */}
+          {!loading && !error && (
+            <div className="animate-fade-in-up stagger-4">
+              {displayedItems.length === 0 ? (
+                <span className="text-sm font-semibold text-foreground">{t("noItems")}</span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-100 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-500/20">
+                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 dark:bg-indigo-400 inline-block" />
+                  {displayedItems.length} {t("items")}
+                  {selectedDay && selectedMonthShort && (
+                    <span className="text-indigo-400 dark:text-indigo-500">· {selectedMonthShort} {selectedDay.getDate()}</span>
+                  )}
+                </span>
+              )}
+            </div>
+          )}
+
+          <ItemList
+            items={displayedItems}
+            loading={loading}
+            onDelete={handleDelete}
+            onStatusChange={handleStatusChange}
+          />
+        </div>
+      </div>
     </div>
   );
 }

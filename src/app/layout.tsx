@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { ThemeProvider } from "next-themes";
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
               <Header />
               <main className="flex-1">{children}</main>
+              <ScrollToTop />
             </div>
           </ToastProvider>
           </LanguageProvider>
