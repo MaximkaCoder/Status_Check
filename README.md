@@ -9,12 +9,18 @@ A shared commitment and deadline tracker — know what everyone is working on, w
 ## Screenshots
 
 ### Desktop — Light mode
-![Dashboard light](https://status-check-henna.vercel.app/screenshots/ss-dashboard-light.png)
+![Desktop light](https://status-check-henna.vercel.app/screenshots/ss-dashboard-light.png)
 
 ### Desktop — Dark mode
-![Dashboard dark](https://status-check-henna.vercel.app/screenshots/ss-dashboard-dark.png)
+![Desktop dark](https://status-check-henna.vercel.app/screenshots/ss-dashboard-dark.png)
 
-### Create new item
+### Mobile — Light mode
+![Mobile light](https://status-check-henna.vercel.app/screenshots/ss-mobile-light.png)
+
+### Mobile — Dark mode
+![Mobile dark](https://status-check-henna.vercel.app/screenshots/ss-mobile-dark.png)
+
+### Create new item (AI smart input)
 ![New item](https://status-check-henna.vercel.app/screenshots/ss-new-item.png)
 
 ---
