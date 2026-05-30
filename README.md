@@ -1,6 +1,6 @@
 # Status Check
 
-A shared commitment and deadline tracker — know what everyone is working on, when it's due, and whether it's on track.
+Спільний трекер зобов'язань та дедлайнів — знайте хто що робить, коли це має бути готове, і чи йде робота за планом.
 
 **Live demo → [status-check-henna.vercel.app](https://status-check-henna.vercel.app)**
 
@@ -25,63 +25,123 @@ A shared commitment and deadline tracker — know what everyone is working on, w
 
 ---
 
-## Layout modes
+## Layout
 
-### Desktop (landscape)
-On wide screens the layout splits into two columns:
-- **Left** — calendar and donut stats panel, **sticky** while you scroll
-- **Right** — filter chips and task list, scrollable independently
+### Desktop (≥ 1280px) — три колонки
+| Ліво | Центр | Право |
+|------|-------|-------|
+| Календар + Donut статистика (sticky) | Список задач | Панель фільтрів (sticky) |
 
-Changing a task's status never jumps the scroll position — updates happen optimistically and sync silently in the background.
+### Desktop (1024–1279px) — дві колонки
+Календар + статистика зліва, задачі справа. Фільтри — кнопка → drawer справа.
 
-### Mobile (portrait)
-Single-column stack. A **scroll-to-top button** appears in the bottom-right corner after scrolling 300 px — liquid-glass style, fades in smoothly and returns you to the top in one tap.
-
----
-
-## AI smart input
-
-When creating a task you can describe it in plain language — the parser extracts the title and deadline automatically.
-
-**Examples:**
-- `Deploy to production by next Friday`
-- `Зустріч з командою через тиждень`
-- `Board review on June 10`
-
-Powered by **chrono-node** — no API key required, works offline, supports both English and Ukrainian date phrasing.
+### Mobile (< 1024px)
+Одна колонка. Кнопка фільтрів у хедері → drawer. Кнопка scroll-to-top після 300 px скролу.
 
 ---
 
-## Features
+## Система прав доступу
 
-| Feature | Details |
-|---|---|
-| **Task management** | Create, edit, delete commitments with deadlines |
-| **Status tracking** | Pending → In Progress → Done / Overdue |
-| **Auto-expire** | Tasks with a past deadline auto-flip to Overdue on next load |
-| **Overdue indicator** | Any task with a missed deadline shows "overdue" regardless of current status |
-| **Calendar view** | Monthly calendar with per-day filtering and color-coded status dots |
-| **Donut chart** | Live stats with per-status counts and completion rate |
-| **AI smart input** | Natural language → title + deadline (chrono-node, no API key) |
-| **Dark / light theme** | Persistent via next-themes, liquid-glass design in both modes |
-| **Ukrainian / English UI** | Full i18n — dates, labels, validation messages, status names |
-| **Seamless status change** | Optimistic update + silent background sync, no scroll jump |
-| **Scroll to top** | Floating liquid-glass button on mobile, appears after 300 px |
-| **Responsive** | Adaptive two-column desktop layout, single-column mobile |
-| **Custom confirm dialog** | Blur backdrop, smooth exit animation, keyboard (Esc) support |
+### Ролі
+
+| Роль | Опис |
+|------|------|
+| **Гість** | Лише перегляд (читання) |
+| **Учасник** | Може редагувати та видаляти задачі, де він є **автором**, **виконавцем** або **перевіряючим** |
+| **Адмін** | Повний доступ до всіх задач |
+
+### Що може робити учасник
+- ✅ Переглядати всі задачі
+- ✅ Створювати нові задачі
+- ✅ Редагувати / видаляти / змінювати статус задач, де він є **автором**, **виконавцем** або **перевіряючим**
+- ❌ Редагувати чужі задачі (де він не задіяний)
+
+### Адмін акаунт
+```
+Email:    1@gmail.com
+Password: admin1234
+```
+Адмін може редагувати та видаляти **будь-яку** задачу.
 
 ---
 
-## Tech stack
+## Фільтри
+
+Фільтри доступні через панель справа (desktop) або кнопку "Фільтри" (mobile/tablet):
+
+- **Статус** — To Check / Прострочено / Виконано / Не актуально / Беклог ідей
+- **Проєкт** — фільтрація за назвою проєкту; пошук при великому списку
+- **Виконавець** — фільтрація за ім'ям виконавця; пошук при великому списку
+
+Кнопка "Фільтри" стає indigo і показує кількість активних фільтрів.
+
+---
+
+## Статуси задач
+
+| Статус | Опис |
+|--------|------|
+| **To Check** | Задача створена, очікує на опрацювання |
+| **Expired** | Дедлайн минув, задачу не закрили і не перенесли (встановлюється автоматично) |
+| **Done** | Виконано |
+| **Not Actual** | Більше не актуально |
+| **Ideas Backlog** | Ідея для майбутнього опрацювання |
+
+---
+
+## Поля задачі
+
+| Поле | Обов'язкове | Опис |
+|------|-------------|------|
+| Назва | ✅ | Коротка назва задачі |
+| Опис | — | Додатковий контекст |
+| Дедлайн | — | Дата та час виконання |
+| Проєкт | ✅ | Проєкт до якого відноситься задача |
+| Виконавець | ✅ | Відповідальний за виконання |
+| Перевіряючий | ✅ | Відповідальний за перевірку результату |
+
+---
+
+## AI Smart Input
+
+При створенні задачі можна описати її звичайною мовою — парсер витягне назву, дедлайн, проєкт, виконавця та перевіряючого автоматично.
+
+**Приклади:**
+```
+Deploy to production by next Friday
+Зробити дашборд до п'ятниці, проєкт: Веб-платформа, виконавець: Марія Іванова, перевіряючий: Дмитро Коваль
+Board review on June 10, project: API Gateway, assignee: John, reviewer: Alice
+```
+
+Powered by **chrono-node** — без API ключів, підтримує українську та англійську.
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
-|---|---|
+|-------|------------|
 | Framework | Next.js 14 (App Router) |
 | Language | TypeScript |
 | Styling | Tailwind CSS + shadcn/ui |
 | Database | Neon PostgreSQL (serverless) |
 | ORM | Prisma 7 + `@prisma/adapter-neon` |
+| Auth | JWT (jose) + bcryptjs, httpOnly cookies |
 | NL parsing | chrono-node (free, no key) |
 | Theming | next-themes |
 | Deployment | Vercel |
 
+---
+
+## Features
+
+- Реєстрація / логін з JWT авторизацією
+- Рольова система прав (учасник / адмін)
+- Календар з кольоровими крапками статусів
+- Donut chart з статистикою по статусах
+- AI розумне введення (парсинг структурованих полів)
+- Автоматичний переклад в EXPIRED при просроченні дедлайну
+- Фільтри по статусу, проєкту та виконавцю
+- Адаптивний дизайн (3 колонки → 2 → 1)
+- Темна / світла тема
+- Українська / англійська мова інтерфейсу
