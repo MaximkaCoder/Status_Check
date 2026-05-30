@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <LanguageProvider>
           <ToastProvider>
-            <div className="min-h-screen flex flex-col bg-background dark:bg-[#0a0b1a] relative">
+            <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-200/90 via-blue-50/80 to-indigo-100/70 dark:[background:#0a0b1a] relative" style={{backgroundAttachment:'fixed'}}>
               {/* Geometric mesh background - light mode (very faint) */}
               <div className="fixed inset-0 pointer-events-none block dark:hidden" aria-hidden="true">
                 <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">

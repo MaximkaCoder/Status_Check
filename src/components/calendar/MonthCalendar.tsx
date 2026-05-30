@@ -26,7 +26,7 @@ export function MonthCalendar({
   const year = currentMonth.getFullYear();
 
   return (
-    <div className="rounded-2xl bg-card dark:bg-card shadow-md dark:shadow-2xl dark:shadow-black/40 dark:border dark:border-white/[0.08] overflow-hidden">
+    <div className="rounded-2xl bg-white/40 dark:bg-white/[0.04] backdrop-blur-md border border-white/70 dark:border-white/[0.08] shadow-[0_4px_24px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-2xl dark:shadow-black/40 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4">
         <button

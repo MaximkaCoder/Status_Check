@@ -84,24 +84,24 @@ export default function DashboardPage() {
           {/* Stats pills */}
           {!loading && items.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200/80 dark:bg-white/5 dark:text-slate-300 dark:border-white/10">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/50 backdrop-blur-sm text-slate-600 text-xs font-semibold border border-white/80 dark:bg-white/5 dark:text-slate-300 dark:border-white/10">
                 <span className="h-1.5 w-1.5 rounded-full bg-slate-400 inline-block" />
                 {items.length} {t("totalItems").toLowerCase()}
               </span>
               {statusCounts.OVERDUE > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200/80 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-500/30 dark:shadow-[0_0_12px_rgba(239,68,68,0.15)]">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/50 backdrop-blur-sm text-rose-700 text-xs font-semibold border border-rose-200/70 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-500/30 dark:shadow-[0_0_12px_rgba(239,68,68,0.15)]">
                   <span className="h-1.5 w-1.5 rounded-full bg-rose-500 inline-block animate-pulse" />
                   {statusCounts.OVERDUE} {t("overdueItems").toLowerCase()}
                 </span>
               )}
               {statusCounts.IN_PROGRESS > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200/80 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-500/30">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/50 backdrop-blur-sm text-amber-700 text-xs font-semibold border border-amber-200/70 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-500/30">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-500 inline-block" />
                   {statusCounts.IN_PROGRESS} {t("inProgress").toLowerCase()}
                 </span>
               )}
               {statusCounts.DONE > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200/80 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-500/30">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/50 backdrop-blur-sm text-emerald-700 text-xs font-semibold border border-emerald-200/70 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-500/30">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
                   {statusCounts.DONE} {t("doneItems").toLowerCase()}
                 </span>

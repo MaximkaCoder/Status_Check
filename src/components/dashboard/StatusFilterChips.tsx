@@ -15,10 +15,10 @@ const STATUS_CHIP_ACTIVE: Record<Status, string> = {
 };
 
 const STATUS_CHIP_INACTIVE: Record<Status, string> = {
-  PENDING:     "border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 dark:border-white/20 dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white/80",
-  IN_PROGRESS: "border-amber-200 text-amber-600 hover:bg-amber-50 hover:border-amber-300 dark:border-white/20 dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white/80",
-  DONE:        "border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 dark:border-white/20 dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white/80",
-  OVERDUE:     "border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 dark:border-white/20 dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white/80",
+  PENDING:     "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-indigo-200/80 text-indigo-600 hover:bg-white/70 hover:border-indigo-300 dark:border-indigo-400/20 dark:text-white/60 dark:hover:border-indigo-400/40 dark:hover:text-white/80",
+  IN_PROGRESS: "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-amber-200/80 text-amber-600 hover:bg-white/70 hover:border-amber-300 dark:border-amber-400/20 dark:text-white/60 dark:hover:border-amber-400/40 dark:hover:text-white/80",
+  DONE:        "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-emerald-200/80 text-emerald-600 hover:bg-white/70 hover:border-emerald-300 dark:border-emerald-400/20 dark:text-white/60 dark:hover:border-emerald-400/40 dark:hover:text-white/80",
+  OVERDUE:     "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-rose-200/80 text-rose-600 hover:bg-white/70 hover:border-rose-300 dark:border-rose-400/20 dark:text-white/60 dark:hover:border-rose-400/40 dark:hover:text-white/80",
 };
 
 interface StatusFilterChipsProps {
@@ -55,7 +55,7 @@ export function StatusFilterChips({ selected, onChange }: StatusFilterChipsProps
           "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border-2 transition-all duration-200 cursor-pointer",
           isAll
             ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-            : "border-border text-muted-foreground hover:bg-muted/60 hover:border-muted-foreground/40 dark:border-white/20 dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white/80"
+            : "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-white/80 text-muted-foreground hover:bg-white/70 hover:border-white dark:border-white/20 dark:text-white/60 dark:hover:border-white/40 dark:hover:text-white/80"
         )}
       >
         {t("all")}

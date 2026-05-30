@@ -105,8 +105,9 @@ export function StatsPanel({ items, label }: StatsPanelProps) {
 
   return (
     <div className={cn(
-      "rounded-2xl bg-card shadow-md dark:shadow-2xl dark:shadow-black/40",
-      "dark:border dark:border-white/[0.08]",
+      "rounded-2xl bg-white/40 dark:bg-white/[0.04] backdrop-blur-md",
+      "border border-white/70 dark:border-white/[0.08]",
+      "shadow-[0_4px_24px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-2xl dark:shadow-black/40",
       "p-5 flex flex-col gap-4 h-full"
     )}>
       {/* Label when filtering by date */}
