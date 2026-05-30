@@ -7,5 +7,8 @@ export type StatusItem = PrismaStatusItem;
 export interface ParsedItem {
   title: string;
   description?: string;
-  deadline?: string; // ISO 8601 UTC string
+  deadline?: string;
+  project?: string;
+  assignee?: string;
+  reviewer?: string;
 }

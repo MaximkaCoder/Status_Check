@@ -150,6 +150,9 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
     if (!title.trim()) newErrors.title = t("errorTitleRequired");
     if (title.trim().length > 200) newErrors.title = t("errorTitleLength");
     if (!deadline) newErrors.deadline = t("errorDeadlineRequired");
+    if (!project.trim())  newErrors.project  = t("errorProjectRequired");
+    if (!assignee.trim()) newErrors.assignee = t("errorAssigneeRequired");
+    if (!reviewer.trim()) newErrors.reviewer = t("errorReviewerRequired");
     // only validate creator_name if user is not logged in
     if (!user) {
       if (!creatorName.trim()) newErrors.creator_name = t("errorNameRequired");
@@ -332,7 +335,7 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
 
       {/* Project */}
       <div>
-        <FieldLabel htmlFor="form-project">{t("project")}</FieldLabel>
+        <FieldLabel required htmlFor="form-project">{t("project")}</FieldLabel>
         <ComboboxInput
           id="form-project"
           value={project}
@@ -340,11 +343,12 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
           options={projectNames}
           placeholder={locale === "uk" ? "Назва проєкту..." : "Project name..."}
         />
+        <FieldError message={errors.project} id="project-error" />
       </div>
 
       {/* Assignee */}
       <div>
-        <FieldLabel htmlFor="form-assignee">{t("assignee")}</FieldLabel>
+        <FieldLabel required htmlFor="form-assignee">{t("assignee")}</FieldLabel>
         <ComboboxInput
           id="form-assignee"
           value={assignee}
@@ -352,11 +356,12 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
           options={userNames}
           placeholder={locale === "uk" ? "Виконавець..." : "Assignee..."}
         />
+        <FieldError message={errors.assignee} id="assignee-error" />
       </div>
 
       {/* Reviewer */}
       <div>
-        <FieldLabel htmlFor="form-reviewer">{t("reviewer")}</FieldLabel>
+        <FieldLabel required htmlFor="form-reviewer">{t("reviewer")}</FieldLabel>
         <ComboboxInput
           id="form-reviewer"
           value={reviewer}
@@ -364,6 +369,7 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
           options={userNames}
           placeholder={locale === "uk" ? "Перевіряючий..." : "Reviewer..."}
         />
+        <FieldError message={errors.reviewer} id="reviewer-error" />
       </div>
 
       {/* Status — edit mode only */}

@@ -10,10 +10,13 @@ import { parseText } from "@/lib/api-client";
 interface ParsedPreview {
   title: string;
   deadline?: string;
+  project?: string;
+  assignee?: string;
+  reviewer?: string;
 }
 
 interface NLInputFormProps {
-  onUseParsed: (values: { title: string; deadline?: string }) => void;
+  onUseParsed: (values: ParsedPreview) => void;
 }
 
 export function NLInputForm({ onUseParsed }: NLInputFormProps) {
@@ -33,7 +36,7 @@ export function NLInputForm({ onUseParsed }: NLInputFormProps) {
 
     try {
       const result = await parseText(trimmed);
-      setPreview({ title: result.title, deadline: result.deadline });
+      setPreview({ title: result.title, deadline: result.deadline, project: result.project, assignee: result.assignee, reviewer: result.reviewer });
     } catch (err) {
       setParseError(err instanceof Error ? err.message : t("parseError"));
     } finally {
@@ -52,7 +55,7 @@ export function NLInputForm({ onUseParsed }: NLInputFormProps) {
 
   function handleUse() {
     if (!preview) return;
-    onUseParsed({ title: preview.title, deadline: preview.deadline });
+    onUseParsed(preview);
     setText("");
     setPreview(null);
     setParseError(null);
@@ -192,6 +195,29 @@ export function NLInputForm({ onUseParsed }: NLInputFormProps) {
               </p>
             )}
           </div>
+
+          {(preview.project || preview.assignee || preview.reviewer) && (
+            <div className="grid grid-cols-1 gap-2">
+              {preview.project && (
+                <div className="rounded-lg bg-white/90 dark:bg-white/[0.06] border border-indigo-100/60 dark:border-white/10 px-3 py-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">{t("project")}</p>
+                  <p className="text-sm font-medium text-foreground">{preview.project}</p>
+                </div>
+              )}
+              {preview.assignee && (
+                <div className="rounded-lg bg-white/90 dark:bg-white/[0.06] border border-indigo-100/60 dark:border-white/10 px-3 py-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">{t("assignee")}</p>
+                  <p className="text-sm font-medium text-foreground">{preview.assignee}</p>
+                </div>
+              )}
+              {preview.reviewer && (
+                <div className="rounded-lg bg-white/90 dark:bg-white/[0.06] border border-indigo-100/60 dark:border-white/10 px-3 py-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">{t("reviewer")}</p>
+                  <p className="text-sm font-medium text-foreground">{preview.reviewer}</p>
+                </div>
+              )}
+            </div>
+          )}
 
           <button
             type="button"

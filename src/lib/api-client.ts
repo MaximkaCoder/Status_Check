@@ -111,7 +111,10 @@ export async function getItemById(id: string): Promise<StatusItem> {
 
 export interface ParseTextResult {
   title: string;
-  deadline?: string; // ISO 8601 UTC string, present only when a date was found
+  deadline?: string;
+  project?: string;
+  assignee?: string;
+  reviewer?: string;
 }
 
 /**

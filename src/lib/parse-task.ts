@@ -90,21 +90,58 @@ function extractTitleAndDeadline(
   return { title: remaining, deadline: match.start.date() };
 }
 
+interface StructuredFields {
+  project?: string
+  assignee?: string
+  reviewer?: string
+  remaining: string
+}
+
+function extractStructuredFields(text: string): StructuredFields {
+  let remaining = text
+  let project: string | undefined
+  let assignee: string | undefined
+  let reviewer: string | undefined
+
+  const patterns: [RegExp, (v: string) => void][] = [
+    [/(?:проєкт|project)\s*[:=]\s*([^,;\n]+?)(?=\s*(?:виконавець|assignee|перевіряючий|reviewer|,|;|\n|$))/i, (v) => { project = v.trim() }],
+    [/(?:виконавець|assignee|відповідальний)\s*[:=]\s*([^,;\n]+?)(?=\s*(?:проєкт|project|перевіряючий|reviewer|,|;|\n|$))/i, (v) => { assignee = v.trim() }],
+    [/(?:перевіряючий|reviewer)\s*[:=]\s*([^,;\n]+?)(?=\s*(?:проєкт|project|виконавець|assignee|,|;|\n|$))/i, (v) => { reviewer = v.trim() }],
+  ]
+
+  for (const [re, setter] of patterns) {
+    const m = remaining.match(re)
+    if (m) {
+      setter(m[1])
+      remaining = remaining.replace(m[0], '').trim()
+    }
+  }
+
+  // Remove trailing separators
+  remaining = remaining.replace(/[,;]+$/, '').trim()
+
+  return { project, assignee, reviewer, remaining }
+}
+
 export function parseTask(
   text: string,
   referenceDate: Date
-): { title: string; deadline?: Date } {
+): { title: string; deadline?: Date; project?: string; assignee?: string; reviewer?: string } {
+  // Extract structured fields first
+  const { project, assignee, reviewer, remaining } = extractStructuredFields(text)
+  const cleanText = remaining || text.trim()
+
   // Try English first
-  const enResult = extractTitleAndDeadline(text, text, referenceDate);
-  if (enResult) return enResult;
+  const enResult = extractTitleAndDeadline(cleanText, cleanText, referenceDate);
+  if (enResult) return { ...enResult, project, assignee, reviewer };
 
   // Try Ukrainian → English translation
-  const translated = ukrainianToEnglish(text);
-  if (translated !== text) {
-    const ukResult = extractTitleAndDeadline(text, translated, referenceDate);
-    if (ukResult) return ukResult;
+  const translated = ukrainianToEnglish(cleanText);
+  if (translated !== cleanText) {
+    const ukResult = extractTitleAndDeadline(cleanText, translated, referenceDate);
+    if (ukResult) return { ...ukResult, project, assignee, reviewer };
   }
 
   // No date found — return full text as title
-  return { title: text.trim() };
+  return { title: cleanText, project, assignee, reviewer };
 }

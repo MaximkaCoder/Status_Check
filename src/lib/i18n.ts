@@ -97,6 +97,9 @@ export const translations = {
     errorDeadlineRequired: 'Deadline is required',
     errorNameRequired: 'Name is required',
     errorNameLength: 'Name must be 100 characters or fewer',
+    errorProjectRequired: 'Project is required',
+    errorAssigneeRequired: 'Assignee is required',
+    errorReviewerRequired: 'Reviewer is required',
   },
   uk: {
     appName: 'Status Check',
@@ -182,6 +185,9 @@ export const translations = {
     errorDeadlineRequired: 'Дедлайн обов\'язковий',
     errorNameRequired: "Ім'я обов'язкове",
     errorNameLength: "Ім'я не може перевищувати 100 символів",
+    errorProjectRequired: "Проєкт обов'язковий",
+    errorAssigneeRequired: "Виконавець обов'язковий",
+    errorReviewerRequired: "Перевіряючий обов'язковий",
   },
 } as const
 

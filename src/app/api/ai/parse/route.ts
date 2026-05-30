@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     const { text } = parseResult.data;
 
-    let result: { title: string; deadline?: Date };
+    let result: { title: string; deadline?: Date; project?: string; assignee?: string; reviewer?: string };
     try {
       result = parseTask(text, new Date());
     } catch {
@@ -35,16 +35,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response: { title: string; deadline?: string; status: "PENDING" } = {
-      title: result.title,
-      status: "PENDING",
-    };
-
-    if (result.deadline) {
-      response.deadline = result.deadline.toISOString();
-    }
-
-    return NextResponse.json(response);
+    return NextResponse.json({
+      title:    result.title,
+      deadline: result.deadline ? result.deadline.toISOString() : undefined,
+      project:  result.project,
+      assignee: result.assignee,
+      reviewer: result.reviewer,
+      status:   "TO_CHECK",
+    });
   } catch (error) {
     console.error("POST /api/ai/parse unexpected error:", error);
     return NextResponse.json(
