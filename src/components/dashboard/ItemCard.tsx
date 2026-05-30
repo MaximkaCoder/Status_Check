@@ -176,6 +176,30 @@ export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animat
             {item.title}
           </h3>
 
+          {/* Action buttons — only for users with permission */}
+          {canEdit && (
+            <div className="flex gap-1 flex-shrink-0">
+              <button
+                onClick={(e) => { e.stopPropagation(); router.push(`/items/${item.id}/edit`); }}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-indigo-50 dark:hover:bg-indigo-900/40 hover:text-indigo-600 dark:hover:text-indigo-300 transition-all duration-150 cursor-pointer"
+                type="button"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-rose-50 dark:hover:bg-rose-900/40 hover:text-rose-600 dark:hover:text-rose-300 transition-all duration-150 cursor-pointer"
+                type="button"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Status badge + dropdown */}
           <div className="relative flex-shrink-0" ref={menuRef}>
             <button
@@ -231,28 +255,6 @@ export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animat
                 })}
               </div>
             )}
-          </div>
-
-          {/* Action buttons — only for users with permission */}
-          <div className={cn("flex gap-1 transition-opacity duration-150 flex-shrink-0", canEdit ? "opacity-0 group-hover/card:opacity-100" : "hidden")}>
-            <button
-              onClick={(e) => { e.stopPropagation(); router.push(`/items/${item.id}/edit`); }}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-indigo-50 dark:hover:bg-indigo-900/40 hover:text-indigo-600 dark:hover:text-indigo-300 transition-all duration-150 cursor-pointer"
-              type="button"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-rose-50 dark:hover:bg-rose-900/40 hover:text-rose-600 dark:hover:text-rose-300 transition-all duration-150 cursor-pointer"
-              type="button"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
           </div>
         </div>
 

@@ -132,7 +132,6 @@ export function ItemList({ items, loading, onDelete, onStatusChange }: ItemListP
         <ItemDetailOverlay
           item={detailItem}
           onClose={() => setDetailItem(null)}
-          onDelete={onDelete}
         />
       )}
     </>

@@ -2,11 +2,9 @@
 
 import { useEffect, useCallback, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { useRouter } from 'next/navigation'
 import { isPast, isToday, isTomorrow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { translations } from '@/lib/i18n'
 import type { StatusItem } from '@/lib/types'
@@ -14,7 +12,6 @@ import type { StatusItem } from '@/lib/types'
 interface ItemDetailOverlayProps {
   item: StatusItem
   onClose: () => void
-  onDelete?: (id: string) => Promise<void>
 }
 
 function formatDateLocale(date: Date, locale: string, monthsEn: readonly string[], monthsUkGen: readonly string[]): string {
@@ -37,11 +34,9 @@ function getAvatarColor(name: string): string {
   return colors[Math.abs(hash) % colors.length]
 }
 
-export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlayProps) {
-  const router = useRouter()
+export function ItemDetailOverlay({ item, onClose }: ItemDetailOverlayProps) {
   const { t, locale } = useLanguage()
   const [mounted, setMounted] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const isClosingRef = useRef(false)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -75,12 +70,6 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
       document.body.style.overflow = ''
     }
   }, [handleKeyDown])
-
-  async function doDelete() {
-    if (!onDelete) return
-    await onDelete(item.id)
-    onClose()
-  }
 
   const deadline = item.deadline ? new Date(item.deadline) : null
   const isPastDeadline = deadline ? (isPast(deadline) && item.status !== 'DONE') : false
@@ -196,45 +185,11 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border/60 flex-shrink-0">
-            {onDelete && (
-              <button type="button" onClick={() => setConfirmDelete(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 transition-all cursor-pointer">
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                {t('deleteItem')}
-              </button>
-            )}
-            <button type="button" onClick={() => router.push(`/items/${item.id}/edit`)}
-              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm hover:shadow-md transition-all cursor-pointer">
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              {t('editItem')}
-            </button>
-          </div>
         </div>
       </div>
     </>,
     document.body
   )
 
-  return (
-    <>
-      {overlay}
-      {confirmDelete && (
-        <ConfirmDialog
-          title={t('confirmDelete')}
-          description={`"${item.title}"`}
-          confirmLabel={t('deleteItem')}
-          cancelLabel={t('cancelBtn')}
-          variant="danger"
-          onConfirm={() => { setConfirmDelete(false); doDelete(); }}
-          onCancel={() => setConfirmDelete(false)}
-        />
-      )}
-    </>
-  )
+  return overlay
 }
