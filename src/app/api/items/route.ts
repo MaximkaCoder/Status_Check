@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 import { CreateItemSchema, GetItemsQuerySchema } from "@/lib/validations";
 
 // ---------------------------------------------------------------------------
@@ -108,12 +109,16 @@ export async function POST(request: NextRequest) {
 
     const { title, description, deadline, creator_name } = parseResult.data;
 
+    // Use session user's name if authenticated, otherwise fall back to provided name
+    const session = await getSession();
+    const resolvedName = session?.name ?? creator_name;
+
     const item = await prisma.statusItem.create({
       data: {
         title,
         description: description ?? null,
         deadline: new Date(deadline),
-        creator_name,
+        creator_name: resolvedName,
         status: "PENDING",
       },
     });

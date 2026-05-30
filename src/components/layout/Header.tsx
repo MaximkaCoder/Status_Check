@@ -6,11 +6,13 @@ import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeToggle } from "./ThemeToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Header() {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const { t } = useLanguage();
+  const { user, logout } = useAuth();
 
   return (
     <header className={cn(
@@ -78,6 +80,42 @@ export function Header() {
 
           <ThemeToggle />
           <LanguageSwitcher />
+
+          {/* User pill + logout */}
+          {user && (
+            <div className="flex items-center gap-1.5">
+              <div className={cn(
+                "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium",
+                "bg-white/40 dark:bg-white/[0.06] backdrop-blur-sm",
+                "border border-white/70 dark:border-white/[0.10]",
+                "text-slate-700 dark:text-white/80",
+                "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none"
+              )}>
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-white text-[10px] font-bold flex-shrink-0">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="max-w-[96px] truncate">{user.name}</span>
+              </div>
+              <button
+                type="button"
+                onClick={logout}
+                title="Logout"
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-xl",
+                  "bg-white/40 dark:bg-white/[0.06] backdrop-blur-sm",
+                  "border border-white/70 dark:border-white/[0.10]",
+                  "text-slate-500 dark:text-white/50",
+                  "hover:bg-white/60 dark:hover:bg-white/[0.10] hover:text-rose-500 dark:hover:text-rose-400",
+                  "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none",
+                  "transition-all duration-150 cursor-pointer"
+                )}
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+          )}
 
           {/* New Item — gradient pill with smooth hover via opacity overlay */}
           <Link

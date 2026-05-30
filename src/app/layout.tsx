@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <LanguageProvider>
+          <AuthProvider>
           <ToastProvider>
             <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-200/90 via-blue-50/80 to-indigo-100/70 dark:[background:#0a0b1a] relative" style={{backgroundAttachment:'fixed'}}>
               {/* Geometric mesh background - light mode (very faint) */}
@@ -72,6 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <ScrollToTop />
             </div>
           </ToastProvider>
+          </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>

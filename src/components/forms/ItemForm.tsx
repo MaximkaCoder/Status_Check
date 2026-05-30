@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/Spinner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { createItem, updateItem } from "@/lib/api-client";
 import type { TranslationKey } from "@/lib/i18n";
 
@@ -134,6 +135,7 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
   const router = useRouter();
   const { t, locale } = useLanguage();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [title, setTitle] = useState(defaultValues?.title ?? "");
   const [description, setDescription] = useState(defaultValues?.description ?? "");
@@ -143,7 +145,7 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
       return defaultValues.deadline;
     return toDatetimeLocal(defaultValues.deadline);
   });
-  const [creatorName, setCreatorName] = useState(defaultValues?.creator_name ?? "");
+  const [creatorName, setCreatorName] = useState(defaultValues?.creator_name ?? user?.name ?? "");
   const initialStatus: Status =
     mode === "edit" && defaultValues?.status === "OVERDUE"
       ? "IN_PROGRESS"
@@ -159,8 +161,11 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
     if (!title.trim()) newErrors.title = t("errorTitleRequired");
     if (title.trim().length > 200) newErrors.title = t("errorTitleLength");
     if (!deadline) newErrors.deadline = t("errorDeadlineRequired");
-    if (!creatorName.trim()) newErrors.creator_name = t("errorNameRequired");
-    if (creatorName.trim().length > 100) newErrors.creator_name = t("errorNameLength");
+    // only validate creator_name if user is not logged in
+    if (!user) {
+      if (!creatorName.trim()) newErrors.creator_name = t("errorNameRequired");
+      if (creatorName.trim().length > 100) newErrors.creator_name = t("errorNameLength");
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -321,30 +326,32 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
         </div>
       )}
 
-      {/* Creator name */}
-      <div>
-        <FieldLabel required htmlFor="form-creator">
-          {t("yourName")}
-        </FieldLabel>
-        <input
-          id="form-creator"
-          type="text"
-          value={creatorName}
-          onChange={(e) => setCreatorName(e.target.value)}
-          placeholder={t("yourNamePlaceholder")}
-          maxLength={100}
-          aria-required="true"
-          aria-invalid={!!errors.creator_name}
-          aria-describedby={errors.creator_name ? "creator-error" : undefined}
-          className={cn(
-            inputBase,
-            errors.creator_name
-              ? "border-rose-400 focus:ring-rose-400/40 focus:border-rose-400"
-              : "border-input"
-          )}
-        />
-        <FieldError message={errors.creator_name} id="creator-error" />
-      </div>
+      {/* Creator name — hidden when logged in */}
+      {!user && (
+        <div>
+          <FieldLabel required htmlFor="form-creator">
+            {t("yourName")}
+          </FieldLabel>
+          <input
+            id="form-creator"
+            type="text"
+            value={creatorName}
+            onChange={(e) => setCreatorName(e.target.value)}
+            placeholder={t("yourNamePlaceholder")}
+            maxLength={100}
+            aria-required="true"
+            aria-invalid={!!errors.creator_name}
+            aria-describedby={errors.creator_name ? "creator-error" : undefined}
+            className={cn(
+              inputBase,
+              errors.creator_name
+                ? "border-rose-400 focus:ring-rose-400/40 focus:border-rose-400"
+                : "border-input"
+            )}
+          />
+          <FieldError message={errors.creator_name} id="creator-error" />
+        </div>
+      )}
 
       {/* API-level error */}
       {apiError && (
