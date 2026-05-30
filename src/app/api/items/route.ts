@@ -9,7 +9,7 @@ async function autoExpireOverdue(): Promise<void> {
   await prisma.statusItem.updateMany({
     where: {
       deadline: { lt: new Date() },
-      status: { in: ["PENDING", "IN_PROGRESS"] },
+      status: { in: ["PENDING"] },
     },
     data: {
       status: "OVERDUE",
