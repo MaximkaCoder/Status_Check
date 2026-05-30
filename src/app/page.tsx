@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { isSameDay, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import { MonthCalendar } from "@/components/calendar/MonthCalendar";
-import { StatusFilterChips } from "@/components/dashboard/StatusFilterChips";
+import { FilterDrawer } from "@/components/dashboard/FilterDrawer";
 import { ItemList } from "@/components/dashboard/ItemList";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [selectedStatuses, setSelectedStatuses] = useState<Status[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const { t, locale } = useLanguage();
   const { toast } = useToast();
@@ -48,7 +49,6 @@ export default function DashboardPage() {
     silentRefresh();
   }
 
-  // Unique project/assignee values from current items
   const uniqueProjects = useMemo(
     () => [...new Set(items.map((i) => i.project).filter(Boolean))].sort() as string[],
     [items]
@@ -69,9 +69,13 @@ export default function DashboardPage() {
     return result;
   }, [items, selectedDay, selectedProjects, selectedAssignees]);
 
-  function toggleChip<T>(val: T, selected: T[], setSelected: (v: T[]) => void) {
-    if (selected.includes(val)) setSelected(selected.filter((s) => s !== val));
-    else setSelected([...selected, val]);
+  const activeFilterCount = selectedStatuses.length + selectedProjects.length + selectedAssignees.length;
+
+  function toggleProject(p: string) {
+    setSelectedProjects((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]);
+  }
+  function toggleAssignee(a: string) {
+    setSelectedAssignees((prev) => prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]);
   }
 
   return (
@@ -90,82 +94,35 @@ export default function DashboardPage() {
           <StatsPanel items={displayedItems} />
         </div>
 
-        {/* RIGHT: Filters + list */}
+        {/* RIGHT: List */}
         <div className="flex-1 min-w-0 flex flex-col gap-4">
 
-          {/* Filters */}
-          <div className="flex flex-col gap-3 animate-fade-in-up stagger-3">
-
-            {/* Status filter */}
-            <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                {t("filter")}
-              </span>
-              <StatusFilterChips selected={selectedStatuses} onChange={setSelectedStatuses} />
-            </div>
-
-            {/* Project filter */}
-            {uniqueProjects.length > 0 && (
-              <div className="flex flex-col gap-1.5 pt-1 border-t border-border/40 dark:border-white/[0.06]">
-                <span className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                  {t("project")}
+          {/* List header: filter button */}
+          <div className="flex items-center justify-between animate-fade-in-up stagger-3">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              {locale === "uk" ? "Задачі" : "Tasks"}
+            </span>
+            <button
+              type="button"
+              onClick={() => setFilterOpen(true)}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold",
+                "border transition-all duration-150 cursor-pointer outline-none",
+                activeFilterCount > 0
+                  ? "bg-indigo-500 text-white border-indigo-500 shadow-sm"
+                  : "bg-white/40 dark:bg-white/[0.06] border-white/70 dark:border-white/[0.10] text-slate-600 dark:text-white/70 hover:bg-white/60 dark:hover:bg-white/[0.10]"
+              )}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+              </svg>
+              {locale === "uk" ? "Фільтри" : "Filters"}
+              {activeFilterCount > 0 && (
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-white/30 text-white text-[10px] font-bold px-1">
+                  {activeFilterCount}
                 </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {uniqueProjects.map((proj) => {
-                    const active = selectedProjects.includes(proj);
-                    return (
-                      <button
-                        key={proj}
-                        type="button"
-                        onClick={() => toggleChip(proj, selectedProjects, setSelectedProjects)}
-                        aria-pressed={active}
-                        className={cn(
-                          "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border-2 transition-all duration-200 cursor-pointer outline-none",
-                          active
-                            ? "bg-indigo-500 text-white border-indigo-500 shadow-sm"
-                            : "bg-white/50 dark:bg-white/[0.04] border-indigo-200/80 text-indigo-600 hover:bg-white/70 hover:border-indigo-300 dark:border-indigo-400/20 dark:text-white/60 dark:hover:border-indigo-400/40 dark:hover:text-white/80"
-                        )}
-                      >
-                        {proj}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Assignee filter */}
-            {uniqueAssignees.length > 0 && (
-              <div className="flex flex-col gap-1.5 pt-1 border-t border-border/40 dark:border-white/[0.06]">
-                <span className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                  {t("assignee")}
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {uniqueAssignees.map((name) => {
-                    const active = selectedAssignees.includes(name);
-                    return (
-                      <button
-                        key={name}
-                        type="button"
-                        onClick={() => toggleChip(name, selectedAssignees, setSelectedAssignees)}
-                        aria-pressed={active}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border-2 transition-all duration-200 cursor-pointer outline-none",
-                          active
-                            ? "bg-violet-500 text-white border-violet-500 shadow-sm"
-                            : "bg-white/50 dark:bg-white/[0.04] border-violet-200/80 text-violet-600 hover:bg-white/70 hover:border-violet-300 dark:border-violet-400/20 dark:text-white/60 dark:hover:border-violet-400/40 dark:hover:text-white/80"
-                        )}
-                      >
-                        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-violet-400 dark:bg-violet-600 text-white text-[8px] font-bold flex-shrink-0">
-                          {name.charAt(0)}
-                        </span>
-                        {name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+              )}
+            </button>
           </div>
 
           {/* Error state */}
@@ -189,6 +146,24 @@ export default function DashboardPage() {
           />
         </div>
       </div>
+
+      {/* Filter drawer */}
+      <FilterDrawer
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        selectedStatuses={selectedStatuses}
+        onStatusChange={setSelectedStatuses}
+        selectedProjects={selectedProjects}
+        onProjectToggle={toggleProject}
+        onProjectClear={() => setSelectedProjects([])}
+        selectedAssignees={selectedAssignees}
+        onAssigneeToggle={toggleAssignee}
+        onAssigneeClear={() => setSelectedAssignees([])}
+        uniqueProjects={uniqueProjects}
+        uniqueAssignees={uniqueAssignees}
+        onClearAll={() => { setSelectedStatuses([]); setSelectedProjects([]); setSelectedAssignees([]); }}
+        activeCount={activeFilterCount}
+      />
     </div>
   );
 }
