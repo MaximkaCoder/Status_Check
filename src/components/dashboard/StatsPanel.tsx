@@ -29,7 +29,7 @@ interface SegmentData {
 }
 
 function buildSegments(counts: Record<Status, number>, total: number): SegmentData[] {
-  const cx = 80, cy = 80, r = 56;
+  const r = 56;
   const C = 2 * Math.PI * r;
   const GAP = total > 1 ? 4 : 0;
   let startAngle = 0;
@@ -110,7 +110,6 @@ export function StatsPanel({ items, label }: StatsPanelProps) {
       "shadow-[0_4px_24px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-2xl dark:shadow-black/40",
       "p-5 flex flex-col gap-4 h-full"
     )}>
-      {/* Label when filtering by date */}
       {label && (
         <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-center -mb-2">
           {label}
@@ -148,7 +147,7 @@ export function StatsPanel({ items, label }: StatsPanelProps) {
       <div className="pt-3 border-t border-border/50 dark:border-white/[0.08]">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Done
+            {t("done")}
           </span>
           <span className={cn(
             "text-sm font-bold tabular-nums",
