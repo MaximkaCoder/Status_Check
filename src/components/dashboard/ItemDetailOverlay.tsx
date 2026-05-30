@@ -123,21 +123,21 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
         aria-hidden="true"
       />
 
-      {/* Panel — mobile: full-screen, desktop: centered modal */}
+      {/* Panel — mobile: fixed inset-0 fullscreen, desktop: centered dialog */}
       <div
-        className="fixed inset-0 z-[101] flex flex-col sm:items-center sm:justify-center sm:p-4"
+        className={cn(
+          // mobile: fixed fullscreen
+          "fixed inset-0 z-[101] bg-card flex flex-col",
+          // desktop: centered modal
+          "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2",
+          "sm:w-[calc(100vw-2rem)] sm:max-w-lg sm:rounded-2xl sm:shadow-2xl sm:max-h-[85dvh]",
+          isClosing ? "animate-overlay-out" : "animate-overlay-in"
+        )}
         role="dialog"
         aria-modal="true"
         aria-label={item.title}
+        onClick={(e) => e.stopPropagation()}
       >
-        <div
-          className={cn(
-            "bg-card w-full h-full sm:h-auto sm:max-w-lg sm:rounded-2xl shadow-2xl",
-            "flex flex-col sm:max-h-[85dvh]",
-            isClosing ? "animate-overlay-out" : "animate-overlay-in"
-          )}
-          onClick={(e) => e.stopPropagation()}
-        >
 
           {/* Header */}
           <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border/60 flex-shrink-0">
@@ -155,7 +155,7 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
           </div>
 
           {/* Scrollable body */}
-          <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
+          <div className="overflow-y-auto flex-1 min-h-0 px-5 py-4 space-y-3">
 
             {/* Description */}
             {item.description && (
@@ -250,7 +250,6 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
             </button>
           </div>
         </div>
-      </div>
     </>,
     document.body
   )
