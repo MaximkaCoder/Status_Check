@@ -80,6 +80,7 @@ export const translations = {
     today: 'Today',
     tomorrow: 'Tomorrow',
     createdAt: 'Created',
+    tasks: 'tasks',
   },
   uk: {
     appName: 'Status Check',
@@ -149,6 +150,7 @@ export const translations = {
     today: 'Сьогодні',
     tomorrow: 'Завтра',
     createdAt: 'Створено',
+    tasks: 'задач',
   },
 } as const
 

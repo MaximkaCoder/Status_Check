@@ -17,6 +17,7 @@ const STATUS_CONFIG: { status: Status; color: string; dot: string; labelKey: str
 interface DonutProps {
   counts: Record<Status, number>;
   total: number;
+  tasksLabel: string;
 }
 
 interface SegmentData {
@@ -44,7 +45,7 @@ function buildSegments(counts: Record<Status, number>, total: number): SegmentDa
     });
 }
 
-function DonutChart({ counts, total }: DonutProps) {
+function DonutChart({ counts, total, tasksLabel }: DonutProps) {
   const cx = 80, cy = 80, r = 56, sw = 14;
   const C = 2 * Math.PI * r;
 
@@ -77,7 +78,7 @@ function DonutChart({ counts, total }: DonutProps) {
       </text>
       <text x={cx} y={cy + 14} textAnchor="middle" fontSize="11"
         fontFamily="Plus Jakarta Sans, system-ui, sans-serif" fill="#9ca3af">
-        tasks
+        {tasksLabel}
       </text>
     </svg>
   );
@@ -118,7 +119,7 @@ export function StatsPanel({ items, label }: StatsPanelProps) {
       {/* Donut */}
       <div className="flex flex-1 justify-center items-center">
         <div className="w-[130px] h-[130px]">
-          <DonutChart counts={counts} total={total} />
+          <DonutChart counts={counts} total={total} tasksLabel={t("tasks")} />
         </div>
       </div>
 
