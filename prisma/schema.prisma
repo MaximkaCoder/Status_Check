@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Status {
+  PENDING
+  IN_PROGRESS
+  DONE
+  OVERDUE
+}
+
+model StatusItem {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  deadline     DateTime
+  status       Status   @default(PENDING)
+  creator_name String
+  created_at   DateTime @default(now()) @map("created_at")
+  updated_at   DateTime @updatedAt @map("updated_at")
+
+  @@index([deadline])
+  @@index([status])
+  @@index([deadline, status])
+  @@index([created_at])
+  @@map("status_items")
+}

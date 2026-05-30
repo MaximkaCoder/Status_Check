@@ -1,0 +1,288 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design System: Plus Jakarta Sans — deep indigo primary (#4F46E5) + violet accent
+ * Micro-interactions: 150-300ms ease-out transitions on all interactive elements
+ * Color palette: Premium indigo/violet SaaS (ui-ux-pro-max: project management SaaS)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    /* ---- Canvas ---------------------------------------------------- */
+    --background: 240 30% 98%;
+    --foreground: 240 10% 10%;
+
+    /* ---- Card / Popover -------------------------------------------- */
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+
+    /* ---- Primary: Deep Indigo #4F46E5 ------------------------------ */
+    --primary: 243 75% 59%;
+    --primary-foreground: 0 0% 100%;
+
+    /* ---- Secondary ------------------------------------------------- */
+    --secondary: 243 40% 96%;
+    --secondary-foreground: 243 50% 35%;
+
+    /* ---- Muted ----------------------------------------------------- */
+    --muted: 240 15% 95%;
+    --muted-foreground: 240 10% 50%;
+
+    /* ---- Accent: Violet #7C3AED ----------------------------------- */
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+
+    /* ---- Destructive (Danger) ------------------------------------- */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ---- Border / Input ------------------------------------------- */
+    --border: 240 15% 90%;
+    --input: 240 15% 90%;
+
+    /* ---- Focus ring ----------------------------------------------- */
+    --ring: 243 75% 59%;
+
+    --radius: 0.75rem;
+
+    /* ---- Status colors -------------------------------------------- */
+    --status-pending: 243 75% 59%;
+    --status-in-progress: 38 92% 50%;
+    --status-done: 160 84% 39%;
+    --status-overdue: 0 84% 60%;
+  }
+
+  .dark {
+    --background: 231 47% 7%;        /* #0a0b1a deep navy */
+    --foreground: 220 20% 92%;
+    --card: 232 38% 12%;             /* #161827 card bg */
+    --card-foreground: 220 20% 92%;
+    --popover: 232 38% 12%;
+    --popover-foreground: 220 20% 92%;
+    --primary: 243 75% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 243 30% 18%;
+    --secondary-foreground: 243 30% 80%;
+    --muted: 232 30% 16%;
+    --muted-foreground: 220 15% 55%;
+    --accent: 262 83% 68%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 232 25% 20%;
+    --input: 232 25% 20%;
+    --ring: 243 75% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.15s ease;
+  }
+
+  /* Smooth micro-interactions on all interactive elements */
+  button, a, input, textarea, select {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+
+  /* Focus ring visibility - keyboard navigation */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Date/time picker color-scheme */
+  input[type="datetime-local"] {
+    color-scheme: light;
+    accent-color: hsl(var(--primary));
+  }
+  .dark input[type="datetime-local"] {
+    color-scheme: dark;
+    accent-color: hsl(var(--primary));
+  }
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    opacity: 0.6;
+    cursor: pointer;
+  }
+  .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    opacity: 0.6;
+  }
+
+  /* Reduce motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* =====================================================================
+   KEYFRAME ANIMATIONS
+   ===================================================================== */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70%  { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+  50%       { box-shadow: 0 0 12px 2px rgba(79, 70, 229, 0.25); }
+}
+
+/* =====================================================================
+   ANIMATION UTILITY CLASSES
+   ===================================================================== */
+
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fade-in-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    opacity: 0;
+  }
+
+  /* Staggered delays for list items */
+  .stagger-1  { animation-delay: 0ms; }
+  .stagger-2  { animation-delay: 50ms; }
+  .stagger-3  { animation-delay: 100ms; }
+  .stagger-4  { animation-delay: 150ms; }
+  .stagger-5  { animation-delay: 200ms; }
+  .stagger-6  { animation-delay: 250ms; }
+  .stagger-7  { animation-delay: 300ms; }
+  .stagger-8  { animation-delay: 350ms; }
+  .stagger-9  { animation-delay: 400ms; }
+  .stagger-10 { animation-delay: 450ms; }
+
+  /* Overdue pulse ring */
+  .animate-pulse-ring {
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* New item button glow */
+  .animate-glow-pulse {
+    animation: glow-pulse 2.5s ease-in-out infinite;
+  }
+}
+
+@keyframes overlay-in {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+.animate-overlay-in {
+  animation: overlay-in 0.2s ease-out forwards;
+}
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-backdrop-in {
+  animation: backdrop-in 0.15s ease-out forwards;
+}
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.animate-fade-out {
+  animation: fade-out 0.18s ease-in forwards;
+}
+@keyframes overlay-out {
+  from { opacity: 1; transform: scale(1)    translateY(0);   }
+  to   { opacity: 0; transform: scale(0.95) translateY(8px); }
+}
+.animate-overlay-out {
+  animation: overlay-out 0.18s ease-in forwards;
+}
+
+/* =====================================================================
+   SHIMMER SKELETON
+   ===================================================================== */
+
+@layer components {
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: calc(var(--radius) - 4px);
+  }
+
+  /* Card lift on hover */
+  .card-hover {
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -4px rgba(79, 70, 229, 0.12),
+                0 4px 8px -2px rgba(0, 0, 0, 0.06);
+  }
+}
