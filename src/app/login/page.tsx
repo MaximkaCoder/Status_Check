@@ -10,7 +10,6 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function LoginPage() {
   const router = useRouter();
   const { locale } = useLanguage();
-  const { refreshUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -38,8 +37,7 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error); return; }
-      await refreshUser();
-      router.push("/");
+      window.location.replace("/");
     } catch {
       setError(locale === "uk" ? "Помилка мережі" : "Network error");
     } finally {
