@@ -146,11 +146,12 @@ export default function DashboardPage() {
       </div>
 
       {/* Filters + legend row */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 animate-fade-in-up stagger-3">
-        <div className="flex items-center gap-2 flex-1">
-          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex-shrink-0">
-            {t("filter")}
-          </span>
+      <div className="flex flex-col gap-2 animate-fade-in-up stagger-3">
+        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+          {t("filter")}
+        </span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex-1">
           <StatusFilterChips selected={selectedStatuses} onChange={setSelectedStatuses} />
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground flex-shrink-0">
@@ -176,6 +177,7 @@ export default function DashboardPage() {
                 : t("overdue")}
             </span>
           ))}
+        </div>
         </div>
       </div>
 
