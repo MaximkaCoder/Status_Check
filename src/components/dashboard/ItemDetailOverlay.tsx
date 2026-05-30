@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback, useState, useRef, useMemo } from 'react'
+import { useEffect, useCallback, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { isPast, isToday, isTomorrow } from 'date-fns'
@@ -20,9 +20,7 @@ interface ItemDetailOverlayProps {
 function formatDateLocale(date: Date, locale: string, monthsEn: readonly string[], monthsUkGen: readonly string[]): string {
   const h = date.getHours().toString().padStart(2, '0')
   const m = date.getMinutes().toString().padStart(2, '0')
-  if (locale === 'uk') {
-    return `${date.getDate()} ${monthsUkGen[date.getMonth()]}, ${date.getFullYear()} · ${h}:${m}`
-  }
+  if (locale === 'uk') return `${date.getDate()} ${monthsUkGen[date.getMonth()]}, ${date.getFullYear()} · ${h}:${m}`
   return `${monthsEn[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} · ${h}:${m}`
 }
 
@@ -33,15 +31,9 @@ function formatDeadlineLocale(date: Date, today: string, tomorrow: string, local
 }
 
 function getAvatarColor(name: string): string {
-  const colors = [
-    'bg-indigo-500', 'bg-violet-500', 'bg-pink-500', 'bg-rose-500',
-    'bg-amber-500', 'bg-emerald-500', 'bg-cyan-500', 'bg-sky-500',
-    'bg-teal-500', 'bg-orange-500',
-  ]
+  const colors = ['bg-indigo-500','bg-violet-500','bg-pink-500','bg-rose-500','bg-amber-500','bg-emerald-500','bg-cyan-500','bg-sky-500','bg-teal-500','bg-orange-500']
   let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  }
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
   return colors[Math.abs(hash) % colors.length]
 }
 
@@ -57,21 +49,10 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
   const monthsEn = translations.en.months
   const monthsUkGen = translations.uk.monthsGenitive
 
-  const [windowWidth, setWindowWidth] = useState(0)
-  useEffect(() => {
-    const update = () => setWindowWidth(window.innerWidth)
-    update()
-    window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
-  }, [])
-  const isMobile = windowWidth > 0 && windowWidth < 640
-
   useEffect(() => setMounted(true), [])
 
   useEffect(() => {
-    return () => {
-      if (closeTimer.current) clearTimeout(closeTimer.current)
-    }
+    return () => { if (closeTimer.current) clearTimeout(closeTimer.current) }
   }, [])
 
   function close() {
@@ -89,18 +70,9 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown)
     document.body.style.overflow = 'hidden'
-
-    const header = document.querySelector('header') as HTMLElement | null
-    const main = document.querySelector('main') as HTMLElement | null
-    const transition = 'filter 0.15s ease'
-    if (header) { header.style.transition = transition; header.style.filter = 'blur(3px)' }
-    if (main)   { main.style.transition   = transition; main.style.filter   = 'blur(3px)' }
-
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
       document.body.style.overflow = ''
-      if (header) { header.style.filter = ''; header.style.transition = '' }
-      if (main)   { main.style.filter   = ''; main.style.transition   = '' }
     }
   }, [handleKeyDown])
 
@@ -124,54 +96,36 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
     <>
       {/* Backdrop */}
       <div
-        className={cn(
-          "fixed inset-0 bg-black/50 z-[100]",
-          isClosing ? "animate-fade-out" : "animate-backdrop-in"
-        )}
+        style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.55)' }}
+        className={isClosing ? 'animate-fade-out' : 'animate-backdrop-in'}
         onClick={close}
         aria-hidden="true"
       />
 
-      {/* Panel */}
+      {/* Centering wrapper — flex, pointer-events none so backdrop click works */}
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={item.title}
-        onClick={(e) => e.stopPropagation()}
-        className={cn(
-          "bg-card flex flex-col",
-          isClosing ? "animate-overlay-out" : "animate-overlay-in",
-          !isMobile && "rounded-2xl shadow-2xl overflow-hidden"
-        )}
-        style={isMobile ? {
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          zIndex: 101,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        } : {
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 101,
-          width: 'min(calc(100vw - 2rem), 512px)',
-          maxHeight: '85dvh',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
+        style={{ position: 'fixed', inset: 0, zIndex: 201, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', pointerEvents: 'none' }}
       >
-
+        {/* Panel */}
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={item.title}
+          onClick={(e) => e.stopPropagation()}
+          style={{ pointerEvents: 'auto', width: '100%', maxWidth: '512px', maxHeight: '85svh', display: 'flex', flexDirection: 'column' }}
+          className={cn(
+            'bg-card rounded-2xl shadow-2xl overflow-hidden',
+            isClosing ? 'animate-overlay-out' : 'animate-overlay-in'
+          )}
+        >
           {/* Header */}
           <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border/60 flex-shrink-0">
             <div className="flex-1 min-w-0">
               <h2 className="text-base font-bold text-foreground leading-snug break-words">{item.title}</h2>
-              <div className="mt-1.5">
-                <StatusBadge status={item.status} />
-              </div>
+              <div className="mt-1.5"><StatusBadge status={item.status} /></div>
             </div>
-            <button onClick={close} className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer" type="button" aria-label="Close">
+            <button onClick={close} type="button" aria-label="Close"
+              className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -180,8 +134,6 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
 
           {/* Scrollable body */}
           <div className="overflow-y-auto flex-1 min-h-0 px-5 py-4 space-y-3">
-
-            {/* Description */}
             {item.description && (
               <div>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('description')}</p>
@@ -190,7 +142,6 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
             )}
 
             <div className="grid grid-cols-2 gap-2.5">
-              {/* Created at */}
               <div className="rounded-xl bg-muted/50 p-3 col-span-2">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('createdAt')}</p>
                 <span className="text-sm font-medium text-foreground">
@@ -198,7 +149,6 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
                 </span>
               </div>
 
-              {/* Deadline */}
               <div className="rounded-xl bg-muted/50 p-3">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('deadline')}</p>
                 <span className={cn('text-sm font-medium', isPastDeadline ? 'text-rose-600' : 'text-foreground')}>
@@ -207,18 +157,16 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
                 </span>
               </div>
 
-              {/* Author */}
               <div className="rounded-xl bg-muted/50 p-3">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('by')}</p>
                 <div className="flex items-center gap-1.5">
-                  <span className={cn('inline-flex h-5 w-5 items-center justify-center rounded-full text-white flex-shrink-0 text-[10px] font-bold leading-none', avatarColor)}>
+                  <span className={cn('inline-flex h-5 w-5 items-center justify-center rounded-full text-white flex-shrink-0 text-[10px] font-bold', avatarColor)}>
                     {avatarInitial}
                   </span>
                   <span className="text-sm font-medium text-foreground truncate">{item.creator_name}</span>
                 </div>
               </div>
 
-              {/* Project */}
               {item.project && (
                 <div className="rounded-xl bg-muted/50 p-3">
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('project')}</p>
@@ -226,27 +174,21 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
                 </div>
               )}
 
-              {/* Assignee */}
               {item.assignee && (
                 <div className="rounded-xl bg-muted/50 p-3">
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('assignee')}</p>
                   <div className="flex items-center gap-1.5">
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white flex-shrink-0 text-[10px] font-bold leading-none">
-                      {item.assignee.charAt(0)}
-                    </span>
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white flex-shrink-0 text-[10px] font-bold">{item.assignee.charAt(0)}</span>
                     <span className="text-sm font-medium text-foreground truncate">{item.assignee}</span>
                   </div>
                 </div>
               )}
 
-              {/* Reviewer */}
               {item.reviewer && (
                 <div className="rounded-xl bg-muted/50 p-3">
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{t('reviewer')}</p>
                   <div className="flex items-center gap-1.5">
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white flex-shrink-0 text-[10px] font-bold leading-none">
-                      {item.reviewer.charAt(0)}
-                    </span>
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white flex-shrink-0 text-[10px] font-bold">{item.reviewer.charAt(0)}</span>
                     <span className="text-sm font-medium text-foreground truncate">{item.reviewer}</span>
                   </div>
                 </div>
@@ -258,7 +200,7 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
           <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border/60 flex-shrink-0">
             {onDelete && (
               <button type="button" onClick={() => setConfirmDelete(true)}
-                className={cn('inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium', 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50', 'transition-all duration-150 cursor-pointer')}>
+                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 transition-all cursor-pointer">
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
@@ -266,7 +208,7 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
               </button>
             )}
             <button type="button" onClick={() => router.push(`/items/${item.id}/edit`)}
-              className={cn('inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold', 'bg-indigo-600 text-white hover:bg-indigo-700', 'shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer')}>
+              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm hover:shadow-md transition-all cursor-pointer">
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
@@ -274,6 +216,7 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
             </button>
           </div>
         </div>
+      </div>
     </>,
     document.body
   )
