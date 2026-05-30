@@ -7,13 +7,13 @@ import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { StatusItem } from "@/lib/types";
 
-type UserSettableStatus = "PENDING" | "IN_PROGRESS" | "DONE";
+type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
 
 interface ItemListProps {
   items: StatusItem[];
   loading: boolean;
   onDelete: (id: string) => Promise<void>;
-  onStatusChange?: (id: string, status: UserSettableStatus) => Promise<void>;
+  onStatusChange?: (id: string, status: Status) => Promise<void>;
 }
 
 function SkeletonCard({ index }: { index: number }) {

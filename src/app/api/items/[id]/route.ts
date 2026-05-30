@@ -53,34 +53,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const data = parseResult.data;
 
-    // Status transition rules:
-    // - OVERDUE cannot be set by the user (auto-only)
-    if (data.status === "OVERDUE") {
-      return NextResponse.json(
-        { error: "Status OVERDUE can only be set automatically, not manually", code: "INVALID_STATUS_TRANSITION" },
-        { status: 400 }
-      );
-    }
-
-    // - If item is currently OVERDUE, user may only transition to DONE or IN_PROGRESS
-    if (existing.status === "OVERDUE" && data.status && data.status === "PENDING") {
-      return NextResponse.json(
-        {
-          error: "Overdue items cannot be set back to PENDING; use IN_PROGRESS or DONE",
-          code: "INVALID_STATUS_TRANSITION",
-        },
-        { status: 400 }
-      );
-    }
-
     const updated = await prisma.statusItem.update({
       where: { id: params.id },
       data: {
         ...(data.title !== undefined && { title: data.title }),
         ...(data.description !== undefined && { description: data.description }),
-        ...(data.deadline !== undefined && { deadline: new Date(data.deadline) }),
+        ...(data.deadline !== undefined && { deadline: data.deadline ? new Date(data.deadline) : null }),
         ...(data.status !== undefined && { status: data.status }),
         ...(data.creator_name !== undefined && { creator_name: data.creator_name }),
+        ...(data.project  !== undefined && { project:  data.project }),
+        ...(data.assignee !== undefined && { assignee: data.assignee }),
+        ...(data.reviewer !== undefined && { reviewer: data.reviewer }),
       },
     });
 

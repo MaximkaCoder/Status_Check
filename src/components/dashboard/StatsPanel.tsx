@@ -5,13 +5,14 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import type { StatusItem } from "@/lib/types";
 
-type Status = "PENDING" | "IN_PROGRESS" | "DONE" | "OVERDUE";
+type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
 
 const STATUS_CONFIG: { status: Status; color: string; dot: string; labelKey: string }[] = [
-  { status: "OVERDUE",     color: "#ef4444", dot: "bg-rose-500",    labelKey: "overdue"     },
-  { status: "IN_PROGRESS", color: "#f59e0b", dot: "bg-amber-500",   labelKey: "inProgress"  },
-  { status: "PENDING",     color: "#6366f1", dot: "bg-indigo-500",  labelKey: "pending"     },
-  { status: "DONE",        color: "#10b981", dot: "bg-emerald-500", labelKey: "done"        },
+  { status: "EXPIRED",       color: "#ef4444", dot: "bg-rose-500",    labelKey: "expired"      },
+  { status: "TO_CHECK",      color: "#6366f1", dot: "bg-indigo-500",  labelKey: "toCheck"      },
+  { status: "DONE",          color: "#10b981", dot: "bg-emerald-500", labelKey: "done"         },
+  { status: "NOT_ACTUAL",    color: "#94a3b8", dot: "bg-slate-400",   labelKey: "notActual"    },
+  { status: "IDEAS_BACKLOG", color: "#8b5cf6", dot: "bg-violet-500",  labelKey: "ideasBacklog" },
 ];
 
 interface DonutProps {
@@ -93,7 +94,7 @@ export function StatsPanel({ items, label }: StatsPanelProps) {
   const { t } = useLanguage();
 
   const counts = useMemo(() => {
-    const c: Record<Status, number> = { PENDING: 0, IN_PROGRESS: 0, DONE: 0, OVERDUE: 0 };
+    const c: Record<Status, number> = { TO_CHECK: 0, EXPIRED: 0, DONE: 0, NOT_ACTUAL: 0, IDEAS_BACKLOG: 0 };
     for (const item of items) {
       if (item.status in c) c[item.status as Status]++;
     }

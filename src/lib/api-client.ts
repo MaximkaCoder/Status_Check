@@ -53,8 +53,11 @@ export async function getItems(params?: GetItemsParams): Promise<StatusItem[]> {
 export interface CreateItemPayload {
   title: string;
   description?: string;
-  deadline: string; // ISO 8601
+  deadline?: string | null;
   creator_name: string;
+  project?:  string | null;
+  assignee?: string | null;
+  reviewer?: string | null;
 }
 
 export async function createItem(payload: CreateItemPayload): Promise<StatusItem> {
@@ -64,12 +67,17 @@ export async function createItem(payload: CreateItemPayload): Promise<StatusItem
   });
 }
 
+type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
+
 export interface UpdateItemPayload {
   title?: string;
   description?: string | null;
-  deadline?: string; // ISO 8601
+  deadline?: string | null;
   creator_name?: string;
-  status?: "PENDING" | "IN_PROGRESS" | "DONE" | "OVERDUE";
+  status?: Status;
+  project?:  string | null;
+  assignee?: string | null;
+  reviewer?: string | null;
 }
 
 export async function updateItem(id: string, payload: UpdateItemPayload): Promise<StatusItem> {
@@ -81,7 +89,7 @@ export async function updateItem(id: string, payload: UpdateItemPayload): Promis
 
 export async function updateItemStatus(
   id: string,
-  status: "PENDING" | "IN_PROGRESS" | "DONE"
+  status: Status
 ): Promise<StatusItem> {
   return apiFetch<StatusItem>(`/api/items/${id}/status`, {
     method: "PATCH",

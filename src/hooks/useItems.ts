@@ -10,7 +10,7 @@ import {
 } from "@/lib/api-client";
 import type { StatusItem } from "@/lib/types";
 
-type Status = "PENDING" | "IN_PROGRESS" | "DONE" | "OVERDUE";
+type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
 
 interface UseItemsOptions {
   month: Date;
@@ -24,7 +24,7 @@ interface UseItemsReturn {
   refresh: () => void;
   silentRefresh: () => Promise<void>;
   removeItem: (id: string) => Promise<void>;
-  changeStatus: (id: string, status: "PENDING" | "IN_PROGRESS" | "DONE") => Promise<void>;
+  changeStatus: (id: string, status: Status) => Promise<void>;
   addItemOptimistic: (item: StatusItem) => void;
 }
 
@@ -88,7 +88,7 @@ export function useItems({ month, statuses }: UseItemsOptions): UseItemsReturn {
 
   // Optimistic status change
   const changeStatus = useCallback(
-    async (id: string, status: "PENDING" | "IN_PROGRESS" | "DONE") => {
+    async (id: string, status: Status) => {
       const snapshot = items;
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, status } : item))
@@ -122,7 +122,7 @@ export function useItems({ month, statuses }: UseItemsOptions): UseItemsReturn {
       // Insert in deadline-ascending order
       const newList = [...prev, item];
       return newList.sort(
-        (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+        (a, b) => (a.deadline ? new Date(a.deadline).getTime() : Infinity) - (b.deadline ? new Date(b.deadline).getTime() : Infinity)
       );
     });
   }, []);

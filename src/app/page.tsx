@@ -11,7 +11,7 @@ import { useItems } from "@/hooks/useItems";
 import { translations } from "@/lib/i18n";
 import { StatsPanel } from "@/components/dashboard/StatsPanel";
 
-type Status = "PENDING" | "IN_PROGRESS" | "DONE" | "OVERDUE";
+type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
 
 export default function DashboardPage() {
   const [currentMonth, setCurrentMonth] = useState<Date>(() => startOfMonth(new Date()));
@@ -47,10 +47,7 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleStatusChange(
-    id: string,
-    status: "PENDING" | "IN_PROGRESS" | "DONE"
-  ) {
+  async function handleStatusChange(id: string, status: Status) {
     await changeStatus(id, status);
     silentRefresh();
   }
@@ -58,7 +55,7 @@ export default function DashboardPage() {
   const displayedItems = useMemo(
     () =>
       selectedDay
-        ? items.filter((item) => isSameDay(new Date(item.deadline), selectedDay))
+        ? items.filter((item) => item.deadline && isSameDay(new Date(item.deadline), selectedDay))
         : items,
     [items, selectedDay]
   );

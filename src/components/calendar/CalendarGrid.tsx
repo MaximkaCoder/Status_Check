@@ -38,6 +38,7 @@ export function CalendarGrid({ currentMonth, items, selectedDay, onDayClick }: C
 
   const itemsByDay = new Map<string, StatusItem[]>();
   for (const item of items) {
+    if (!item.deadline) continue;
     const key = format(new Date(item.deadline), "yyyy-MM-dd");
     if (!itemsByDay.has(key)) itemsByDay.set(key, []);
     itemsByDay.get(key)!.push(item);

@@ -10,10 +10,10 @@ async function autoExpireOverdue(): Promise<void> {
   await prisma.statusItem.updateMany({
     where: {
       deadline: { lt: new Date() },
-      status: { in: ["PENDING"] },
+      status: { in: ["TO_CHECK"] },
     },
     data: {
-      status: "OVERDUE",
+      status: "EXPIRED",
     },
   });
 }
@@ -47,15 +47,14 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     type WhereClause = {
-      status?: { in: ("PENDING" | "IN_PROGRESS" | "DONE" | "OVERDUE")[] };
+      status?: { in: ("TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG")[] };
       deadline?: { gte: Date; lte: Date };
     };
     const where: WhereClause = {};
 
     if (statusParam) {
       const statusValues = statusParam.split(",").map((s) => s.trim());
-      // Validate each value against enum
-      const validStatuses = ["PENDING", "IN_PROGRESS", "DONE", "OVERDUE"] as const;
+      const validStatuses = ["TO_CHECK", "EXPIRED", "DONE", "NOT_ACTUAL", "IDEAS_BACKLOG"] as const;
       const invalid = statusValues.find((s) => !validStatuses.includes(s as (typeof validStatuses)[number]));
       if (invalid) {
         return NextResponse.json(
@@ -63,7 +62,7 @@ export async function GET(request: NextRequest) {
           { status: 400 }
         );
       }
-      where.status = { in: statusValues as ("PENDING" | "IN_PROGRESS" | "DONE" | "OVERDUE")[] };
+      where.status = { in: statusValues as ("TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG")[] };
     }
 
     if (month) {
@@ -107,9 +106,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, description, deadline, creator_name } = parseResult.data;
+    const { title, description, deadline, creator_name, project, assignee, reviewer } = parseResult.data;
 
-    // Use session user's name if authenticated, otherwise fall back to provided name
     const session = await getSession();
     const resolvedName = session?.name ?? creator_name;
 
@@ -117,9 +115,12 @@ export async function POST(request: NextRequest) {
       data: {
         title,
         description: description ?? null,
-        deadline: new Date(deadline),
+        deadline: deadline ? new Date(deadline) : null,
         creator_name: resolvedName,
-        status: "PENDING",
+        project:  project  ?? null,
+        assignee: assignee ?? null,
+        reviewer: reviewer ?? null,
+        status: "TO_CHECK",
       },
     });
 

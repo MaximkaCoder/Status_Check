@@ -3,22 +3,24 @@
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-type Status = "PENDING" | "IN_PROGRESS" | "DONE" | "OVERDUE";
+type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
 
-const ALL_STATUSES: Status[] = ["PENDING", "IN_PROGRESS", "DONE", "OVERDUE"];
+const ALL_STATUSES: Status[] = ["TO_CHECK", "EXPIRED", "DONE", "NOT_ACTUAL", "IDEAS_BACKLOG"];
 
-const STATUS_CHIP_ACTIVE: Record<Status, string> = {
-  PENDING:     "bg-indigo-500 text-white border-indigo-500 shadow-sm",
-  IN_PROGRESS: "bg-amber-500 text-white border-amber-500 shadow-sm",
-  DONE:        "bg-emerald-500 text-white border-emerald-500 shadow-sm",
-  OVERDUE:     "bg-rose-500 text-white border-rose-500 shadow-sm",
+const CHIP_ACTIVE: Record<Status, string> = {
+  TO_CHECK:      "bg-indigo-500 text-white border-indigo-500 shadow-sm",
+  EXPIRED:       "bg-rose-500 text-white border-rose-500 shadow-sm",
+  DONE:          "bg-emerald-500 text-white border-emerald-500 shadow-sm",
+  NOT_ACTUAL:    "bg-slate-500 text-white border-slate-500 shadow-sm",
+  IDEAS_BACKLOG: "bg-violet-500 text-white border-violet-500 shadow-sm",
 };
 
-const STATUS_CHIP_INACTIVE: Record<Status, string> = {
-  PENDING:     "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-indigo-200/80 text-indigo-600 hover:bg-white/70 hover:border-indigo-300 dark:border-indigo-400/20 dark:text-white/60 dark:hover:border-indigo-400/40 dark:hover:text-white/80",
-  IN_PROGRESS: "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-amber-200/80 text-amber-600 hover:bg-white/70 hover:border-amber-300 dark:border-amber-400/20 dark:text-white/60 dark:hover:border-amber-400/40 dark:hover:text-white/80",
-  DONE:        "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-emerald-200/80 text-emerald-600 hover:bg-white/70 hover:border-emerald-300 dark:border-emerald-400/20 dark:text-white/60 dark:hover:border-emerald-400/40 dark:hover:text-white/80",
-  OVERDUE:     "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-rose-200/80 text-rose-600 hover:bg-white/70 hover:border-rose-300 dark:border-rose-400/20 dark:text-white/60 dark:hover:border-rose-400/40 dark:hover:text-white/80",
+const CHIP_INACTIVE: Record<Status, string> = {
+  TO_CHECK:      "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-indigo-200/80 text-indigo-600 hover:bg-white/70 hover:border-indigo-300 dark:border-indigo-400/20 dark:text-white/60 dark:hover:border-indigo-400/40 dark:hover:text-white/80",
+  EXPIRED:       "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-rose-200/80 text-rose-600 hover:bg-white/70 hover:border-rose-300 dark:border-rose-400/20 dark:text-white/60 dark:hover:border-rose-400/40 dark:hover:text-white/80",
+  DONE:          "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-emerald-200/80 text-emerald-600 hover:bg-white/70 hover:border-emerald-300 dark:border-emerald-400/20 dark:text-white/60 dark:hover:border-emerald-400/40 dark:hover:text-white/80",
+  NOT_ACTUAL:    "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-slate-200/80 text-slate-500 hover:bg-white/70 hover:border-slate-300 dark:border-slate-400/20 dark:text-white/60 dark:hover:border-slate-400/40 dark:hover:text-white/80",
+  IDEAS_BACKLOG: "bg-white/50 dark:bg-white/[0.04] backdrop-blur-sm border-violet-200/80 text-violet-600 hover:bg-white/70 hover:border-violet-300 dark:border-violet-400/20 dark:text-white/60 dark:hover:border-violet-400/40 dark:hover:text-white/80",
 };
 
 interface StatusFilterChipsProps {
@@ -30,19 +32,17 @@ export function StatusFilterChips({ selected, onChange }: StatusFilterChipsProps
   const { t } = useLanguage();
   const isAll = selected.length === 0;
 
-  const statusLabels: Record<Status, string> = {
-    PENDING:     t("pending"),
-    IN_PROGRESS: t("inProgress"),
-    DONE:        t("done"),
-    OVERDUE:     t("overdue"),
+  const labels: Record<Status, string> = {
+    TO_CHECK:      t("toCheck"),
+    EXPIRED:       t("expired"),
+    DONE:          t("done"),
+    NOT_ACTUAL:    t("notActual"),
+    IDEAS_BACKLOG: t("ideasBacklog"),
   };
 
-  function toggleStatus(status: Status) {
-    if (selected.includes(status)) {
-      onChange(selected.filter((s) => s !== status));
-    } else {
-      onChange([...selected, status]);
-    }
+  function toggle(status: Status) {
+    if (selected.includes(status)) onChange(selected.filter((s) => s !== status));
+    else onChange([...selected, status]);
   }
 
   return (
@@ -60,21 +60,16 @@ export function StatusFilterChips({ selected, onChange }: StatusFilterChipsProps
       >
         {t("all")}
       </button>
-
       {ALL_STATUSES.map((status) => {
         const isActive = selected.includes(status);
         return (
-          <button
-            key={status}
-            onClick={() => toggleStatus(status)}
-            type="button"
-            aria-pressed={isActive}
+          <button key={status} onClick={() => toggle(status)} type="button" aria-pressed={isActive}
             className={cn(
               "inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border-2 transition-all duration-200 cursor-pointer",
-              isActive ? STATUS_CHIP_ACTIVE[status] : STATUS_CHIP_INACTIVE[status]
+              isActive ? CHIP_ACTIVE[status] : CHIP_INACTIVE[status]
             )}
           >
-            {statusLabels[status]}
+            {labels[status]}
           </button>
         );
       })}

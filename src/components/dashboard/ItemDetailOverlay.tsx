@@ -101,10 +101,11 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
     onClose()
   }
 
-  const deadline = new Date(item.deadline)
-  const isOverdue = item.status === 'OVERDUE'
-  const isPastDeadline = isPast(deadline) && item.status !== 'DONE'
-  const deadlineLabel = formatDeadlineLocale(deadline, t('today'), t('tomorrow'), locale, monthsEn, monthsUkGen)
+  const deadline = item.deadline ? new Date(item.deadline) : null
+  const isPastDeadline = deadline ? (isPast(deadline) && item.status !== 'DONE') : false
+  const deadlineLabel = deadline
+    ? formatDeadlineLocale(deadline, t('today'), t('tomorrow'), locale, monthsEn, monthsUkGen)
+    : t('noDeadline')
   const avatarColor = getAvatarColor(item.creator_name)
   const avatarInitial = item.creator_name.charAt(0).toUpperCase()
 
@@ -190,11 +191,11 @@ export function ItemDetailOverlay({ item, onClose, onDelete }: ItemDetailOverlay
                 </p>
                 <span className={cn(
                   'text-sm font-medium',
-                  (isOverdue || isPastDeadline) ? 'text-rose-600' : 'text-foreground'
+                  isPastDeadline ? 'text-rose-600' : 'text-foreground'
                 )}>
                   {deadlineLabel}
-                  {(isOverdue || isPastDeadline) && (
-                    <span className="ml-1.5 text-xs font-normal text-rose-500/80">· {t('overdue')}</span>
+                  {isPastDeadline && (
+                    <span className="ml-1.5 text-xs font-normal text-rose-500/80">· {t('expired')}</span>
                   )}
                 </span>
               </div>

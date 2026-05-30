@@ -2,20 +2,22 @@
 
 import { cn } from "@/lib/utils";
 
-type Status = "PENDING" | "IN_PROGRESS" | "DONE" | "OVERDUE";
+type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
 
 const STATUS_DOT_COLORS: Record<Status, string> = {
-  PENDING:     "bg-indigo-500",
-  IN_PROGRESS: "bg-amber-500",
-  DONE:        "bg-emerald-500",
-  OVERDUE:     "bg-rose-500",
+  TO_CHECK:      "bg-indigo-500",
+  EXPIRED:       "bg-rose-500",
+  DONE:          "bg-emerald-500",
+  NOT_ACTUAL:    "bg-slate-400",
+  IDEAS_BACKLOG: "bg-violet-500",
 };
 
 const STATUS_DOT_GLOW: Record<Status, string> = {
-  PENDING:     "",
-  IN_PROGRESS: "",
-  DONE:        "",
-  OVERDUE:     "shadow-[0_0_4px_1px_rgba(239,68,68,0.5)]",
+  TO_CHECK:      "",
+  EXPIRED:       "shadow-[0_0_4px_1px_rgba(239,68,68,0.5)]",
+  DONE:          "",
+  NOT_ACTUAL:    "",
+  IDEAS_BACKLOG: "",
 };
 
 interface StatusDotProps {

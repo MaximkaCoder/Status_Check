@@ -11,13 +11,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createItem, updateItem } from "@/lib/api-client";
 import type { TranslationKey } from "@/lib/i18n";
 
-type Status = "PENDING" | "IN_PROGRESS" | "DONE" | "OVERDUE";
+type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
 
 export interface ItemFormValues {
   title: string;
   description: string;
   deadline: string;
   creator_name: string;
+  project?: string;
+  assignee?: string;
+  reviewer?: string;
   status?: Status;
 }
 
@@ -27,41 +30,14 @@ interface ItemFormProps {
   itemId?: string;
 }
 
-const USER_SETTABLE_STATUSES: Status[] = ["PENDING", "IN_PROGRESS", "DONE"];
+const USER_SETTABLE_STATUSES: Status[] = ["TO_CHECK", "EXPIRED", "DONE", "NOT_ACTUAL", "IDEAS_BACKLOG"];
 
-const STATUS_STYLES: Record<
-  string,
-  {
-    active: string;
-    inactive: string;
-    dot: string;
-    label: (t: (k: TranslationKey) => string) => string;
-  }
-> = {
-  PENDING: {
-    active:
-      "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
-    inactive:
-      "border-border text-muted-foreground hover:border-indigo-300 hover:text-indigo-600",
-    dot: "bg-indigo-500",
-    label: (t) => t("pending"),
-  },
-  IN_PROGRESS: {
-    active:
-      "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-    inactive:
-      "border-border text-muted-foreground hover:border-amber-300 hover:text-amber-600",
-    dot: "bg-amber-500",
-    label: (t) => t("inProgress"),
-  },
-  DONE: {
-    active:
-      "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-    inactive:
-      "border-border text-muted-foreground hover:border-emerald-300 hover:text-emerald-600",
-    dot: "bg-emerald-500",
-    label: (t) => t("done"),
-  },
+const STATUS_STYLES: Record<Status, { active: string; inactive: string; dot: string; label: (t: (k: TranslationKey) => string) => string }> = {
+  TO_CHECK:      { active: "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",   inactive: "border-border text-muted-foreground hover:border-indigo-300 hover:text-indigo-600",  dot: "bg-indigo-500",  label: (t) => t("toCheck")      },
+  EXPIRED:       { active: "border-rose-500 bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300",             inactive: "border-border text-muted-foreground hover:border-rose-300 hover:text-rose-600",      dot: "bg-rose-500",    label: (t) => t("expired")      },
+  DONE:          { active: "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300", inactive: "border-border text-muted-foreground hover:border-emerald-300 hover:text-emerald-600", dot: "bg-emerald-500", label: (t) => t("done")         },
+  NOT_ACTUAL:    { active: "border-slate-500 bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-300",        inactive: "border-border text-muted-foreground hover:border-slate-300 hover:text-slate-600",    dot: "bg-slate-400",   label: (t) => t("notActual")    },
+  IDEAS_BACKLOG: { active: "border-violet-500 bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300",   inactive: "border-border text-muted-foreground hover:border-violet-300 hover:text-violet-600",  dot: "bg-violet-500",  label: (t) => t("ideasBacklog") },
 };
 
 const inputBase = cn(
@@ -146,10 +122,11 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
     return toDatetimeLocal(defaultValues.deadline);
   });
   const [creatorName, setCreatorName] = useState(defaultValues?.creator_name ?? user?.name ?? "");
+  const [project,  setProject]  = useState(defaultValues?.project  ?? "");
+  const [assignee, setAssignee] = useState(defaultValues?.assignee ?? "");
+  const [reviewer, setReviewer] = useState(defaultValues?.reviewer ?? "");
   const initialStatus: Status =
-    mode === "edit" && defaultValues?.status === "OVERDUE"
-      ? "IN_PROGRESS"
-      : defaultValues?.status ?? "PENDING";
+    (defaultValues?.status as Status | undefined) ?? "TO_CHECK";
   const [status, setStatus] = useState<Status>(initialStatus);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -182,8 +159,11 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
         await createItem({
           title: title.trim(),
           description: description.trim() || undefined,
-          deadline: new Date(deadline).toISOString(),
+          deadline: deadline ? new Date(deadline).toISOString() : null,
           creator_name: creatorName.trim(),
+          project:  project.trim()  || null,
+          assignee: assignee.trim() || null,
+          reviewer: reviewer.trim() || null,
         });
         toast(
           locale === "uk" ? "Задачу створено" : "Item created successfully",
@@ -194,8 +174,11 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
         await updateItem(itemId, {
           title: title.trim(),
           description: description.trim() || null,
-          deadline: new Date(deadline).toISOString(),
+          deadline: deadline ? new Date(deadline).toISOString() : null,
           creator_name: creatorName.trim(),
+          project:  project.trim()  || null,
+          assignee: assignee.trim() || null,
+          reviewer: reviewer.trim() || null,
           status,
         });
         toast(
@@ -292,6 +275,27 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
           )}
         />
         <FieldError message={errors.deadline} id="deadline-error" />
+      </div>
+
+      {/* Project */}
+      <div>
+        <FieldLabel htmlFor="form-project">{t("project")}</FieldLabel>
+        <input id="form-project" type="text" value={project} onChange={(e) => setProject(e.target.value)}
+          maxLength={200} className={cn(inputBase, "border-input")} />
+      </div>
+
+      {/* Assignee */}
+      <div>
+        <FieldLabel htmlFor="form-assignee">{t("assignee")}</FieldLabel>
+        <input id="form-assignee" type="text" value={assignee} onChange={(e) => setAssignee(e.target.value)}
+          maxLength={100} className={cn(inputBase, "border-input")} />
+      </div>
+
+      {/* Reviewer */}
+      <div>
+        <FieldLabel htmlFor="form-reviewer">{t("reviewer")}</FieldLabel>
+        <input id="form-reviewer" type="text" value={reviewer} onChange={(e) => setReviewer(e.target.value)}
+          maxLength={100} className={cn(inputBase, "border-input")} />
       </div>
 
       {/* Status — edit mode only */}

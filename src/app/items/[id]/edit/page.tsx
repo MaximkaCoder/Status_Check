@@ -132,8 +132,11 @@ export default function EditItemPage() {
           defaultValues={{
             title: item.title,
             description: item.description ?? "",
-            deadline: item.deadline.toString(),
+            deadline: item.deadline ? item.deadline.toString() : "",
             creator_name: item.creator_name,
+            project:  item.project  ?? "",
+            assignee: item.assignee ?? "",
+            reviewer: item.reviewer ?? "",
             status: item.status,
           }}
         />

@@ -7,10 +7,11 @@ datasource db {
 }
 
 enum Status {
-  PENDING
-  IN_PROGRESS
+  TO_CHECK
+  EXPIRED
   DONE
-  OVERDUE
+  NOT_ACTUAL
+  IDEAS_BACKLOG
 }
 
 model User {
@@ -24,14 +25,17 @@ model User {
 }
 
 model StatusItem {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   title        String
   description  String?
-  deadline     DateTime
-  status       Status   @default(PENDING)
+  deadline     DateTime?
+  status       Status    @default(TO_CHECK)
   creator_name String
-  created_at   DateTime @default(now()) @map("created_at")
-  updated_at   DateTime @updatedAt @map("updated_at")
+  project      String?
+  assignee     String?
+  reviewer     String?
+  created_at   DateTime  @default(now()) @map("created_at")
+  updated_at   DateTime  @updatedAt @map("updated_at")
 
   @@index([deadline])
   @@index([status])
