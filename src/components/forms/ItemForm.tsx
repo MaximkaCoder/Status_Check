@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/Spinner";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ComboboxInput } from "@/components/ui/ComboboxInput";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -125,6 +127,16 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
   const [project,  setProject]  = useState(defaultValues?.project  ?? "");
   const [assignee, setAssignee] = useState(defaultValues?.assignee ?? "");
   const [reviewer, setReviewer] = useState(defaultValues?.reviewer ?? "");
+
+  const [userNames,     setUserNames]     = useState<string[]>([]);
+  const [projectNames,  setProjectNames]  = useState<string[]>([]);
+  const [newProjectPending, setNewProjectPending] = useState<string | null>(null);
+  const [pendingSubmitData, setPendingSubmitData] = useState<null | (() => Promise<void>)>(null);
+
+  useEffect(() => {
+    fetch("/api/users").then((r) => r.ok ? r.json() : []).then((data: { name: string }[]) => setUserNames(data.map((u) => u.name))).catch(() => {});
+    fetch("/api/projects").then((r) => r.ok ? r.json() : []).then((data: { name: string }[]) => setProjectNames(data.map((p) => p.name))).catch(() => {});
+  }, []);
   const initialStatus: Status =
     (defaultValues?.status as Status | undefined) ?? "TO_CHECK";
   const [status, setStatus] = useState<Status>(initialStatus);
@@ -147,13 +159,9 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
     return Object.keys(newErrors).length === 0;
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!validate()) return;
-
+  async function doSubmit() {
     setSubmitting(true);
     setApiError(null);
-
     try {
       if (mode === "create") {
         await createItem({
@@ -206,7 +214,52 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
     }
   }
 
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!validate()) return;
+
+    const trimmedProject = project.trim();
+    if (trimmedProject && !projectNames.includes(trimmedProject)) {
+      setNewProjectPending(trimmedProject);
+      setPendingSubmitData(() => doSubmit);
+      return;
+    }
+
+    await doSubmit();
+  }
+
+  async function confirmCreateProject() {
+    if (!newProjectPending) return;
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newProjectPending }),
+      });
+      if (res.ok) {
+        setProjectNames((prev) => [...prev, newProjectPending].sort());
+      }
+    } catch {}
+    setNewProjectPending(null);
+    if (pendingSubmitData) await pendingSubmitData();
+    setPendingSubmitData(null);
+  }
+
   return (
+    <>
+    {newProjectPending && (
+      <ConfirmDialog
+        title={locale === "uk" ? "Проєкт не існує" : "Project not found"}
+        description={locale === "uk"
+          ? `Проєкт "${newProjectPending}" не знайдено. Бажаєте створити?`
+          : `Project "${newProjectPending}" does not exist. Create it?`}
+        confirmLabel={locale === "uk" ? "Створити" : "Create"}
+        cancelLabel={t("cancelBtn")}
+        variant="default"
+        onConfirm={confirmCreateProject}
+        onCancel={() => { setNewProjectPending(null); setPendingSubmitData(null); }}
+      />
+    )}
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
       {/* Title */}
       <div>
@@ -280,22 +333,37 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
       {/* Project */}
       <div>
         <FieldLabel htmlFor="form-project">{t("project")}</FieldLabel>
-        <input id="form-project" type="text" value={project} onChange={(e) => setProject(e.target.value)}
-          maxLength={200} className={cn(inputBase, "border-input")} />
+        <ComboboxInput
+          id="form-project"
+          value={project}
+          onChange={setProject}
+          options={projectNames}
+          placeholder={locale === "uk" ? "Назва проєкту..." : "Project name..."}
+        />
       </div>
 
       {/* Assignee */}
       <div>
         <FieldLabel htmlFor="form-assignee">{t("assignee")}</FieldLabel>
-        <input id="form-assignee" type="text" value={assignee} onChange={(e) => setAssignee(e.target.value)}
-          maxLength={100} className={cn(inputBase, "border-input")} />
+        <ComboboxInput
+          id="form-assignee"
+          value={assignee}
+          onChange={setAssignee}
+          options={userNames}
+          placeholder={locale === "uk" ? "Виконавець..." : "Assignee..."}
+        />
       </div>
 
       {/* Reviewer */}
       <div>
         <FieldLabel htmlFor="form-reviewer">{t("reviewer")}</FieldLabel>
-        <input id="form-reviewer" type="text" value={reviewer} onChange={(e) => setReviewer(e.target.value)}
-          maxLength={100} className={cn(inputBase, "border-input")} />
+        <ComboboxInput
+          id="form-reviewer"
+          value={reviewer}
+          onChange={setReviewer}
+          options={userNames}
+          placeholder={locale === "uk" ? "Перевіряючий..." : "Reviewer..."}
+        />
       </div>
 
       {/* Status — edit mode only */}
@@ -414,5 +482,6 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
         </button>
       </div>
     </form>
+    </>
   );
 }
