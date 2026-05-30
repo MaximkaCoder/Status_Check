@@ -65,10 +65,10 @@ const STATUS_NEXT: Record<Status, UserSettableStatus[]> = {
   OVERDUE:     ["IN_PROGRESS", "DONE"],
 };
 
-const STATUS_NEXT_LABELS: Record<UserSettableStatus, { label: string; dot: string }> = {
-  PENDING:     { label: "Pending",     dot: "bg-indigo-500" },
-  IN_PROGRESS: { label: "In Progress", dot: "bg-amber-500"  },
-  DONE:        { label: "Done",        dot: "bg-emerald-500" },
+const STATUS_NEXT_DOTS: Record<UserSettableStatus, string> = {
+  PENDING:     "bg-indigo-500",
+  IN_PROGRESS: "bg-amber-500",
+  DONE:        "bg-emerald-500",
 };
 
 export function ItemCard({
@@ -132,7 +132,7 @@ export function ItemCard({
     setChangingStatus(true);
     try {
       await onStatusChange(item.id, newStatus);
-      toast(`Status → ${STATUS_NEXT_LABELS[newStatus].label}`, "success");
+      toast(`Status → ${t(newStatus === "IN_PROGRESS" ? "inProgress" : newStatus === "DONE" ? "done" : "pending")}`, "success");
     } catch (err) {
       toast(err instanceof Error ? err.message : t("networkError"), "error");
     } finally {
@@ -225,24 +225,21 @@ export function ItemCard({
               >
                 <div className="px-3 py-2 border-b border-border/60 dark:border-white/10">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Change status
+                    {t("status")}
                   </p>
                 </div>
-                {STATUS_NEXT[item.status].map((nextStatus) => {
-                  const info = STATUS_NEXT_LABELS[nextStatus];
-                  return (
-                    <button
-                      key={nextStatus}
-                      role="menuitem"
-                      type="button"
-                      onClick={(e) => handleStatusChange(e, nextStatus)}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/60 dark:hover:bg-white/5 transition-colors duration-150 cursor-pointer text-left"
-                    >
-                      <span className={cn("h-2 w-2 rounded-full flex-shrink-0", info.dot)} />
-                      {info.label}
-                    </button>
-                  );
-                })}
+                {STATUS_NEXT[item.status].map((nextStatus) => (
+                  <button
+                    key={nextStatus}
+                    role="menuitem"
+                    type="button"
+                    onClick={(e) => handleStatusChange(e, nextStatus)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/60 dark:hover:bg-white/5 transition-colors duration-150 cursor-pointer text-left"
+                  >
+                    <span className={cn("h-2 w-2 rounded-full flex-shrink-0", STATUS_NEXT_DOTS[nextStatus])} />
+                    {t(nextStatus === "IN_PROGRESS" ? "inProgress" : nextStatus === "DONE" ? "done" : "pending")}
+                  </button>
+                ))}
               </div>
             )}
           </div>
