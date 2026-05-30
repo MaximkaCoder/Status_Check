@@ -82,10 +82,12 @@ function extractTitleAndDeadline(
   // Map matched position back to original text by character offset
   const withoutDate = parsed.replace(match.text, "");
   const remaining = withoutDate
-    .replace(/\b(by|until|at|on|in)\b/gi, "")  // English connectors
-    .replace(/\b(до|о|в|на)\b/gi, "")           // Ukrainian connectors
-    .replace(/[,;]+/g, " ")                      // leftover separators
+    .replace(/\b(by|until|at|on|in)\b/gi, "")           // English connectors
+    .replace(/[,;]+/g, " ")                               // leftover separators
     .replace(/\s+/g, " ")
+    .trim()
+    // Strip trailing Ukrainian prepositions (\b doesn't work with Cyrillic)
+    .replace(/\s+(до|о|в|на|за|для|з|по|від)$/i, "")
     .trim();
 
   if (remaining.length < 2) return null;
