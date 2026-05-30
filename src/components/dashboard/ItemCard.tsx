@@ -29,16 +29,9 @@ function formatDeadlineRelative(date: Date, today: string, tomorrow: string): st
 
 function getAvatarColor(name: string): string {
   const colors = [
-    "bg-indigo-500",
-    "bg-violet-500",
-    "bg-pink-500",
-    "bg-rose-500",
-    "bg-amber-500",
-    "bg-emerald-500",
-    "bg-cyan-500",
-    "bg-sky-500",
-    "bg-teal-500",
-    "bg-orange-500",
+    "bg-indigo-500", "bg-violet-500", "bg-pink-500", "bg-rose-500",
+    "bg-amber-500", "bg-emerald-500", "bg-cyan-500", "bg-sky-500",
+    "bg-teal-500", "bg-orange-500",
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -47,14 +40,24 @@ function getAvatarColor(name: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
-const STATUS_BAR_COLORS: Record<string, string> = {
-  PENDING:     "bg-indigo-500 dark:shadow-[0_0_8px_rgba(99,102,241,0.5)]",
-  IN_PROGRESS: "bg-amber-500 dark:shadow-[0_0_8px_rgba(245,158,11,0.5)]",
-  DONE:        "bg-emerald-500 dark:shadow-[0_0_8px_rgba(16,185,129,0.5)]",
-  OVERDUE:     "bg-rose-500 dark:shadow-[0_0_8px_rgba(239,68,68,0.5)]",
+const STATUS_DOT: Record<string, string> = {
+  PENDING:     "bg-indigo-500 shadow-[0_0_6px_2px_rgba(99,102,241,0.45)]",
+  IN_PROGRESS: "bg-amber-500  shadow-[0_0_6px_2px_rgba(245,158,11,0.45)]",
+  DONE:        "bg-emerald-500 shadow-[0_0_6px_2px_rgba(16,185,129,0.45)]",
+  OVERDUE:     "bg-rose-500   shadow-[0_0_6px_2px_rgba(239,68,68,0.45)]",
 };
 
-// Next logical status transitions shown in quick-change menu
+const STATUS_HOVER_GLOW: Record<string, string> = {
+  PENDING:
+    "hover:border-indigo-300/60 hover:shadow-[0_8px_32px_rgba(99,102,241,0.14)] dark:hover:border-indigo-400/25 dark:hover:shadow-[0_8px_32px_rgba(99,102,241,0.22)]",
+  IN_PROGRESS:
+    "hover:border-amber-300/60 hover:shadow-[0_8px_32px_rgba(245,158,11,0.14)] dark:hover:border-amber-400/25 dark:hover:shadow-[0_8px_32px_rgba(245,158,11,0.22)]",
+  DONE:
+    "hover:border-emerald-300/60 hover:shadow-[0_8px_32px_rgba(16,185,129,0.14)] dark:hover:border-emerald-400/25 dark:hover:shadow-[0_8px_32px_rgba(16,185,129,0.22)]",
+  OVERDUE:
+    "hover:border-rose-300/60 hover:shadow-[0_8px_32px_rgba(239,68,68,0.14)] dark:hover:border-rose-400/25 dark:hover:shadow-[0_8px_32px_rgba(239,68,68,0.22)]",
+};
+
 const STATUS_NEXT: Record<Status, UserSettableStatus[]> = {
   PENDING:     ["IN_PROGRESS", "DONE"],
   IN_PROGRESS: ["DONE", "PENDING"],
@@ -83,7 +86,6 @@ export function ItemCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close on any outside click
   useEffect(() => {
     if (!statusMenuOpen) return;
     function handleClick(e: MouseEvent) {
@@ -101,8 +103,11 @@ export function ItemCard({
   const daysUntil = differenceInDays(deadline, new Date());
   const isNearDeadline = !isOverdue && !isPastDeadline && daysUntil >= 0 && daysUntil <= 3;
   const deadlineLabel = formatDeadlineRelative(deadline, t("today"), t("tomorrow"));
+  const staggerClass = `stagger-${Math.min(animationIndex + 1, 10)}`;
+  const avatarColor = getAvatarColor(item.creator_name);
+  const avatarInitial = item.creator_name.charAt(0).toUpperCase();
 
-  const deadlineColorClass = cn(
+  const deadlineClass = cn(
     "inline-flex items-center gap-1 font-medium",
     isOverdue || isPastDeadline
       ? "text-rose-600 dark:text-rose-400"
@@ -110,10 +115,6 @@ export function ItemCard({
       ? "text-amber-600 dark:text-amber-400"
       : "text-muted-foreground"
   );
-
-  const staggerClass = `stagger-${Math.min(animationIndex + 1, 10)}`;
-  const avatarColor = getAvatarColor(item.creator_name);
-  const avatarInitial = item.creator_name.charAt(0).toUpperCase();
 
   async function doDelete() {
     try {
@@ -124,11 +125,6 @@ export function ItemCard({
     }
   }
 
-  function handleDelete(e: React.MouseEvent) {
-    e.stopPropagation();
-    setConfirmDelete(true);
-  }
-
   async function handleStatusChange(e: React.MouseEvent, newStatus: UserSettableStatus) {
     e.stopPropagation();
     setStatusMenuOpen(false);
@@ -136,8 +132,7 @@ export function ItemCard({
     setChangingStatus(true);
     try {
       await onStatusChange(item.id, newStatus);
-      const label = STATUS_NEXT_LABELS[newStatus].label;
-      toast(`Status → ${label}`, "success");
+      toast(`Status → ${STATUS_NEXT_LABELS[newStatus].label}`, "success");
     } catch (err) {
       toast(err instanceof Error ? err.message : t("networkError"), "error");
     } finally {
@@ -145,25 +140,20 @@ export function ItemCard({
     }
   }
 
-  function toggleStatusMenu(e: React.MouseEvent) {
-    e.stopPropagation();
-    setStatusMenuOpen((v) => !v);
-  }
-
   return (
     <div
       className={cn(
-        "group/card flex items-stretch rounded-xl border overflow-visible",
-        "bg-card dark:bg-card/60 dark:backdrop-blur-sm",
-        "border-border/60 dark:border-white/[0.08]",
-        "shadow-sm dark:shadow-lg dark:shadow-black/20",
-        "hover:-translate-y-0.5 hover:shadow-md hover:border-indigo-200 hover:shadow-indigo-50",
-        "dark:hover:shadow-xl dark:hover:shadow-black/30 dark:hover:border-white/[0.15]",
-        "transition-all duration-200",
+        "group/card relative rounded-2xl overflow-visible",
+        "bg-white/80 dark:bg-white/[0.04]",
+        "backdrop-blur-[2px]",
+        "border border-slate-200/80 dark:border-white/[0.08]",
+        "shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_16px_rgba(0,0,0,0.04)]",
+        "dark:shadow-[0_2px_16px_rgba(0,0,0,0.5)]",
+        STATUS_HOVER_GLOW[item.status],
+        "hover:-translate-y-0.5 transition-all duration-200",
         onDetailClick ? "cursor-pointer" : "cursor-default",
         "animate-fade-in-up",
         staggerClass,
-        "relative",
         statusMenuOpen && "z-10"
       )}
       onClick={() => onDetailClick?.(item)}
@@ -180,197 +170,151 @@ export function ItemCard({
           : undefined
       }
     >
-      {/* Status color bar */}
-      <div
-        className={cn(
-          "w-1.5 flex-shrink-0 rounded-l-xl",
-          STATUS_BAR_COLORS[item.status] ?? "bg-muted"
-        )}
-      />
+      {/* Inner glass highlight */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/40 to-transparent dark:from-white/[0.03] dark:to-transparent pointer-events-none" />
 
-      {/* Content */}
-      <div className="flex flex-1 items-start gap-3 px-4 py-3.5 min-w-0">
-        <div className="flex-1 min-w-0 space-y-2">
-          {/* Title + status badge */}
-          <div className="flex flex-wrap items-start gap-2">
-            <h3 className="text-sm font-bold text-foreground leading-snug break-words flex-1 min-w-0">
-              {item.title}
-            </h3>
-            {/* Status badge — clickable for quick-change */}
-            <div className="relative flex-shrink-0 mt-0.5" ref={menuRef}>
-              <button
-                type="button"
-                onClick={toggleStatusMenu}
-                disabled={changingStatus || !onStatusChange}
-                className={cn(
-                  "transition-opacity duration-150",
-                  onStatusChange ? "cursor-pointer hover:opacity-75" : "cursor-default",
-                  "disabled:cursor-not-allowed disabled:opacity-60"
-                )}
-                aria-label={`Change status (current: ${item.status})`}
-                aria-expanded={statusMenuOpen}
-                aria-haspopup="menu"
-                title="Click to change status"
-              >
-                {changingStatus ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-muted text-muted-foreground border-border animate-pulse">
-                    <span className="h-1.5 w-1.5 rounded-full bg-current inline-block animate-spin" />
-                    ...
-                  </span>
-                ) : (
-                  <StatusBadge status={item.status} />
-                )}
-              </button>
+      <div className="relative p-4 space-y-2.5">
+        {/* Title row */}
+        <div className="flex items-start gap-2.5">
+          {/* Glowing status dot */}
+          <span
+            className={cn("h-2 w-2 rounded-full flex-shrink-0 mt-[5px]", STATUS_DOT[item.status])}
+            aria-hidden="true"
+          />
 
-              {/* Status dropdown menu */}
-              {statusMenuOpen && onStatusChange && (
-                <div
-                  role="menu"
-                  aria-label="Change status"
-                  className={cn(
-                    "absolute right-0 top-full mt-1.5 z-[60] min-w-[160px]",
-                    "rounded-xl border border-border/60 bg-card shadow-xl",
-                    "dark:border-white/10 dark:bg-card dark:shadow-black/40",
-                    "animate-scale-in overflow-hidden"
-                  )}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="px-3 py-2 border-b border-border/60 dark:border-white/10">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Change status
-                    </p>
-                  </div>
-                  {STATUS_NEXT[item.status].map((nextStatus) => {
-                    const info = STATUS_NEXT_LABELS[nextStatus];
-                    return (
-                      <button
-                        key={nextStatus}
-                        role="menuitem"
-                        type="button"
-                        onClick={(e) => handleStatusChange(e, nextStatus)}
-                        className={cn(
-                          "w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium",
-                          "text-foreground hover:bg-muted/60 dark:hover:bg-white/5",
-                          "transition-colors duration-150 cursor-pointer text-left"
-                        )}
-                      >
-                        <span className={cn("h-2 w-2 rounded-full flex-shrink-0", info.dot)} />
-                        {info.label}
-                      </button>
-                    );
-                  })}
-                </div>
+          <h3 className="text-sm font-bold text-foreground leading-snug break-words flex-1 min-w-0">
+            {item.title}
+          </h3>
+
+          {/* Status badge + dropdown */}
+          <div className="relative flex-shrink-0" ref={menuRef}>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setStatusMenuOpen((v) => !v); }}
+              disabled={changingStatus || !onStatusChange}
+              className={cn(
+                "transition-opacity duration-150",
+                onStatusChange ? "cursor-pointer hover:opacity-75" : "cursor-default",
+                "disabled:cursor-not-allowed disabled:opacity-60"
               )}
-            </div>
+              aria-label={`Change status (current: ${item.status})`}
+              aria-expanded={statusMenuOpen}
+              aria-haspopup="menu"
+            >
+              {changingStatus ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-muted text-muted-foreground border-border animate-pulse">
+                  <span className="h-1.5 w-1.5 rounded-full bg-current inline-block animate-spin" />
+                  ...
+                </span>
+              ) : (
+                <StatusBadge status={item.status} />
+              )}
+            </button>
+
+            {statusMenuOpen && onStatusChange && (
+              <div
+                role="menu"
+                aria-label="Change status"
+                className={cn(
+                  "absolute right-0 top-full mt-1.5 z-[60] min-w-[160px]",
+                  "rounded-xl border border-border/60 bg-card shadow-xl",
+                  "dark:border-white/10 dark:shadow-black/40",
+                  "animate-scale-in overflow-hidden"
+                )}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="px-3 py-2 border-b border-border/60 dark:border-white/10">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Change status
+                  </p>
+                </div>
+                {STATUS_NEXT[item.status].map((nextStatus) => {
+                  const info = STATUS_NEXT_LABELS[nextStatus];
+                  return (
+                    <button
+                      key={nextStatus}
+                      role="menuitem"
+                      type="button"
+                      onClick={(e) => handleStatusChange(e, nextStatus)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted/60 dark:hover:bg-white/5 transition-colors duration-150 cursor-pointer text-left"
+                    >
+                      <span className={cn("h-2 w-2 rounded-full flex-shrink-0", info.dot)} />
+                      {info.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Description */}
-          {item.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-              {item.description}
-            </p>
-          )}
-
-          {/* Meta row */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-            {/* Deadline */}
-            <span className={deadlineColorClass}>
-              <svg
-                className="h-3 w-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
+          {/* Action buttons — on hover */}
+          <div className="flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity duration-150 flex-shrink-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); router.push(`/items/${item.id}/edit`); }}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-indigo-50 dark:hover:bg-indigo-900/40 hover:text-indigo-600 dark:hover:text-indigo-300 transition-all duration-150 cursor-pointer"
+              type="button"
+              title={t("editItem")}
+              aria-label={`${t("editItem")} ${item.title}`}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              <span>{deadlineLabel}</span>
-              {isOverdue && (
-                <span className="font-normal text-rose-500/80 dark:text-rose-400/70">
-                  · {t("overdue").toLowerCase()}
-                </span>
-              )}
-            </span>
-
-            {/* Creator */}
-            <span className="flex items-center gap-1.5 text-muted-foreground">
-              <span
-                className={cn(
-                  "inline-flex h-4 w-4 items-center justify-center rounded-full",
-                  "text-white flex-shrink-0 text-[9px] font-bold leading-none",
-                  avatarColor
-                )}
-                aria-hidden="true"
-              >
-                {avatarInitial}
-              </span>
-              <span>
-                {t("by")} {item.creator_name}
-              </span>
-            </span>
-
-            {/* Created at */}
-            <span className="flex items-center gap-1 text-muted-foreground/60">
-              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-rose-50 dark:hover:bg-rose-900/40 hover:text-rose-600 dark:hover:text-rose-300 transition-all duration-150 cursor-pointer"
+              type="button"
+              title={t("deleteItem")}
+              aria-label={`${t("deleteItem")} ${item.title}`}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
-              <span>{format(new Date(item.created_at), "MMM d, yyyy")}</span>
-            </span>
+            </button>
           </div>
         </div>
 
-        {/* Action buttons — visible on hover */}
-        <div className="flex flex-shrink-0 gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity duration-150 mt-0.5">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/items/${item.id}/edit`);
-            }}
-            className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-lg",
-              "text-muted-foreground hover:bg-indigo-50 dark:hover:bg-indigo-900/40",
-              "hover:text-indigo-600 dark:hover:text-indigo-300",
-              "transition-all duration-150 cursor-pointer"
-            )}
-            type="button"
-            title={t("editItem")}
-            aria-label={`${t("editItem")} ${item.title}`}
-          >
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
+        {/* Description */}
+        {item.description && (
+          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed pl-[18px]">
+            {item.description}
+          </p>
+        )}
+
+        {/* Meta row */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs pl-[18px]">
+          <span className={deadlineClass}>
+            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-          </button>
-          <button
-            onClick={handleDelete}
-            className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-lg",
-              "text-muted-foreground hover:bg-rose-50 dark:hover:bg-rose-900/40",
-              "hover:text-rose-600 dark:hover:text-rose-300",
-              "transition-all duration-150 cursor-pointer"
+            <span>{deadlineLabel}</span>
+            {isOverdue && (
+              <span className="font-normal text-rose-500/80 dark:text-rose-400/70">
+                · {t("overdue").toLowerCase()}
+              </span>
             )}
-            type="button"
-            title={t("deleteItem")}
-            aria-label={`${t("deleteItem")} ${item.title}`}
-          >
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
+          </span>
+
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <span
+              className={cn(
+                "inline-flex h-4 w-4 items-center justify-center rounded-full",
+                "text-white flex-shrink-0 text-[9px] font-bold leading-none",
+                avatarColor
+              )}
+              aria-hidden="true"
+            >
+              {avatarInitial}
+            </span>
+            <span>{t("by")} {item.creator_name}</span>
+          </span>
+
+          <span className="flex items-center gap-1 text-muted-foreground/50">
+            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-          </button>
+            <span>{format(new Date(item.created_at), "MMM d, yyyy")}</span>
+          </span>
         </div>
       </div>
 
