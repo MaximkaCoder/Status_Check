@@ -53,6 +53,7 @@ export default function DashboardPage() {
     status: "PENDING" | "IN_PROGRESS" | "DONE"
   ) {
     await changeStatus(id, status);
+    refresh();
   }
 
   const displayedItems = useMemo(
