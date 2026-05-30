@@ -95,8 +95,8 @@ export function Header() {
             </div>
           )}
 
-          {/* New Item — icon-only on mobile, full pill on desktop */}
-          <Link
+          {/* New Item — only when logged in */}
+          {user && <Link
             href="/items/new"
             className={cn(
               "relative overflow-hidden rounded-xl text-white cursor-pointer group/btn",
@@ -113,8 +113,8 @@ export function Header() {
             <svg className="relative h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
-          </Link>
-          <Link
+          </Link>}
+          {user && <Link
             href="/items/new"
             className={cn(
               "relative hidden sm:inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold overflow-hidden",
@@ -132,7 +132,7 @@ export function Header() {
               </svg>
               {t("newItem")}
             </span>
-          </Link>
+          </Link>}
         </nav>
       </div>
     </header>
