@@ -82,7 +82,9 @@ function extractTitleAndDeadline(
   // Map matched position back to original text by character offset
   const withoutDate = parsed.replace(match.text, "");
   const remaining = withoutDate
-    .replace(/\b(by|until|at|on|in)\b/gi, "")
+    .replace(/\b(by|until|at|on|in)\b/gi, "")  // English connectors
+    .replace(/\b(до|о|в|на)\b/gi, "")           // Ukrainian connectors
+    .replace(/[,;]+/g, " ")                      // leftover separators
     .replace(/\s+/g, " ")
     .trim();
 
@@ -117,8 +119,13 @@ function extractStructuredFields(text: string): StructuredFields {
     }
   }
 
-  // Remove trailing separators
-  remaining = remaining.replace(/[,;]+$/, '').trim()
+  // Clean up leftover separators and whitespace
+  remaining = remaining
+    .replace(/[,;]\s*[,;]/g, ',')   // ", ," → ","
+    .replace(/^\s*[,;]\s*/g, '')    // leading comma
+    .replace(/[,;]\s*$/g, '')       // trailing comma
+    .replace(/\s+/g, ' ')
+    .trim()
 
   return { project, assignee, reviewer, remaining }
 }
