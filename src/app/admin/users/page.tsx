@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
+interface Department { id: string; name: string; }
 interface AdminUser {
   id: string;
   name: string;
@@ -10,6 +11,7 @@ interface AdminUser {
   isAdmin: boolean;
   blocked: boolean;
   created_at: string;
+  department: { id: string; name: string } | null;
 }
 
 function formatDate(d: string) {
@@ -18,6 +20,7 @@ function formatDate(d: string) {
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [depts, setDepts] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -25,9 +28,12 @@ export default function AdminUsersPage() {
   async function load() {
     setLoading(true);
     try {
-      const r = await fetch("/api/admin/users");
-      if (!r.ok) throw new Error("Failed to load");
-      setUsers(await r.json());
+      const [ur, dr] = await Promise.all([
+        fetch("/api/admin/users").then(r => r.json()),
+        fetch("/api/admin/departments").then(r => r.json()),
+      ]);
+      setUsers(ur);
+      setDepts(dr);
     } catch { setError("Не вдалось завантажити"); }
     finally { setLoading(false); }
   }
@@ -40,6 +46,17 @@ export default function AdminUsersPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ blocked: !user.blocked }),
+    });
+    await load();
+    setBusy(null);
+  }
+
+  async function setDepartment(user: AdminUser, deptId: string | null) {
+    setBusy(user.id);
+    await fetch(`/api/admin/users/${user.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ departmentId: deptId }),
     });
     await load();
     setBusy(null);
@@ -73,9 +90,10 @@ export default function AdminUsersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/60 bg-muted/30">
-                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-6 py-3">Ім'я</th>
+                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-6 py-3">Ім&apos;я</th>
                 <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Email</th>
                 <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Роль</th>
+                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Департамент</th>
                 <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Статус</th>
                 <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Дата реєстрації</th>
                 <th className="px-4 py-3" />
@@ -99,6 +117,23 @@ export default function AdminUsersPage() {
                     ) : (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50">Учасник</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <select
+                      disabled={busy === u.id}
+                      value={u.department?.id ?? ""}
+                      onChange={(e) => setDepartment(u, e.target.value || null)}
+                      className={cn(
+                        "text-xs rounded-lg px-2 py-1 border border-border/60 bg-background text-foreground",
+                        "focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer",
+                        "disabled:opacity-40 disabled:cursor-not-allowed"
+                      )}
+                    >
+                      <option value="">— без департаменту —</option>
+                      {depts.map(d => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-4 py-3.5">
                     {u.blocked ? (
