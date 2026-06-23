@@ -26,9 +26,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Cannot block yourself" }, { status: 400 });
 
   const body = await req.json();
-  const data: { blocked?: boolean; departmentId?: string | null } = {};
+  const data: { blocked?: boolean; departmentId?: string | null; isAdmin?: boolean } = {};
   if (typeof body.blocked === "boolean") data.blocked = body.blocked;
   if ("departmentId" in body) data.departmentId = body.departmentId ?? null;
+  if (typeof body.isAdmin === "boolean") data.isAdmin = body.isAdmin;
   const user = await prisma.user.update({ where: { id: params.id }, data });
   return NextResponse.json(user);
 }

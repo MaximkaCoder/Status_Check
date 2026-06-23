@@ -18,6 +18,78 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString("uk-UA", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
+function RolePicker({ user, busy, onChange }: {
+  user: AdminUser; busy: boolean; onChange: (isAdmin: boolean) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+
+  const roles = [
+    { label: "Адмін", value: true },
+    { label: "Учасник", value: false },
+  ];
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => setOpen(v => !v)}
+        className={cn(
+          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
+          "text-xs font-semibold border-2 transition-all duration-150 cursor-pointer",
+          "disabled:opacity-40 disabled:cursor-not-allowed",
+          user.isAdmin
+            ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+            : "border-border text-muted-foreground hover:border-slate-400"
+        )}
+      >
+        <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", user.isAdmin ? "bg-indigo-500" : "bg-slate-400")} />
+        {user.isAdmin ? "Адмін" : "Учасник"}
+        <svg className={cn("h-3 w-3 transition-transform", open && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className={cn(
+          "absolute left-0 top-full mt-1.5 z-50 min-w-[130px]",
+          "rounded-xl border border-border/60 bg-white dark:bg-[#0f1029]",
+          "shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]",
+          "py-1.5 overflow-hidden"
+        )}>
+          {roles.map(r => {
+            const isActive = user.isAdmin === r.value;
+            return (
+              <button
+                key={String(r.value)}
+                type="button"
+                onClick={() => { setOpen(false); if (!isActive) onChange(r.value); }}
+                className={cn(
+                  "w-full text-left px-3 py-2 text-xs font-semibold flex items-center gap-2 transition-colors duration-100",
+                  isActive
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
+                    : "text-foreground hover:bg-muted/40"
+                )}
+              >
+                <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", isActive ? "bg-indigo-500" : "bg-muted-foreground/40")} />
+                {r.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DeptPicker({ user, depts, busy, onChange }: {
   user: AdminUser;
   depts: Department[];
@@ -148,6 +220,17 @@ export default function AdminUsersPage() {
     setBusy(null);
   }
 
+  async function toggleRole(user: AdminUser, isAdmin: boolean) {
+    setBusy(user.id);
+    await fetch(`/api/admin/users/${user.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isAdmin }),
+    });
+    await load();
+    setBusy(null);
+  }
+
   async function setDepartment(user: AdminUser, deptId: string | null) {
     setBusy(user.id);
     await fetch(`/api/admin/users/${user.id}`, {
@@ -209,11 +292,11 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="px-4 py-3.5 text-muted-foreground">{u.email}</td>
                   <td className="px-4 py-3.5">
-                    {u.isAdmin ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">Адмін</span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/50">Учасник</span>
-                    )}
+                    <RolePicker
+                      user={u}
+                      busy={busy === u.id}
+                      onChange={(isAdmin) => toggleRole(u, isAdmin)}
+                    />
                   </td>
                   <td className="px-4 py-3.5">
                     <DeptPicker
