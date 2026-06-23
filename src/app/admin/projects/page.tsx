@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 interface Project { id: string; name: string; created_at: string }
 
@@ -14,10 +13,6 @@ export default function AdminProjectsPage() {
   const [items, setItems] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
-  const [newName, setNewName] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const newRef = useRef<HTMLInputElement>(null);
 
   async function load() {
     setLoading(true);
@@ -28,18 +23,6 @@ export default function AdminProjectsPage() {
   }
 
   useEffect(() => { load(); }, []);
-
-  async function create() {
-    if (!newName.trim()) return;
-    setCreating(true); setError(null);
-    const r = await fetch("/api/admin/projects", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName.trim() }),
-    });
-    if (!r.ok) { const d = await r.json(); setError(d.error); }
-    else { setNewName(""); await load(); }
-    setCreating(false);
-  }
 
   async function remove(item: Project) {
     if (!confirm(`Видалити проєкт «${item.name}»?`)) return;
@@ -55,37 +38,6 @@ export default function AdminProjectsPage() {
           <h2 className="text-base font-bold text-foreground">Проєкти</h2>
           <p className="text-xs text-muted-foreground mt-0.5">{items.length} проєктів у системі</p>
         </div>
-      </div>
-
-      {/* Create form */}
-      <div className="px-6 py-4 border-b border-border/40 bg-muted/20">
-        <div className="flex gap-2 items-center max-w-md">
-          <input
-            ref={newRef}
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && create()}
-            placeholder="Назва нового проєкту..."
-            className={cn(
-              "flex-1 rounded-xl px-3.5 py-2 text-sm",
-              "bg-white dark:bg-white/[0.06] border border-border/60",
-              "text-foreground placeholder:text-muted-foreground",
-              "focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400",
-              "transition-all duration-150"
-            )}
-          />
-          <button
-            type="button"
-            onClick={create}
-            disabled={creating || !newName.trim()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-500 to-violet-500 text-white disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-opacity"
-          >
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-            Додати
-          </button>
-        </div>
-        {error && <p className="text-xs text-rose-500 mt-2">{error}</p>}
       </div>
 
       {loading ? (

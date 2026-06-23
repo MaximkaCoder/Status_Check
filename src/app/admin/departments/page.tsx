@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface Department { id: string; name: string; created_at: string }
@@ -15,10 +15,7 @@ export default function AdminDepartmentsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
-  const [newName, setNewName] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const newRef = useRef<HTMLInputElement>(null);
+  const [editErr, setEditErr] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -30,26 +27,14 @@ export default function AdminDepartmentsPage() {
 
   useEffect(() => { load(); }, []);
 
-  async function create() {
-    if (!newName.trim()) return;
-    setCreating(true); setError(null);
-    const r = await fetch("/api/admin/departments", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName.trim() }),
-    });
-    if (!r.ok) { const d = await r.json(); setError(d.error); }
-    else { setNewName(""); await load(); }
-    setCreating(false);
-  }
-
   async function save(id: string) {
     if (!editName.trim()) return;
-    setBusy(id); setError(null);
+    setBusy(id); setEditErr(null);
     const r = await fetch(`/api/admin/departments/${id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: editName.trim() }),
     });
-    if (!r.ok) { const d = await r.json(); setError(d.error); }
+    if (!r.ok) { const d = await r.json(); setEditErr(d.error); }
     else { setEditId(null); await load(); }
     setBusy(null);
   }
@@ -68,37 +53,6 @@ export default function AdminDepartmentsPage() {
           <h2 className="text-base font-bold text-foreground">Департаменти</h2>
           <p className="text-xs text-muted-foreground mt-0.5">{items.length} департаментів у системі</p>
         </div>
-      </div>
-
-      {/* Create form */}
-      <div className="px-6 py-4 border-b border-border/40 bg-muted/20">
-        <div className="flex gap-2 items-center max-w-md">
-          <input
-            ref={newRef}
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && create()}
-            placeholder="Назва нового департаменту..."
-            className={cn(
-              "flex-1 rounded-xl px-3.5 py-2 text-sm",
-              "bg-white dark:bg-white/[0.06] border border-border/60",
-              "text-foreground placeholder:text-muted-foreground",
-              "focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400",
-              "transition-all duration-150"
-            )}
-          />
-          <button
-            type="button"
-            onClick={create}
-            disabled={creating || !newName.trim()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-500 to-violet-500 text-white disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-opacity"
-          >
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-            Додати
-          </button>
-        </div>
-        {error && <p className="text-xs text-rose-500 mt-2">{error}</p>}
       </div>
 
       {loading ? (
@@ -138,16 +92,16 @@ export default function AdminDepartmentsPage() {
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-50 cursor-pointer transition-colors">
                       Зберегти
                     </button>
-                    <button type="button" onClick={() => setEditId(null)}
+                    <button type="button" onClick={() => { setEditId(null); setEditErr(null); }}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer transition-colors">
                       Скасувати
                     </button>
                   </>
                 ) : (
                   <>
-                    <button type="button" onClick={() => { setEditId(item.id); setEditName(item.name); setError(null); }}
+                    <button type="button" onClick={() => { setEditId(item.id); setEditName(item.name); setEditErr(null); }}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/[0.10] cursor-pointer transition-colors">
-                      Редагувати
+                      Перейменувати
                     </button>
                     <button type="button" onClick={() => remove(item)} disabled={busy === item.id}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 hover:bg-rose-200 disabled:opacity-50 cursor-pointer transition-colors">
@@ -158,6 +112,7 @@ export default function AdminDepartmentsPage() {
               </div>
             </div>
           ))}
+          {editErr && <p className="text-xs text-rose-500 px-6 py-2">{editErr}</p>}
         </div>
       )}
     </div>
