@@ -11,9 +11,16 @@ import { NotificationBell } from "./NotificationBell";
 
 export function Header() {
   const pathname = usePathname();
-  const isHome = pathname === "/";
   const { t } = useLanguage();
   const { user, logout } = useAuth();
+
+  const ctaConfig = (() => {
+    if (/\/admin\/[^/]+\/[^/]+\/edit$/.test(pathname)) return null;
+    if (pathname.startsWith("/admin/projects")) return { label: "Новий проєкт", href: "/admin/projects/new/edit" };
+    if (pathname.startsWith("/admin/users")) return { label: "Новий користувач", href: "/admin/users/new" };
+    if (pathname.startsWith("/admin/departments")) return { label: "Новий департамент", href: "/admin/departments/new" };
+    return { label: t("newItem"), href: "/items/new" };
+  })();
 
   return (
     <header className={cn(
@@ -122,30 +129,29 @@ export function Header() {
             </div>
           )}
 
-          {/* New Item — only when logged in */}
-          {user && <Link
-            href="/items/new"
+          {/* Context-aware CTA — only when logged in and config exists */}
+          {user && ctaConfig && <Link
+            href={ctaConfig.href}
             className={cn(
               "relative overflow-hidden rounded-xl text-white cursor-pointer group/btn",
               "bg-gradient-to-r from-indigo-500 to-violet-500",
               "border border-indigo-400/30",
               "shadow-[0_4px_14px_rgba(99,102,241,0.45)] hover:shadow-[0_6px_20px_rgba(99,102,241,0.55)]",
               "transition-shadow duration-300",
-              // mobile: square icon button
               "flex h-9 w-9 items-center justify-center sm:hidden",
             )}
-            aria-label={t("newItem")}
+            aria-label={ctaConfig.label}
           >
             <span className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-violet-400 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 ease-out" />
             <svg className="relative h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
           </Link>}
-          {user && <Link
-            href="/items/new"
+          {user && ctaConfig && <Link
+            href={ctaConfig.href}
             className={cn(
               "relative hidden sm:inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold overflow-hidden",
-              "w-[152px] shrink-0",
+              "min-w-[140px] shrink-0",
               "bg-gradient-to-r from-indigo-500 to-violet-500",
               "text-white border border-indigo-400/30",
               "shadow-[0_4px_14px_rgba(99,102,241,0.45)] hover:shadow-[0_6px_20px_rgba(99,102,241,0.55)]",
@@ -153,11 +159,11 @@ export function Header() {
             )}
           >
             <span className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-violet-400 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 ease-out" />
-            <span className="relative flex items-center gap-1.5">
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <span className="relative flex items-center gap-1.5 whitespace-nowrap">
+              <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
-              {t("newItem")}
+              {ctaConfig.label}
             </span>
           </Link>}
         </nav>

@@ -14,11 +14,11 @@ export async function POST(req: NextRequest) {
   const guard = await requireAdmin();
   if ("error" in guard) return guard.error;
 
-  const { name } = await req.json();
+  const { name, description } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: "Name required" }, { status: 400 });
 
   try {
-    const project = await prisma.project.create({ data: { name: name.trim() } });
+    const project = await prisma.project.create({ data: { name: name.trim(), description: description?.trim() || null } });
     return NextResponse.json(project, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Project with this name already exists" }, { status: 409 });
