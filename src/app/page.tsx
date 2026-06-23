@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
 import { isSameDay, startOfMonth } from "date-fns";
 import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,27 @@ import { StatsPanel } from "@/components/dashboard/StatsPanel";
 import { getItemById } from "@/lib/api-client";
 import type { StatusItem } from "@/lib/types";
 
+// Separate component so useSearchParams is inside Suspense
+function NotificationOverlay() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [overlayItem, setOverlayItem] = useState<StatusItem | null>(null);
+
+  useEffect(() => {
+    const itemId = searchParams.get("item");
+    if (!itemId) { setOverlayItem(null); return; }
+    getItemById(itemId).then(setOverlayItem).catch(() => setOverlayItem(null));
+  }, [searchParams]);
+
+  if (!overlayItem) return null;
+  return (
+    <ItemDetailOverlay
+      item={overlayItem}
+      onClose={() => { setOverlayItem(null); router.replace("/"); }}
+    />
+  );
+}
+
 type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
 
 export default function DashboardPage() {
@@ -25,21 +46,9 @@ export default function DashboardPage() {
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [overlayItem, setOverlayItem] = useState<StatusItem | null>(null);
 
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const { t, locale } = useLanguage();
   const { toast } = useToast();
-
-  // Open overlay when ?item=<id> is in URL
-  useEffect(() => {
-    const itemId = searchParams.get("item");
-    if (!itemId) { setOverlayItem(null); return; }
-    getItemById(itemId)
-      .then(setOverlayItem)
-      .catch(() => setOverlayItem(null));
-  }, [searchParams]);
 
   const { items, loading, error, refresh, silentRefresh, removeItem, changeStatus } = useItems({
     month: currentMonth,
@@ -171,12 +180,9 @@ export default function DashboardPage() {
       <FilterDrawer open={filterOpen} onClose={() => setFilterOpen(false)} {...filterProps} />
 
       {/* Item detail overlay — opened via ?item=<id> (e.g. from notifications) */}
-      {overlayItem && (
-        <ItemDetailOverlay
-          item={overlayItem}
-          onClose={() => { setOverlayItem(null); router.replace("/"); }}
-        />
-      )}
+      <Suspense fallback={null}>
+        <NotificationOverlay />
+      </Suspense>
     </div>
   );
 }
