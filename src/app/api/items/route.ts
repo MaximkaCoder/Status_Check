@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { CreateItemSchema, GetItemsQuerySchema } from "@/lib/validations";
@@ -43,15 +44,16 @@ export async function GET(request: NextRequest) {
 
     const { status: statusParam, month } = queryResult.data;
 
+    const session = await getSession();
+    if (!session?.userId) {
+      return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
+    }
+
     // Auto-expire before reading
     await autoExpireOverdue();
 
     // Build where clause
-    type WhereClause = {
-      status?: { in: ("TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG")[] };
-      deadline?: { gte: Date; lte: Date };
-    };
-    const where: WhereClause = {};
+    const where: Prisma.StatusItemWhereInput = {};
 
     if (statusParam) {
       const statusValues = statusParam.split(",").map((s) => s.trim());
@@ -69,8 +71,27 @@ export async function GET(request: NextRequest) {
     if (month) {
       const [year, monthNum] = month.split("-").map(Number);
       const start = new Date(year, monthNum - 1, 1, 0, 0, 0, 0);
-      const end = new Date(year, monthNum, 0, 23, 59, 59, 999); // last day of month
+      const end = new Date(year, monthNum, 0, 23, 59, 59, 999);
       where.deadline = { gte: start, lte: end };
+    }
+
+    // Non-admins see only items where they are creator/assignee/reviewer or member of the project
+    if (!session.isAdmin) {
+      const memberProjects = await prisma.projectMember.findMany({
+        where: { userId: session.userId },
+        include: { project: { select: { name: true } } },
+      });
+      const memberProjectNames = memberProjects.map((mp) => mp.project.name);
+
+      const visibilityFilter: Prisma.StatusItemWhereInput = {
+        OR: [
+          { creator_name: session.name },
+          { assignee: session.name },
+          { reviewer: session.name },
+          ...(memberProjectNames.length > 0 ? [{ project: { in: memberProjectNames } }] : []),
+        ],
+      };
+      where.AND = [visibilityFilter];
     }
 
     const items = await prisma.statusItem.findMany({
