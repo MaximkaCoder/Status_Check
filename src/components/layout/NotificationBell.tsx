@@ -135,11 +135,10 @@ export function NotificationBell() {
           className={cn(
             "absolute right-0 top-10 z-50",
             "w-80 rounded-2xl",
-            "bg-white/80 dark:bg-[#0f1029]/90",
-            "backdrop-blur-xl",
-            "border border-white/60 dark:border-white/[0.10]",
-            "shadow-[0_8px_32px_rgba(0,0,0,0.12),0_1px_0_rgba(255,255,255,0.8)]",
-            "dark:shadow-[0_8px_32px_rgba(0,0,0,0.5),0_1px_0_rgba(255,255,255,0.04)]",
+            "bg-white dark:bg-[#0f1029]",
+            "border border-slate-200 dark:border-white/[0.10]",
+            "shadow-[0_8px_32px_rgba(0,0,0,0.18),0_1px_0_rgba(255,255,255,0.9)]",
+            "dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)]",
             "overflow-hidden"
           )}
         >
