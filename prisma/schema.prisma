@@ -15,9 +15,10 @@ enum Status {
 }
 
 model Project {
-  id         String   @id @default(cuid())
-  name       String   @unique
-  created_at DateTime @default(now()) @map("created_at")
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  created_at  DateTime @default(now()) @map("created_at")
 
   @@map("projects")
 }

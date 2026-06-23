@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface Project { id: string; name: string; created_at: string }
@@ -13,8 +14,6 @@ export default function AdminProjectsPage() {
   const [items, setItems] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,18 +39,6 @@ export default function AdminProjectsPage() {
     if (!r.ok) { const d = await r.json(); setError(d.error); }
     else { setNewName(""); await load(); }
     setCreating(false);
-  }
-
-  async function save(id: string) {
-    if (!editName.trim()) return;
-    setBusy(id); setError(null);
-    const r = await fetch(`/api/admin/projects/${id}`, {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editName.trim() }),
-    });
-    if (!r.ok) { const d = await r.json(); setError(d.error); }
-    else { setEditId(null); await load(); }
-    setBusy(null);
   }
 
   async function remove(item: Project) {
@@ -116,45 +103,21 @@ export default function AdminProjectsPage() {
                 </svg>
               </div>
 
-              {editId === item.id ? (
-                <input
-                  autoFocus
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") save(item.id); if (e.key === "Escape") setEditId(null); }}
-                  className="flex-1 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-white/[0.06] border border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 text-foreground"
-                />
-              ) : (
-                <span className="flex-1 text-sm font-medium text-foreground">{item.name}</span>
-              )}
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium text-foreground">{item.name}</span>
+              </div>
 
               <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(item.created_at)}</span>
 
               <div className="flex gap-1.5 flex-shrink-0">
-                {editId === item.id ? (
-                  <>
-                    <button type="button" onClick={() => save(item.id)} disabled={busy === item.id}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-50 cursor-pointer transition-colors">
-                      Зберегти
-                    </button>
-                    <button type="button" onClick={() => setEditId(null)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer transition-colors">
-                      Скасувати
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button type="button" onClick={() => { setEditId(item.id); setEditName(item.name); setError(null); }}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/[0.10] cursor-pointer transition-colors">
-                      Редагувати
-                    </button>
-                    <button type="button" onClick={() => remove(item)} disabled={busy === item.id}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 hover:bg-rose-200 disabled:opacity-50 cursor-pointer transition-colors">
-                      Видалити
-                    </button>
-                  </>
-                )}
+                <Link href={`/admin/projects/${item.id}/edit`}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/[0.10] cursor-pointer transition-colors">
+                  Редагувати
+                </Link>
+                <button type="button" onClick={() => remove(item)} disabled={busy === item.id}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 hover:bg-rose-200 disabled:opacity-50 cursor-pointer transition-colors">
+                  Видалити
+                </button>
               </div>
             </div>
           ))}
