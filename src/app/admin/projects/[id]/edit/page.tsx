@@ -43,14 +43,26 @@ function UserPicker({ allUsers, members, projectId, onAdd }: {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
+    function h(e: MouseEvent) {
+      if (
+        triggerRef.current && !triggerRef.current.contains(e.target as Node) &&
+        dropRef.current && !dropRef.current.contains(e.target as Node)
+      ) setOpen(false);
+    }
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, [open]);
+
+  function openDropdown() {
+    if (triggerRef.current) setRect(triggerRef.current.getBoundingClientRect());
+    setOpen(v => !v);
+  }
 
   const memberIds = new Set(members.map(m => m.userId));
   const available = allUsers.filter(u =>
@@ -69,11 +81,12 @@ function UserPicker({ allUsers, members, projectId, onAdd }: {
   }
 
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
+        ref={triggerRef}
         type="button"
         disabled={busy}
-        onClick={() => setOpen(v => !v)}
+        onClick={openDropdown}
         className={cn(
           "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
           "text-xs font-semibold border-2 transition-all duration-150 cursor-pointer",
@@ -88,13 +101,15 @@ function UserPicker({ allUsers, members, projectId, onAdd }: {
         Додати користувача
       </button>
 
-      {open && (
-        <div className={cn(
-          "absolute left-0 top-full mt-1.5 z-50 w-72",
-          "rounded-xl border border-border/60 bg-white dark:bg-[#0f1029]",
-          "shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]",
-          "overflow-hidden"
-        )}>
+      {open && rect && (
+        <div
+          ref={dropRef}
+          style={{ position: "fixed", top: rect.bottom + 6, left: rect.left, width: 288, zIndex: 9999 }}
+          className={cn(
+            "rounded-xl border border-border/60 bg-white dark:bg-[#0f1029]",
+            "shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]",
+            "overflow-hidden"
+          )}>
           <div className="p-2 border-b border-border/40">
             <input
               autoFocus
@@ -125,7 +140,7 @@ function UserPicker({ allUsers, members, projectId, onAdd }: {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
