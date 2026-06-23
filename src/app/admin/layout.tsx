@@ -47,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (loading || !user?.isAdmin) return null;
 
-  const isEditPage = /\/admin\/[^/]+\/[^/]+\/edit$/.test(pathname);
+  const isEditPage = /\/admin\/[^/]+\//.test(pathname);
 
   return (
     <div className="mx-auto max-w-5xl xl:max-w-[1340px] px-4 py-8">
