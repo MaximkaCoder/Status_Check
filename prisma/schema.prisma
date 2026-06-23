@@ -95,21 +95,34 @@ model Notification {
 }
 
 model StatusItem {
-  id           String    @id @default(cuid())
+  id           String     @id @default(cuid())
   title        String
   description  String?
   deadline     DateTime?
-  status       Status    @default(TO_CHECK)
+  status       Status     @default(TO_CHECK)
   creator_name String
   project      String?
   assignee     String?
   reviewer     String?
-  created_at   DateTime  @default(now()) @map("created_at")
-  updated_at   DateTime  @updatedAt @map("updated_at")
+  created_at   DateTime   @default(now()) @map("created_at")
+  updated_at   DateTime   @updatedAt @map("updated_at")
+  files        ItemFile[]
 
   @@index([deadline])
   @@index([status])
   @@index([deadline, status])
   @@index([created_at])
   @@map("status_items")
+}
+
+model ItemFile {
+  id         String     @id @default(cuid())
+  itemId     String
+  item       StatusItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  name       String
+  url        String
+  size       Int
+  created_at DateTime   @default(now()) @map("created_at")
+
+  @@map("item_files")
 }

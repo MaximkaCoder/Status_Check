@@ -30,6 +30,7 @@ interface ItemFormProps {
   defaultValues?: Partial<ItemFormValues>;
   mode: "create" | "edit";
   itemId?: string;
+  onCreated?: (id: string) => void;
 }
 
 const USER_SETTABLE_STATUSES: Status[] = ["TO_CHECK", "EXPIRED", "DONE", "NOT_ACTUAL", "IDEAS_BACKLOG"];
@@ -109,7 +110,7 @@ function FieldError({ message, id }: { message?: string; id?: string }) {
   );
 }
 
-export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
+export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormProps) {
   const router = useRouter();
   const { t, locale } = useLanguage();
   const { toast } = useToast();
@@ -167,7 +168,7 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
     setApiError(null);
     try {
       if (mode === "create") {
-        await createItem({
+        const created = await createItem({
           title: title.trim(),
           description: description.trim() || undefined,
           deadline: deadline ? new Date(deadline).toISOString() : null,
@@ -180,6 +181,7 @@ export function ItemForm({ defaultValues, mode, itemId }: ItemFormProps) {
           locale === "uk" ? "Задачу створено" : "Item created successfully",
           "success"
         );
+        if (onCreated) { onCreated(created.id); return; }
       } else {
         if (!itemId) throw new Error("itemId is required in edit mode");
         await updateItem(itemId, {

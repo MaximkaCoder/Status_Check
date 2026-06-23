@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { TabSwitcher } from "@/components/forms/TabSwitcher";
 import { NLInputForm } from "@/components/forms/NLInputForm";
@@ -19,6 +20,7 @@ interface Prefill {
 
 export default function NewItemPage() {
   const { t } = useLanguage();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("manual");
   const [prefill, setPrefill] = useState<Prefill>({});
   const [formKey, setFormKey] = useState(0);
@@ -60,16 +62,46 @@ export default function NewItemPage() {
       )}
 
       {activeTab === "manual" && (
-        <div className="rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-scale-in">
-          {hasPrefill && (
-            <div className="mb-5 rounded-xl border border-indigo-200/60 dark:border-indigo-500/25 bg-indigo-50/60 dark:bg-indigo-500/10 px-4 py-3 text-sm text-indigo-700 dark:text-indigo-300 flex items-start gap-2.5 animate-fade-in">
-              <svg className="h-4 w-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="font-medium">{t("prefillNotice")}</span>
+        <div className="space-y-6 animate-scale-in">
+          <div className="rounded-2xl border border-border/60 bg-card shadow-card p-6">
+            {hasPrefill && (
+              <div className="mb-5 rounded-xl border border-indigo-200/60 dark:border-indigo-500/25 bg-indigo-50/60 dark:bg-indigo-500/10 px-4 py-3 text-sm text-indigo-700 dark:text-indigo-300 flex items-start gap-2.5 animate-fade-in">
+                <svg className="h-4 w-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-medium">{t("prefillNotice")}</span>
+              </div>
+            )}
+            <ItemForm
+              key={formKey}
+              mode="create"
+              defaultValues={prefill}
+              onCreated={(id) => router.push(`/items/${id}/edit`)}
+            />
+          </div>
+
+          {/* Files — disabled until item is saved */}
+          <div className="rounded-2xl border border-border/60 bg-card shadow-card p-6 opacity-60">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm font-bold text-foreground">Файли</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">макс. 20 МБ на файл</p>
+              </div>
+              <button
+                type="button"
+                disabled
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-violet-400/60 text-violet-600 dark:text-violet-400 disabled:cursor-not-allowed"
+              >
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Завантажити
+              </button>
             </div>
-          )}
-          <ItemForm key={formKey} mode="create" defaultValues={prefill} />
+            <p className="text-xs text-muted-foreground py-4 text-center border border-dashed border-border/60 rounded-xl">
+              Файли можна додати після збереження задачі
+            </p>
+          </div>
         </div>
       )}
     </div>

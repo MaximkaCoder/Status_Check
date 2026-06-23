@@ -60,6 +60,7 @@ export default function ViewItemPage() {
   const { user } = useAuth();
 
   const [item, setItem] = useState<StatusItem | null>(null);
+  const [files, setFiles] = useState<{ id: string; name: string; url: string; size: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,7 +68,12 @@ export default function ViewItemPage() {
     if (!id) return;
     let cancelled = false;
     getItemById(id)
-      .then((data) => { if (!cancelled) setItem(data); })
+      .then(async (data) => {
+        if (cancelled) return;
+        setItem(data);
+        const fr = await fetch(`/api/items/${id}/files`).catch(() => null);
+        if (!cancelled && fr?.ok) setFiles(await fr.json());
+      })
       .catch((err) => {
         if (!cancelled) {
           const msg = err instanceof Error ? err.message : t("failedLoad");
@@ -234,6 +240,38 @@ export default function ViewItemPage() {
             </Field>
           )}
         </div>
+
+        {/* Files */}
+        {files.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Файли</p>
+            <div className="space-y-2">
+              {files.map(f => {
+                const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+                const icon = ["jpg","jpeg","png","gif","webp","svg"].includes(ext) ? "🖼"
+                  : ext === "pdf" ? "📄"
+                  : ["doc","docx"].includes(ext) ? "📝"
+                  : ["xls","xlsx","csv"].includes(ext) ? "📊"
+                  : ["zip","rar","7z"].includes(ext) ? "📦" : "📎";
+                const size = f.size < 1024 ? `${f.size} B`
+                  : f.size < 1024*1024 ? `${(f.size/1024).toFixed(1)} KB`
+                  : `${(f.size/1024/1024).toFixed(1)} MB`;
+                return (
+                  <div key={f.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/60 bg-muted/20">
+                    <span className="text-lg flex-shrink-0 leading-none">{icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <a href={f.url} target="_blank" rel="noreferrer"
+                        className="text-xs font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 truncate block transition-colors">
+                        {f.name}
+                      </a>
+                      <p className="text-[10px] text-muted-foreground">{size}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
