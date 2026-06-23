@@ -71,7 +71,13 @@ export default function ViewItemPage() {
       .catch((err) => {
         if (!cancelled) {
           const msg = err instanceof Error ? err.message : t("failedLoad");
-          setError(msg.includes("404") || msg.toLowerCase().includes("not found") ? t("itemNotFound") : msg);
+          setError(
+            msg.includes("403") || msg.toLowerCase().includes("доступу")
+              ? "У вас немає доступу до цього завдання"
+              : msg.includes("404") || msg.toLowerCase().includes("not found")
+              ? t("itemNotFound")
+              : msg
+          );
         }
       })
       .finally(() => { if (!cancelled) setLoading(false); });

@@ -5,6 +5,18 @@ import { UpdateItemSchema } from "@/lib/validations";
 import type { StatusItem } from "@prisma/client";
 import { notifyAssignees } from "@/lib/notify";
 
+async function canView(userId: string, userName: string, isAdmin: boolean, item: StatusItem): Promise<boolean> {
+  if (isAdmin) return true;
+  if (item.creator_name === userName || item.assignee === userName || item.reviewer === userName) return true;
+  if (item.project) {
+    const membership = await prisma.projectMember.findFirst({
+      where: { userId, project: { name: item.project } },
+    });
+    return !!membership;
+  }
+  return false;
+}
+
 function canModify(userName: string, isAdmin: boolean, item: StatusItem): boolean {
   if (isAdmin) return true;
   return item.creator_name === userName ||
@@ -22,10 +34,21 @@ type RouteParams = { params: { id: string } };
 // ---------------------------------------------------------------------------
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
+    const session = await getSession();
+    if (!session?.userId) {
+      return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
+    }
+
     const item = await prisma.statusItem.findUnique({ where: { id: params.id } });
     if (!item) {
       return NextResponse.json({ error: "Item not found", code: "NOT_FOUND" }, { status: 404 });
     }
+
+    const allowed = await canView(session.userId, session.name, session.isAdmin ?? false, item);
+    if (!allowed) {
+      return NextResponse.json({ error: "У вас немає доступу до цього завдання", code: "FORBIDDEN" }, { status: 403 });
+    }
+
     return NextResponse.json(item);
   } catch (error) {
     console.error(`GET /api/items/${params.id} error:`, error);
