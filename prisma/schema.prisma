@@ -23,14 +23,35 @@ model Project {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  name       String
-  email      String   @unique
-  password   String
-  isAdmin    Boolean  @default(false)
-  created_at DateTime @default(now()) @map("created_at")
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  password      String
+  isAdmin       Boolean        @default(false)
+  created_at    DateTime       @default(now()) @map("created_at")
+  notifications Notification[]
 
   @@map("users")
+}
+
+enum NotificationType {
+  ASSIGNED_ASSIGNEE
+  ASSIGNED_REVIEWER
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       NotificationType
+  itemId     String
+  itemTitle  String
+  read       Boolean          @default(false)
+  created_at DateTime         @default(now()) @map("created_at")
+
+  @@index([userId, read])
+  @@index([userId, created_at])
+  @@map("notifications")
 }
 
 model StatusItem {

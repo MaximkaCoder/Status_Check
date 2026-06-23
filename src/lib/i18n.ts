@@ -100,6 +100,13 @@ export const translations = {
     errorProjectRequired: 'Project is required',
     errorAssigneeRequired: 'Assignee is required',
     errorReviewerRequired: 'Reviewer is required',
+    // Notifications
+    notifications: 'Notifications',
+    noNotifications: 'No notifications',
+    markAllRead: 'Mark all as read',
+    notifAssignedAssignee: 'You were assigned as executor',
+    notifAssignedReviewer: 'You were assigned as reviewer',
+    notifTask: 'Task',
   },
   uk: {
     appName: 'Status Check',
@@ -188,6 +195,13 @@ export const translations = {
     errorProjectRequired: "Проєкт обов'язковий",
     errorAssigneeRequired: "Виконавець обов'язковий",
     errorReviewerRequired: "Перевіряючий обов'язковий",
+    // Notifications
+    notifications: 'Сповіщення',
+    noNotifications: 'Немає сповіщень',
+    markAllRead: 'Позначити всі прочитаними',
+    notifAssignedAssignee: 'Вас призначено виконавцем',
+    notifAssignedReviewer: 'Вас призначено перевіряючим',
+    notifTask: 'Задача',
   },
 } as const
 

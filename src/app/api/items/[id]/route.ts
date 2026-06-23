@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { UpdateItemSchema } from "@/lib/validations";
 import type { StatusItem } from "@prisma/client";
+import { notifyAssignees } from "@/lib/notify";
 
 function canModify(userName: string, isAdmin: boolean, item: StatusItem): boolean {
   if (isAdmin) return true;
@@ -81,6 +82,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(data.reviewer !== undefined && { reviewer: data.reviewer }),
       },
     });
+
+    // Notify only when assignee/reviewer actually changed
+    const newAssignee = data.assignee !== undefined ? data.assignee : existing.assignee;
+    const newReviewer = data.reviewer !== undefined ? data.reviewer : existing.reviewer;
+    const assigneeChanged = data.assignee !== undefined && data.assignee !== existing.assignee;
+    const reviewerChanged = data.reviewer !== undefined && data.reviewer !== existing.reviewer;
+    notifyAssignees(updated.id, updated.title, newAssignee, newReviewer, assigneeChanged, reviewerChanged).catch(() => {});
 
     return NextResponse.json(updated);
   } catch (error) {

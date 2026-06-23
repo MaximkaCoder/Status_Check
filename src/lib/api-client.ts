@@ -106,6 +106,38 @@ export async function getItemById(id: string): Promise<StatusItem> {
 }
 
 // ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+export type NotificationType = "ASSIGNED_ASSIGNEE" | "ASSIGNED_REVIEWER";
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  itemId: string;
+  itemTitle: string;
+  read: boolean;
+  created_at: string;
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[];
+  unreadCount: number;
+}
+
+export async function getNotifications(): Promise<NotificationsResponse> {
+  return apiFetch<NotificationsResponse>("/api/notifications");
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  await apiFetch<{ success: boolean }>(`/api/notifications/${id}/read`, { method: "PATCH" });
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await apiFetch<{ success: boolean }>("/api/notifications", { method: "PATCH" });
+}
+
+// ---------------------------------------------------------------------------
 // AI / NL parse
 // ---------------------------------------------------------------------------
 

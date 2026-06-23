@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { CreateItemSchema, GetItemsQuerySchema } from "@/lib/validations";
+import { notifyAssignees } from "@/lib/notify";
 
 // ---------------------------------------------------------------------------
 // Helper — run auto-expire in a single UPDATE query
@@ -123,6 +124,9 @@ export async function POST(request: NextRequest) {
         status: "TO_CHECK",
       },
     });
+
+    // Notify assignee and reviewer (fire-and-forget)
+    notifyAssignees(item.id, item.title, assignee, reviewer, !!assignee, !!reviewer).catch(() => {});
 
     return NextResponse.json(item, { status: 201 });
   } catch (error) {

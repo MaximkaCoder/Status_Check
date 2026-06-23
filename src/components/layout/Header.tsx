@@ -7,6 +7,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeToggle } from "./ThemeToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { NotificationBell } from "./NotificationBell";
 
 export function Header() {
   const pathname = usePathname();
@@ -59,6 +60,9 @@ export function Header() {
         <nav className="flex items-center gap-2" aria-label="Main navigation">
           <ThemeToggle />
           <LanguageSwitcher />
+
+          {/* Notification bell */}
+          {user && <NotificationBell />}
 
           {/* User pill + logout */}
           {user && (
