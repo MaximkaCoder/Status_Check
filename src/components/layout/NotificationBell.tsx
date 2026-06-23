@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -33,6 +34,7 @@ function timeAgo(dateStr: string, locale: string): string {
 
 export function NotificationBell() {
   const { t, locale } = useLanguage();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -70,10 +72,14 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  async function handleMarkRead(id: string) {
-    await markNotificationRead(id).catch(() => {});
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    setUnreadCount((c) => Math.max(0, c - 1));
+  async function handleClick(n: Notification) {
+    if (!n.read) {
+      await markNotificationRead(n.id).catch(() => {});
+      setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+      setUnreadCount((c) => Math.max(0, c - 1));
+    }
+    setOpen(false);
+    router.push(`/items/${n.itemId}/edit`);
   }
 
   async function handleMarkAll() {
@@ -168,14 +174,14 @@ export function NotificationBell() {
                 <button
                   key={n.id}
                   type="button"
-                  onClick={() => !n.read && handleMarkRead(n.id)}
+                  onClick={() => handleClick(n)}
                   className={cn(
                     "w-full text-left px-4 py-3 flex items-start gap-3",
                     "border-b border-black/[0.04] dark:border-white/[0.05] last:border-0",
-                    "transition-colors duration-100",
+                    "transition-colors duration-100 cursor-pointer",
                     !n.read
-                      ? "bg-indigo-50/60 dark:bg-indigo-500/[0.08] hover:bg-indigo-50 dark:hover:bg-indigo-500/[0.12] cursor-pointer"
-                      : "opacity-60 cursor-default"
+                      ? "bg-indigo-50/60 dark:bg-indigo-500/[0.08] hover:bg-indigo-50 dark:hover:bg-indigo-500/[0.12]"
+                      : "opacity-60 hover:opacity-80"
                   )}
                 >
                   {/* Dot */}
