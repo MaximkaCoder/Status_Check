@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface Department { id: string; name: string; }
@@ -16,6 +16,103 @@ interface AdminUser {
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("uk-UA", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function DeptPicker({ user, depts, busy, onChange }: {
+  user: AdminUser;
+  depts: Department[];
+  busy: boolean;
+  onChange: (deptId: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  function pick(deptId: string | null) {
+    setOpen(false);
+    if (deptId !== (user.department?.id ?? null)) onChange(deptId);
+  }
+
+  const hasDept = !!user.department;
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => setOpen(v => !v)}
+        className={cn(
+          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
+          "text-xs font-semibold border-2 transition-all duration-150 cursor-pointer",
+          "disabled:opacity-40 disabled:cursor-not-allowed",
+          hasDept
+            ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+            : "border-border text-muted-foreground hover:border-indigo-300 hover:text-indigo-600"
+        )}
+      >
+        {hasDept && <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 inline-block flex-shrink-0" />}
+        <span>{user.department?.name ?? "— без департаменту —"}</span>
+        <svg className={cn("h-3 w-3 transition-transform", open && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className={cn(
+          "absolute left-0 top-full mt-1.5 z-50 min-w-[180px]",
+          "rounded-xl border border-border/60 bg-white dark:bg-[#0f1029]",
+          "shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]",
+          "py-1.5 overflow-hidden"
+        )}>
+          <button
+            type="button"
+            onClick={() => pick(null)}
+            className={cn(
+              "w-full text-left px-3 py-2 text-xs font-semibold flex items-center gap-2",
+              "transition-colors duration-100",
+              !user.department
+                ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
+                : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+            )}
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", !user.department ? "bg-indigo-500" : "bg-transparent border border-border")} />
+            — без департаменту —
+          </button>
+
+          <div className="my-1 h-px bg-border/40 mx-2" />
+
+          {depts.map(d => {
+            const isActive = user.department?.id === d.id;
+            return (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => pick(d.id)}
+                className={cn(
+                  "w-full text-left px-3 py-2 text-xs font-semibold flex items-center gap-2",
+                  "transition-colors duration-100",
+                  isActive
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
+                    : "text-foreground hover:bg-muted/40"
+                )}
+              >
+                <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", isActive ? "bg-indigo-500" : "bg-muted-foreground/40")} />
+                {d.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function AdminUsersPage() {
@@ -119,21 +216,12 @@ export default function AdminUsersPage() {
                     )}
                   </td>
                   <td className="px-4 py-3.5">
-                    <select
-                      disabled={busy === u.id}
-                      value={u.department?.id ?? ""}
-                      onChange={(e) => setDepartment(u, e.target.value || null)}
-                      className={cn(
-                        "text-xs rounded-lg px-2 py-1 border border-border/60 bg-background text-foreground",
-                        "focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer",
-                        "disabled:opacity-40 disabled:cursor-not-allowed"
-                      )}
-                    >
-                      <option value="">— без департаменту —</option>
-                      {depts.map(d => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-                      ))}
-                    </select>
+                    <DeptPicker
+                      user={u}
+                      depts={depts}
+                      busy={busy === u.id}
+                      onChange={(deptId) => setDepartment(u, deptId)}
+                    />
                   </td>
                   <td className="px-4 py-3.5">
                     {u.blocked ? (
