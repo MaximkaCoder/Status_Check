@@ -15,12 +15,37 @@ enum Status {
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String          @id @default(cuid())
+  name        String          @unique
   description String?
-  created_at  DateTime @default(now()) @map("created_at")
+  members     ProjectMember[]
+  files       ProjectFile[]
+  created_at  DateTime        @default(now()) @map("created_at")
 
   @@map("projects")
+}
+
+model ProjectMember {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@map("project_members")
+}
+
+model ProjectFile {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name       String
+  url        String
+  size       Int
+  created_at DateTime @default(now()) @map("created_at")
+
+  @@map("project_files")
 }
 
 model User {
@@ -33,7 +58,8 @@ model User {
   departmentId   String?
   department     Department?    @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   created_at     DateTime       @default(now()) @map("created_at")
-  notifications  Notification[]
+  notifications   Notification[]
+  projectMembers  ProjectMember[]
 
   @@index([departmentId])
   @@map("users")

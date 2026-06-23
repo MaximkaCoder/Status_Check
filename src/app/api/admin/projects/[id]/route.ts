@@ -8,7 +8,13 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const guard = await requireAdmin();
   if ("error" in guard) return guard.error;
 
-  const project = await prisma.project.findUnique({ where: { id: params.id } });
+  const project = await prisma.project.findUnique({
+    where: { id: params.id },
+    include: {
+      members: { include: { user: { select: { id: true, name: true, email: true } } }, orderBy: { id: "asc" } },
+      files: { orderBy: { created_at: "desc" } },
+    },
+  });
   if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(project);
 }

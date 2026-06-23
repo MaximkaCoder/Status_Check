@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="Generator" content="Microsoft Word">
+<style>
+  body {
+    font-family: "Calibri", sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    margin: 2.5cm 3cm;
+    color: #1a1a1a;
+  }
+  h1 {
+    font-size: 20pt;
+    font-weight: bold;
+    color: #2e3b8c;
+    border-bottom: 3px solid #2e3b8c;
+    padding-bottom: 6px;
+    margin-top: 24pt;
+    margin-bottom: 12pt;
+  }
+  h2 {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #1f3a6e;
+    margin-top: 18pt;
+    margin-bottom: 8pt;
+    border-left: 4px solid #4f6ed4;
+    padding-left: 8px;
+  }
+  h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #2c4a8a;
+    margin-top: 12pt;
+    margin-bottom: 6pt;
+  }
+  p {
+    margin: 6pt 0;
+    text-align: justify;
+  }
+  pre, code {
+    font-family: "Courier New", monospace;
+    font-size: 9pt;
+    background: #f4f6fa;
+    border: 1px solid #d0d7e8;
+    border-radius: 4px;
+    padding: 2px 5px;
+  }
+  pre {
+    display: block;
+    padding: 10px 14px;
+    margin: 8pt 0;
+    line-height: 1.4;
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10pt 0;
+    font-size: 10pt;
+  }
+  th {
+    background: #2e3b8c;
+    color: white;
+    padding: 7px 10px;
+    text-align: left;
+    font-weight: bold;
+  }
+  td {
+    padding: 6px 10px;
+    border: 1px solid #c5cde8;
+  }
+  tr:nth-child(even) td {
+    background: #f0f3fb;
+  }
+  ul, ol {
+    margin: 6pt 0 6pt 20pt;
+    padding: 0;
+  }
+  li {
+    margin: 3pt 0;
+  }
+  .title-block {
+    text-align: center;
+    margin-bottom: 30pt;
+    padding: 20pt;
+    background: linear-gradient(135deg, #eef1fb, #f8f0ff);
+    border-radius: 8px;
+    border: 2px solid #4f6ed4;
+  }
+  .title-block h1 {
+    border: none;
+    font-size: 24pt;
+    color: #1e2d7a;
+    margin: 0 0 6pt 0;
+  }
+  .title-block .subtitle {
+    font-size: 13pt;
+    color: #5a6ab0;
+    margin: 4pt 0;
+  }
+  .title-block .date {
+    font-size: 11pt;
+    color: #8a8fa8;
+    margin-top: 8pt;
+  }
+  .note {
+    background: #fff8e8;
+    border-left: 4px solid #f0b429;
+    padding: 8px 12px;
+    margin: 10pt 0;
+    font-size: 10pt;
+  }
+  .pro { color: #1a7a3a; font-weight: bold; }
+  .con { color: #a02020; font-weight: bold; }
+  .section-number {
+    display: inline-block;
+    background: #2e3b8c;
+    color: white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    text-align: center;
+    line-height: 22px;
+    font-size: 11pt;
+    font-weight: bold;
+    margin-right: 8px;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #c5cde8;
+    margin: 16pt 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ТИТУЛЬНА СТОРІНКА -->
+<div class="title-block">
+  <h1>Status Check</h1>
+  <div class="subtitle">Спільний трекер зобов'язань та дедлайнів</div>
+  <div class="subtitle">Технічний огляд проєкту для співбесіди</div>
+  <div class="date">Дата підготовки: червень 2026</div>
+</div>
+
+<!-- ========================================= -->
+<h1>Резюме проєкту</h1>
+
+<h2>Що це?</h2>
+<p><strong>Status Check</strong> — корпоративний веб-застосунок для спільного відстеження зобов'язань і дедлайнів у команді. Аналог Trello/Jira, але спрощений і орієнтований на швидку фіксацію домовленостей: хто, що, до коли, у якому проєкті.</p>
+
+<h2>Яку проблему вирішує?</h2>
+<p>У команді домовленості розкидані по чатах, листах і головах. Status Check — єдине місце, де видно всі відкриті зобов'язання, хто відповідальний, який статус, чи не прострочено. Це особливо важливо для менеджерів і ревьюерів, яким потрібен швидкий огляд без зайвих нарад.</p>
+
+<h2>Основні можливості</h2>
+<table>
+  <tr><th>Функція</th><th>Опис</th></tr>
+  <tr><td>Smart Input</td><td>Введення завдання природною мовою (UA/EN) — автоматичне розпізнавання дати, виконавця, проєкту</td></tr>
+  <tr><td>Дашборд</td><td>Адаптивний 3-колонковий layout: список завдань, календар, статистика</td></tr>
+  <tr><td>Статуси</td><td>5 статусів: На перевірці / Прострочено / Виконано / Не актуально / Ідеї</td></tr>
+  <tr><td>Фільтрація</td><td>По статусу, проєкту, виконавцю, рецензенту, місяцю</td></tr>
+  <tr><td>Ролі</td><td>3 рівні доступу: Guest (перегляд) / User (свої завдання) / Admin (всі)</td></tr>
+  <tr><td>Мова</td><td>Повний UI українською та англійською, перемикання без перезавантаження</td></tr>
+  <tr><td>Тема</td><td>Темний і світлий режим</td></tr>
+</table>
+
+<h2>Технічний стек (коротко)</h2>
+<table>
+  <tr><th>Шар</th><th>Технологія</th></tr>
+  <tr><td>Фронтенд + Бекенд</td><td>Next.js 14 (App Router), TypeScript</td></tr>
+  <tr><td>Стилі</td><td>Tailwind CSS, next-themes</td></tr>
+  <tr><td>База даних</td><td>PostgreSQL (Neon serverless) + Prisma ORM</td></tr>
+  <tr><td>Аутентифікація</td><td>JWT (jose) + bcryptjs, httpOnly cookies</td></tr>
+  <tr><td>NL-парсинг</td><td>chrono-node (офлайн, без API)</td></tr>
+  <tr><td>Валідація</td><td>Zod</td></tr>
+  <tr><td>Деплой</td><td>Vercel</td></tr>
+</table>
+
+<h2>Посилання</h2>
+<ul>
+  <li><strong>Продакшн:</strong> <a href="https://status-check-henna.vercel.app">https://status-check-henna.vercel.app</a></li>
+  <li><strong>Демо-акаунт (admin):</strong> <code>1@gmail.com</code> / <code>admin1234</code></li>
+</ul>
+
+<hr>
+
+<!-- ========================================= -->
+<h1><span class="section-number">1</span> Структура проєкту</h1>
+
+<h2>1.1 Загальна архітектура</h2>
+<p>Проєкт — це <strong>fullstack веб-застосунок</strong>, побудований за принципом монорепозиторію: фронтенд і бекенд знаходяться в одній кодовій базі Next.js. Усі API-маршрути — це serverless-функції, які виконуються на Vercel. База даних — PostgreSQL на хмарному сервісі Neon.</p>
+
+<h2>1.2 Дерево директорій</h2>
+<pre>
+MVP/
+├── prisma/                        ← Схема БД та міграції
+│   ├── schema.prisma              ← Моделі даних (User, Project, StatusItem)
+│   ├── seed.ts                    ← Демо-дані (10 користувачів, 18 завдань)
+│   └── migrations/                ← Версіонування структури БД
+│
+├── public/
+│   └── screenshots/               ← Скріншоти для README
+│
+├── scripts/
+│   ├── screenshot.mjs             ← Автоматичне знімання скріншотів
+│   └── set-admin.js               ← CLI для надання admin-ролі
+│
+├── src/
+│   ├── app/                       ← Next.js 14 App Router
+│   │   ├── api/                   ← Бекенд (API endpoints)
+│   │   │   ├── auth/              ← login, logout, register, me
+│   │   │   ├── items/             ← CRUD для завдань
+│   │   │   ├── ai/parse/          ← NL-парсинг тексту
+│   │   │   ├── projects/          ← Список проєктів
+│   │   │   └── users/             ← Список користувачів
+│   │   ├── login/                 ← Сторінка входу
+│   │   ├── register/              ← Сторінка реєстрації
+│   │   ├── items/                 ← Форми: create/edit
+│   │   ├── page.tsx               ← Головна (дашборд)
+│   │   └── layout.tsx             ← Кореневий layout з провайдерами
+│   │
+│   ├── components/
+│   │   ├── dashboard/             ← ItemList, ItemCard, FilterPanel, StatsPanel
+│   │   ├── calendar/              ← MonthCalendar з кольоровими крапками
+│   │   ├── forms/                 ← Ручна форма + Smart NL-форма
+│   │   ├── layout/                ← Header, ThemeToggle, LanguageSwitcher
+│   │   └── ui/                    ← Базові компоненти (Badge, Spinner, Dialog)
+│   │
+│   ├── contexts/
+│   │   ├── AuthContext.tsx        ← Стан сесії користувача
+│   │   ├── LanguageContext.tsx    ← Перемикач мови (UA/EN)
+│   │   └── ToastContext.tsx       ← Сповіщення (toast)
+│   │
+│   ├── hooks/
+│   │   └── useItems.ts            ← Fetch + кеш завдань з фільтрацією
+│   │
+│   ├── lib/
+│   │   ├── auth.ts                ← JWT: signToken / verifyToken / getSession
+│   │   ├── prisma.ts              ← Singleton Prisma client
+│   │   ├── parse-task.ts          ← NL-парсинг (UA→EN переклад + chrono-node)
+│   │   ├── i18n.ts                ← 190+ перекладів (UA + EN)
+│   │   ├── validations.ts         ← Zod-схеми для всіх вхідних даних
+│   │   ├── api-client.ts          ← HTTP-клієнт для запитів до API
+│   │   ├── types.ts               ← TypeScript типи
+│   │   └── utils.ts               ← Допоміжні функції
+│   │
+│   └── middleware.ts              ← Auth guards для всіх маршрутів
+│
+├── .env.local                     ← Секрети (не в git)
+├── .env.example                   ← Шаблон змінних середовища
+├── package.json
+├── tsconfig.json
+├── tailwind.config.ts
+└── next.config.js
+</pre>
+
+<h2>1.3 База даних (Prisma schema)</h2>
+<table>
+  <tr><th>Модель</th><th>Поля</th><th>Призначення</th></tr>
+  <tr>
+    <td><strong>User</strong></td>
+    <td>id, name, email, password (bcrypt), isAdmin, created_at</td>
+    <td>Облікові записи користувачів</td>
+  </tr>
+  <tr>
+    <td><strong>Project</strong></td>
+    <td>id, name (unique), created_at</td>
+    <td>Довідник проєктів</td>
+  </tr>
+  <tr>
+    <td><strong>StatusItem</strong></td>
+    <td>id, title, description, deadline, status, creator_name, project, assignee, reviewer, created_at, updated_at</td>
+    <td>Основна сутність — завдання/зобов'язання</td>
+  </tr>
+</table>
+
+<p><strong>Статуси завдань (enum):</strong> <code>TO_CHECK</code> (на перевірці) · <code>EXPIRED</code> (прострочено) · <code>DONE</code> (виконано) · <code>NOT_ACTUAL</code> (не актуально) · <code>IDEAS_BACKLOG</code> (ідеї/беклог)</p>
+
+<!-- ========================================= -->
+<h1><span class="section-number">2</span> Технологічний стек і причини вибору</h1>
+
+<h2>2.1 TypeScript замість JavaScript або Python</h2>
+<table>
+  <tr><th>Питання</th><th>Рішення</th><th>Причина</th></tr>
+  <tr>
+    <td>TypeScript vs JavaScript</td>
+    <td><strong>TypeScript</strong></td>
+    <td>Статична типізація — менше runtime-помилок. IDE підказує типи Prisma-моделей, API-відповідей, Zod-схем. Рефакторинг безпечніший. Для командного проєкту — обов'язковий стандарт.</td>
+  </tr>
+  <tr>
+    <td>TypeScript vs Python</td>
+    <td><strong>TypeScript</strong></td>
+    <td>Проєкт — веб-застосунок з фронтендом. Python потребував би окремого бекенду (Flask/FastAPI) + окремого фронтенду (React). TypeScript+Next.js — єдина мова для обох шарів, один деплой, менша складність.</td>
+  </tr>
+</table>
+
+<h2>2.2 Next.js 14 (App Router)</h2>
+<table>
+  <tr><th>Альтернатива</th><th>Чому Next.js краще для цього проєкту</th></tr>
+  <tr>
+    <td>React + Express</td>
+    <td>Next.js = фронтенд + бекенд в одному проєкті. Немає потреби в окремому Express-сервері.</td>
+  </tr>
+  <tr>
+    <td>Vite + окремий API</td>
+    <td>Два репозиторії, два деплої. Next.js = один деплой на Vercel.</td>
+  </tr>
+  <tr>
+    <td>Nuxt/SvelteKit</td>
+    <td>Next.js — найпопулярніший React-фреймворк, кращий ринок праці, глибока інтеграція з Vercel.</td>
+  </tr>
+</table>
+<p><strong>App Router</strong> (Next.js 14) використовується замість Pages Router, оскільки підтримує Server Components, краще кешування та вбудовані layout-ієрархії.</p>
+
+<h2>2.3 Prisma ORM + Neon PostgreSQL</h2>
+<table>
+  <tr><th>Компонент</th><th>Причина вибору</th></tr>
+  <tr>
+    <td>Prisma (замість Drizzle, Sequelize, raw SQL)</td>
+    <td>Type-safe запити — TypeScript автодоповнення для моделей. Автоматичні міграції. Зрозумілий schema-файл. Офіційна підтримка Neon.</td>
+  </tr>
+  <tr>
+    <td>Neon PostgreSQL (замість Supabase, PlanetScale)</td>
+    <td>Serverless PostgreSQL — немає витрат у режимі простою. Безкоштовний tier для MVP. Офіційний адаптер для Prisma. Швидкий cold start завдяки connection pooling.</td>
+  </tr>
+  <tr>
+    <td>PostgreSQL (замість MongoDB)</td>
+    <td>Реляційна структура даних (Users, Projects, Items зі зв'язками). Сильна консистентність. SQL — стандарт ринку.</td>
+  </tr>
+</table>
+
+<h2>2.4 JWT + bcryptjs (аутентифікація)</h2>
+<table>
+  <tr><th>Компонент</th><th>Причина</th></tr>
+  <tr>
+    <td>JWT (jose)</td>
+    <td>Stateless-аутентифікація — не потрібна сесійна БД. Токени зберігаються в httpOnly cookies (захист від XSS). Строк дії 30 днів.</td>
+  </tr>
+  <tr>
+    <td>bcryptjs</td>
+    <td>Стандарт хешування паролів. 10 раундів соління — захист від brute-force та rainbow tables.</td>
+  </tr>
+  <tr>
+    <td>Замість NextAuth/Auth.js</td>
+    <td>Простіший контроль. Немає зайвих залежностей. Для MVP з одним методом входу (email+password) власна реалізація достатня.</td>
+  </tr>
+</table>
+
+<h2>2.5 Tailwind CSS</h2>
+<table>
+  <tr><th>Альтернатива</th><th>Чому Tailwind</th></tr>
+  <tr>
+    <td>CSS Modules</td>
+    <td>Tailwind — швидша розробка, утиліт-класи прямо в JSX, не потрібні окремі .css файли.</td>
+  </tr>
+  <tr>
+    <td>Material UI / Chakra UI</td>
+    <td>Готові бібліотеки — жорсткий дизайн. Tailwind — повний контроль над виглядом, унікальний UI.</td>
+  </tr>
+  <tr>
+    <td>Styled Components</td>
+    <td>Tailwind — краща продуктивність (немає CSS-in-JS runtime), менший bundle.</td>
+  </tr>
+</table>
+
+<h2>2.6 chrono-node (NL-парсинг дат)</h2>
+<table>
+  <tr><th>Альтернатива</th><th>Чому chrono-node</th></tr>
+  <tr>
+    <td>OpenAI / Claude API</td>
+    <td>chrono-node — офлайн, безкоштовно, без API-ключа. Для парсингу дат з тексту — достатньо бібліотеки, не потрібен LLM.</td>
+  </tr>
+  <tr>
+    <td>date-fns parse</td>
+    <td>date-fns потребує точного формату. chrono-node розуміє природну мову: "через тиждень", "наступна п'ятниця", "30 червня".</td>
+  </tr>
+</table>
+<p>Для підтримки <strong>української мови</strong> реалізована таблиця перекладів: "через тиждень" → "in 1 week", "наступного понеділка" → "next monday" тощо. Після перекладу рядок передається в chrono-node.</p>
+
+<h2>2.7 Zod (валідація)</h2>
+<p>Zod — runtime-валідація + TypeScript-типи з одного джерела. Схеми визначені в <code>src/lib/validations.ts</code> і використовуються як на вході API, так і у формах. Помилки валідації повертаються клієнту у структурованому вигляді.</p>
+
+<h2>2.8 Vercel (деплой)</h2>
+<p>Vercel = нативна платформа для Next.js. Автодеплой з git push, безкоштовний tier, глобальний CDN, вбудовані Serverless Functions для API-маршрутів. Альтернативи (Railway, Render) складніші в налаштуванні для Next.js.</p>
+
+<!-- ========================================= -->
+<h1><span class="section-number">3</span> Принцип роботи</h1>
+
+<h2>3.1 Загальний потік</h2>
+<pre>
+Браузер  →  Next.js Middleware  →  API Route Handler  →  Prisma  →  Neon PostgreSQL
+                    ↑
+              Перевірка JWT
+              з httpOnly cookie
+</pre>
+
+<h2>3.2 Аутентифікація (покроково)</h2>
+<ol>
+  <li><strong>Реєстрація</strong> (<code>POST /api/auth/register</code>): email + password → bcrypt hash → збереження в БД → підписання JWT → встановлення httpOnly cookie.</li>
+  <li><strong>Вхід</strong> (<code>POST /api/auth/login</code>): email + password → пошук у БД → bcrypt.compare → новий JWT → cookie.</li>
+  <li><strong>Кожен запит</strong>: <code>src/middleware.ts</code> зчитує cookie → верифікує підпис JWT → якщо невалідний — 401/редирект на /login.</li>
+  <li><strong>Вихід</strong> (<code>POST /api/auth/logout</code>): видалення cookie.</li>
+  <li><strong>Клієнт</strong>: <code>AuthContext.tsx</code> зберігає стан поточного користувача, отриманий з <code>GET /api/auth/me</code> при завантаженні застосунку.</li>
+</ol>
+
+<h2>3.3 Ролі та дозволи</h2>
+<table>
+  <tr><th>Роль</th><th>Можливості</th></tr>
+  <tr>
+    <td>Guest (не залогінений)</td>
+    <td>Перегляд тільки (якщо дозволено), немає редагування</td>
+  </tr>
+  <tr>
+    <td>User (залогінений)</td>
+    <td>Повний CRUD для своїх завдань (де є creator, assignee або reviewer = поточний користувач)</td>
+  </tr>
+  <tr>
+    <td>Admin (isAdmin=true)</td>
+    <td>Повний CRUD для всіх завдань, незалежно від автора</td>
+  </tr>
+</table>
+<p>Перевірка прав — на рівні API-хендлера: токен декодується, знаходиться User у БД, порівнюється <code>isAdmin</code> та поля <code>assignee/creator/reviewer</code>.</p>
+
+<h2>3.4 CRUD завдань</h2>
+<ol>
+  <li><strong>GET /api/items</strong>: фільтрація по status та month, запит до Prisma, повернення JSON.</li>
+  <li><strong>POST /api/items</strong>: Zod-валідація тіла → запис у БД → повернення створеного item.</li>
+  <li><strong>PATCH /api/items/[id]/status</strong>: швидка зміна тільки статусу (для drag або кнопок у картці).</li>
+  <li><strong>PUT /api/items/[id]</strong>: оновлення всіх полів з перевіркою прав.</li>
+  <li><strong>DELETE /api/items/[id]</strong>: видалення з перевіркою прав.</li>
+</ol>
+
+<h2>3.5 Smart Input (NL-парсинг)</h2>
+<pre>
+Користувач вводить текст:
+"Перевірити звіт Петра до п'ятниці, проєкт Фінанси"
+         ↓
+POST /api/ai/parse  → src/lib/parse-task.ts
+         ↓
+1. Regex-пошук ключових слів (проєкт, відповідальний, рецензент)
+2. Переклад українських дат: "до п'ятниці" → "till friday"
+3. chrono-node.parseDate() → конкретна дата
+4. Повернення JSON: { title, deadline, project, assignee, reviewer }
+         ↓
+Поля автоматично заповнюються у формі
+</pre>
+
+<h2>3.6 Інтернаціоналізація (i18n)</h2>
+<p>Кастомна реалізація без зовнішніх бібліотек. <code>LanguageContext.tsx</code> зберігає поточну локаль (uk/en). Функція <code>t(key)</code> з <code>src/lib/i18n.ts</code> повертає переклад з 190+ ключів. Перемикач мови у шапці — миттєва зміна без перезавантаження.</p>
+
+<h2>3.7 Responsive Layout</h2>
+<table>
+  <tr><th>Ширина</th><th>Макет</th></tr>
+  <tr><td>≥ 1280px (Desktop)</td><td>3 колонки: Календар+Статистика | Список завдань | Фільтри</td></tr>
+  <tr><td>1024–1279px (Tablet)</td><td>2 колонки: Календар+Статистика | Завдання (фільтри у drawer)</td></tr>
+  <tr><td>&lt; 1024px (Mobile)</td><td>1 колонка, фільтри у нижньому drawer</td></tr>
+</table>
+
+<h2>3.8 Темна/світла тема</h2>
+<p>Реалізована через <code>next-themes</code>. CSS-змінні визначають кольори статусів і поверхонь. Перемикання — без перезавантаження, з persist у localStorage.</p>
+
+<!-- ========================================= -->
+<h1><span class="section-number">4</span> Що можна покращити / недоліки</h1>
+
+<h2>4.1 Технічні недоліки</h2>
+
+<h3>1. Поля assignee/reviewer — рядки, не FK</h3>
+<p><span class="con">Проблема:</span> поля <code>assignee</code> та <code>reviewer</code> в <code>StatusItem</code> зберігаються як вільний текст, а не як зовнішній ключ до таблиці <code>User</code>. Якщо користувач змінить ім'я або буде видалений — дані не синхронізуються.</p>
+<p><span class="pro">Покращення:</span> замінити на <code>assigneeId</code>/<code>reviewerId</code> з <code>@relation</code> до <code>User</code>. Додати каскадне оновлення.</p>
+
+<h3>2. Відсутнє кешування на бекенді</h3>
+<p><span class="con">Проблема:</span> кожен запит <code>GET /api/items</code> — це новий SQL-запит до Neon. При великій кількості користувачів — зростання навантаження.</p>
+<p><span class="pro">Покращення:</span> додати Redis (Upstash) або Next.js fetch cache з revalidation. Або оптимістичне оновлення UI без зайвих refetch.</p>
+
+<h3>3. NL-парсинг — тільки дати, без семантики</h3>
+<p><span class="con">Проблема:</span> chrono-node розуміє дати, але не може виділити виконавця з тексту типу "перевірити звіт Івана" (не знає, що "Іванa" — assignee).</p>
+<p><span class="pro">Покращення:</span> інтегрувати легкий LLM-виклик (Claude Haiku) для складного NL-парсингу.</p>
+
+<h3>4. Відсутнє rate limiting</h3>
+<p><span class="con">Проблема:</span> API-маршрути не захищені від зловживань (brute-force login, масові запити).</p>
+<p><span class="pro">Покращення:</span> додати Vercel Edge Rate Limiting або middleware з лічильником спроб.</p>
+
+<h3>5. Відсутні автоматичні тести</h3>
+<p><span class="con">Проблема:</span> є тільки Playwright (E2E), але немає unit-тестів для бізнес-логіки (auth.ts, parse-task.ts, validations.ts).</p>
+<p><span class="pro">Покращення:</span> додати Vitest для unit-тестів критичних модулів.</p>
+
+<h2>4.2 Функціональні обмеження (для MVP — прийнятно)</h2>
+<ul>
+  <li>Немає сповіщень про наближення дедлайну (email/push).</li>
+  <li>Немає коментарів/обговорення до завдань.</li>
+  <li>Немає прикріплення файлів.</li>
+  <li>Немає пагінації (при великій кількості завдань — повільне завантаження).</li>
+  <li>Статус "прострочено" виставляється вручну, а не автоматично за cron.</li>
+  <li>Відсутній аудит-лог змін (хто і коли змінив статус).</li>
+</ul>
+
+<h2>4.3 Архітектурні рішення на майбутнє</h2>
+<ul>
+  <li><strong>WebSocket / SSE</strong> — для real-time оновлень між колегами без ручного F5.</li>
+  <li><strong>Мікросервіси</strong> — при масштабуванні NL-парсинг можна виокремити в окремий сервіс.</li>
+  <li><strong>RBAC через БД</strong> — поточна роль (isAdmin bool) не масштабується на складні права; краще — таблиця roles/permissions.</li>
+</ul>
+
+<!-- ========================================= -->
+<h1><span class="section-number">5</span> Що було розроблено</h1>
+
+<h2>5.1 Загальний обсяг</h2>
+<p>З нуля побудований повноцінний fullstack MVP: від схеми бази даних до деплою у продакшн на Vercel. Весь код написаний вручну — без використання готових шаблонів чи boilerplate-генераторів.</p>
+
+<h2>5.2 Бекенд</h2>
+<ul>
+  <li><strong>REST API</strong> — 12 ендпоінтів (auth, items CRUD, AI parse, projects, users).</li>
+  <li><strong>Аутентифікація</strong> — реєстрація/вхід/вихід, JWT у httpOnly cookies, верифікація на кожному запиті.</li>
+  <li><strong>Авторизація</strong> — RBAC: Guest / User / Admin з перевіркою у хендлерах.</li>
+  <li><strong>Middleware</strong> — захист маршрутів на рівні Next.js middleware (до рендерингу сторінки).</li>
+  <li><strong>Валідація</strong> — Zod-схеми для всіх вхідних даних, структуровані повідомлення про помилки.</li>
+  <li><strong>ORM</strong> — Prisma з 5 міграціями, seed-скрипт для демо-даних.</li>
+</ul>
+
+<h2>5.3 Фронтенд</h2>
+<ul>
+  <li><strong>Дашборд</strong> — адаптивний 3/2/1-колонковий layout.</li>
+  <li><strong>Список завдань</strong> — картки з кольоровими статусами, вбудований detail-overlay.</li>
+  <li><strong>Фільтрація</strong> — по статусу, проєкту, виконавцю, рецензенту (desktop sidebar + mobile drawer).</li>
+  <li><strong>Календар</strong> — місячний вид з кольоровими крапками по статусах для кожного дня.</li>
+  <li><strong>Статистика</strong> — donut chart (розподіл за статусами), лічильники завдань.</li>
+  <li><strong>Smart Input</strong> — введення завдання природною мовою з автозаповненням полів.</li>
+  <li><strong>Ручна форма</strong> — повна форма з всіма полями, datepicker, combobox для вибору виконавців.</li>
+  <li><strong>Темна/світла тема</strong> — повна підтримка, збереження вибору.</li>
+  <li><strong>Інтернаціоналізація</strong> — повний переклад UI на українську та англійську (190+ рядків).</li>
+  <li><strong>Toast-сповіщення</strong> — успіх/помилки при CRUD-операціях.</li>
+  <li><strong>Scroll to top</strong> — кнопка при прокрутці довгого списку.</li>
+</ul>
+
+<h2>5.4 DevOps / Інфраструктура</h2>
+<ul>
+  <li>Деплой на <strong>Vercel</strong> з автодеплоєм при push в main.</li>
+  <li>База даних <strong>Neon PostgreSQL</strong> у хмарі (serverless, connection pooling).</li>
+  <li>Змінні середовища через Vercel Dashboard (не в репозиторії).</li>
+  <li>Favicon — динамічний SVG-градієнт, згенерований через <code>app/icon.tsx</code>.</li>
+  <li>Автоматичний скріншотинг через Playwright (<code>scripts/screenshot.mjs</code>).</li>
+</ul>
+
+<h2>5.5 Ключові технічні рішення</h2>
+<table>
+  <tr><th>Рішення</th><th>Деталь</th></tr>
+  <tr>
+    <td>NL-парсинг без LLM API</td>
+    <td>chrono-node + власна таблиця перекладів UA→EN для дат</td>
+  </tr>
+  <tr>
+    <td>Безпечна аутентифікація</td>
+    <td>httpOnly cookies, bcrypt(10), JWT HS256, SameSite=strict</td>
+  </tr>
+  <tr>
+    <td>Єдина мова для фронту і бекенду</td>
+    <td>TypeScript для обох шарів — спільні типи з prisma/validations</td>
+  </tr>
+  <tr>
+    <td>Serverless-архітектура</td>
+    <td>Нема окремого сервера — Vercel Functions + Neon serverless DB</td>
+  </tr>
+  <tr>
+    <td>Кастомний i18n</td>
+    <td>Без важких бібліотек (next-intl/i18next) — 1 файл, 190 ключів</td>
+  </tr>
+</table>
+
+<h2>5.6 Продуктивні результати</h2>
+<ul>
+  <li>Розроблено з нуля за ~5 днів активної розробки.</li>
+  <li>Задеплоєно у продакшн: <strong>https://status-check-henna.vercel.app</strong></li>
+  <li>Демо-акаунт адміна: <code>1@gmail.com</code> / <code>admin1234</code></li>
+  <li>Повна підтримка мобільних пристроїв.</li>
+  <li>Заповнена база демо-даними: 10 користувачів, 6 проєктів, 18 завдань.</li>
+</ul>
+
+<hr>
+<p style="text-align:center; color:#8a8fa8; font-size:9pt; margin-top:20pt;">
+  Status Check MVP · Технічний огляд для співбесіди · червень 2026
+</p>
+
+</body>
+</html>
