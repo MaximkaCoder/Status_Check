@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ItemCard } from "./ItemCard";
-import { ItemDetailOverlay } from "./ItemDetailOverlay";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { StatusItem } from "@/lib/types";
@@ -42,7 +41,7 @@ function SkeletonCard({ index }: { index: number }) {
 
 export function ItemList({ items, loading, onDelete, onStatusChange }: ItemListProps) {
   const { t } = useLanguage();
-  const [detailItem, setDetailItem] = useState<StatusItem | null>(null);
+  const router = useRouter();
 
   if (loading) {
     return (
@@ -121,19 +120,13 @@ export function ItemList({ items, loading, onDelete, onStatusChange }: ItemListP
               item={item}
               onDelete={onDelete}
               onStatusChange={onStatusChange}
-              onDetailClick={setDetailItem}
+              onDetailClick={(i) => router.push(`/items/${i.id}`)}
               animationIndex={index}
             />
           </div>
         ))}
       </div>
 
-      {detailItem && (
-        <ItemDetailOverlay
-          item={detailItem}
-          onClose={() => setDetailItem(null)}
-        />
-      )}
     </>
   );
 }
