@@ -143,6 +143,7 @@ export default function EditProjectPage() {
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState<string | null>(null);
   const [memberBusy, setMemberBusy] = useState<string | null>(null);
   const [fileBusy, setFileBusy] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -185,14 +186,21 @@ export default function EditProjectPage() {
   async function uploadFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) { alert("Максимальний розмір файлу 20 МБ"); return; }
-    setUploading(true);
-    const fd = new FormData();
-    fd.append("file", file);
-    const r = await fetch(`/api/admin/projects/${id}/files`, { method: "POST", body: fd });
-    if (r.ok) {
-      const f = await r.json();
-      setProject(p => p ? { ...p, files: [f, ...p.files] } : p);
+    if (file.size > 20 * 1024 * 1024) { setUploadErr("Максимальний розмір файлу 20 МБ"); return; }
+    setUploading(true); setUploadErr(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch(`/api/admin/projects/${id}/files`, { method: "POST", body: fd });
+      if (r.ok) {
+        const f = await r.json();
+        setProject(p => p ? { ...p, files: [f, ...p.files] } : p);
+      } else {
+        const d = await r.json().catch(() => ({}));
+        setUploadErr(d.error ?? "Помилка завантаження");
+      }
+    } catch {
+      setUploadErr("Помилка мережі");
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
     setUploading(false);
@@ -360,6 +368,12 @@ export default function EditProjectPage() {
           </button>
           <input ref={fileInputRef} type="file" className="hidden" onChange={uploadFile} />
         </div>
+
+        {uploadErr && (
+          <p className="text-xs text-rose-600 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-500/30 rounded-lg px-3 py-2 mb-3">
+            {uploadErr}
+          </p>
+        )}
 
         {project.files.length === 0 ? (
           <p className="text-xs text-muted-foreground py-4 text-center border border-dashed border-border/60 rounded-xl">
