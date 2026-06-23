@@ -79,7 +79,7 @@ export function NotificationBell() {
       setUnreadCount((c) => Math.max(0, c - 1));
     }
     setOpen(false);
-    router.push(`/items/${n.itemId}/edit`);
+    router.push(`/?item=${n.itemId}`);
   }
 
   async function handleMarkAll() {
