@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
         SELECT
           c."itemId",
           COUNT(*)::int AS "commentCount",
-          COUNT(CASE WHEN c.created_at > COALESCE(ics.seen_at, '1970-01-01'::timestamptz) THEN 1 END)::int AS "unreadCount"
+          COUNT(CASE WHEN c.created_at > COALESCE(ics.seen_at, '1970-01-01'::timestamptz) AND c."authorId" != ${session.userId} THEN 1 END)::int AS "unreadCount"
         FROM comments c
         LEFT JOIN item_comment_seen ics
           ON ics."itemId" = c."itemId" AND ics."userId" = ${session.userId}
