@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!session?.userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { allowed } = await canAccess(session.userId, session.name, session.isAdmin, id);
+  const { allowed, item } = await canAccess(session.userId, session.name, session.isAdmin, id);
   if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   let body: { text?: string };
@@ -52,6 +52,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     data: { itemId: id, authorId: session.userId, authorName: session.name, text },
     select: { id: true, authorId: true, authorName: true, text: true, created_at: true },
   });
+
+  // Notify assignee (if different from commenter)
+  if (item && item.assignee && item.assignee !== session.name) {
+    const assigneeUser = await prisma.user.findFirst({ where: { name: item.assignee } });
+    if (assigneeUser) {
+      await prisma.notification.create({
+        data: { userId: assigneeUser.id, type: "NEW_COMMENT", itemId: id, itemTitle: item.title },
+      });
+    }
+  }
 
   return NextResponse.json(comment, { status: 201 });
 }

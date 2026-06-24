@@ -313,20 +313,29 @@ export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animat
             <span>{formatDateLocale(new Date(item.created_at), locale, monthsEn, monthsUkGen)}</span>
           </span>
 
-          {(item.commentCount ?? 0) > 0 && (
+        </div>
+
+        {/* Comment badge — bottom-right of card */}
+        {(item.commentCount ?? 0) > 0 && (
+          (item.unreadCount ?? 0) > 0 ? (
             <span className={cn(
-              "flex items-center gap-0.5 font-semibold",
-              (item.unreadCount ?? 0) > 0 ? "text-rose-500" : "text-muted-foreground/50"
+              "absolute bottom-2.5 right-3",
+              "inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full",
+              "bg-rose-500 text-white text-[10px] font-bold",
+              "shadow-[0_0_0_2px_white,0_2px_8px_rgba(239,68,68,0.5)]",
+              "dark:shadow-[0_0_0_2px_rgba(10,11,26,1),0_2px_8px_rgba(239,68,68,0.5)]"
             )}>
+              +{item.unreadCount}
+            </span>
+          ) : (
+            <span className="absolute bottom-2.5 right-3 flex items-center gap-0.5 text-muted-foreground/35 text-[10px] font-medium">
               <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              <span className="text-[10px]">
-                {(item.unreadCount ?? 0) > 0 ? `+${item.unreadCount}` : item.commentCount}
-              </span>
+              {item.commentCount}
             </span>
-          )}
-        </div>
+          )
+        )}
       </div>
 
       {confirmDelete && (

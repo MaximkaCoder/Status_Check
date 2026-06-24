@@ -78,6 +78,7 @@ model Department {
 enum NotificationType {
   ASSIGNED_ASSIGNEE
   ASSIGNED_REVIEWER
+  NEW_COMMENT
 }
 
 model Notification {
