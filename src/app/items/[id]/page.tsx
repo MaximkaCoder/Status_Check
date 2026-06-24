@@ -210,12 +210,9 @@ function CommentsPanel({ itemId }: { itemId: string }) {
         {sendErr && (
           <p className="text-[10px] text-rose-500 mb-2">{sendErr}</p>
         )}
-        <div className="flex gap-2 items-end">
+        <div className="flex gap-2 items-center">
           {user && (
-            <span className={cn(
-              "inline-flex h-7 w-7 items-center justify-center rounded-full text-white flex-shrink-0 text-xs font-bold bg-gradient-to-br",
-              getGradient(user.name)
-            )}>
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full text-white flex-shrink-0 text-xs font-bold bg-gradient-to-br from-indigo-400 to-violet-500">
               {user.name.charAt(0).toUpperCase()}
             </span>
           )}
@@ -502,8 +499,8 @@ export default function ViewItemPage() {
 
       {/* Comments — below card on mobile, sticky right column on 2xl+ */}
       <div className={cn(
-        "mt-6 animate-fade-in-up stagger-3",
-        "2xl:mt-0 2xl:w-[300px] 2xl:flex-shrink-0 2xl:sticky 2xl:top-[72px] 2xl:pt-[118px]"
+        "mt-6 animate-fade-in-up stagger-3 max-w-2xl mx-auto w-full",
+        "2xl:mx-0 2xl:mt-0 2xl:w-[300px] 2xl:max-w-none 2xl:flex-shrink-0 2xl:sticky 2xl:top-[72px] 2xl:pt-[118px]"
       )}>
         <CommentsPanel itemId={id} />
       </div>
