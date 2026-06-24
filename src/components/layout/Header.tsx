@@ -16,9 +16,9 @@ export function Header() {
 
   const ctaConfig = (() => {
     if (/\/admin\/[^/]+\/[^/]+\/edit$/.test(pathname)) return null;
-    if (pathname.startsWith("/admin/projects")) return { label: "Новий проєкт", href: "/admin/projects/new/edit" };
-    if (pathname.startsWith("/admin/users")) return { label: "Новий користувач", href: "/admin/users/new" };
-    if (pathname.startsWith("/admin/departments")) return { label: "Новий департамент", href: "/admin/departments/new" };
+    if (pathname.startsWith("/admin/projects")) return { label: t("newProjectTitle"), href: "/admin/projects/new/edit" };
+    if (pathname.startsWith("/admin/users")) return { label: t("newUserTitle"), href: "/admin/users/new" };
+    if (pathname.startsWith("/admin/departments")) return { label: t("newDeptTitle"), href: "/admin/departments/new" };
     return { label: t("newItem"), href: "/items/new" };
   })();
 
