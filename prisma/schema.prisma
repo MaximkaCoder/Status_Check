@@ -106,6 +106,8 @@ model StatusItem {
   project      String?
   assignee     String?
   reviewer     String?
+  done_at      DateTime?  @map("done_at")
+  done_by      String?    @map("done_by")
   created_at   DateTime   @default(now()) @map("created_at")
   updated_at   DateTime   @updatedAt @map("updated_at")
   files        ItemFile[]

@@ -484,6 +484,24 @@ export default function ViewItemPage() {
                 </div>
               </Field>
             )}
+
+            {item.status === "DONE" && item.done_by && item.done_at && (
+              <div className="sm:col-span-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200/60 dark:border-emerald-500/30 p-4">
+                <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1.5">
+                  {locale === "uk" ? "Виконано" : "Completed"}
+                </p>
+                <div className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <Avatar name={item.done_by} />
+                  <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{item.done_by}</span>
+                  <span className="text-xs text-emerald-600/70 dark:text-emerald-400/70 ml-1">
+                    · {formatDate(new Date(item.done_at), locale)}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Files */}

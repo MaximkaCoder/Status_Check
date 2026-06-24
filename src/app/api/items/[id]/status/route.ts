@@ -36,9 +36,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const newStatus = parseResult.data.status;
+    const doneFields =
+      newStatus === "DONE" && existing.status !== "DONE"
+        ? { done_at: new Date(), done_by: session.name }
+        : newStatus !== "DONE" && existing.status === "DONE"
+        ? { done_at: null, done_by: null }
+        : {};
+
     const updated = await prisma.statusItem.update({
       where: { id: params.id },
-      data: { status: parseResult.data.status },
+      data: { status: newStatus, ...doneFields },
     });
 
     return NextResponse.json(updated);

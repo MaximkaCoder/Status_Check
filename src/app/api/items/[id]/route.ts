@@ -92,6 +92,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const data = parseResult.data;
 
+    const doneFields =
+      data.status === "DONE" && existing.status !== "DONE"
+        ? { done_at: new Date(), done_by: session.name }
+        : data.status !== undefined && data.status !== "DONE" && existing.status === "DONE"
+        ? { done_at: null, done_by: null }
+        : {};
+
     const updated = await prisma.statusItem.update({
       where: { id: params.id },
       data: {
@@ -103,6 +110,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(data.project  !== undefined && { project:  data.project }),
         ...(data.assignee !== undefined && { assignee: data.assignee }),
         ...(data.reviewer !== undefined && { reviewer: data.reviewer }),
+        ...doneFields,
       },
     });
 
