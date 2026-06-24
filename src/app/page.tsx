@@ -200,21 +200,26 @@ export default function DashboardPage() {
           )}
 
           {/* Animated view container — clips at center-column edges. Inner padding keeps
-              card shadows from being cut by overflow-hidden. Two halves slide as one row. */}
-          <div className="overflow-hidden -m-2">
+              card shadows from being cut by overflow-hidden. The active view is in-flow
+              (sets the height); the inactive one is absolute so it never adds extra height. */}
+          <div className="relative overflow-hidden -m-2">
+            {/* List view */}
             <div className={cn(
-              "flex w-[200%] items-start",
-              "transition-transform duration-500 ease-in-out",
-              viewMode === "list" ? "translate-x-0" : "-translate-x-1/2"
+              "p-2 flex flex-col gap-4 transition-transform duration-500 ease-in-out",
+              viewMode === "list"
+                ? "relative translate-x-0"
+                : "absolute inset-x-0 top-0 -translate-x-full pointer-events-none"
             )}>
-              {/* List view */}
-              <div className="w-1/2 min-w-0 p-2 flex flex-col gap-4">
-                <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
-              </div>
-              {/* Board view — grouped by project */}
-              <div className={cn("w-1/2 min-w-0 p-2", viewMode !== "board" && "pointer-events-none")}>
-                <BoardView items={displayedItems} onDelete={handleDelete} onStatusChange={handleStatusChange} />
-              </div>
+              <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+            </div>
+            {/* Board view — grouped by project */}
+            <div className={cn(
+              "p-2 transition-transform duration-500 ease-in-out",
+              viewMode === "board"
+                ? "relative translate-x-0"
+                : "absolute inset-x-0 top-0 translate-x-full pointer-events-none"
+            )}>
+              <BoardView items={displayedItems} onDelete={handleDelete} onStatusChange={handleStatusChange} />
             </div>
           </div>
         </div>
