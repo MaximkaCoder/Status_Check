@@ -205,19 +205,19 @@ export default function DashboardPage() {
           <div className="relative overflow-hidden -m-2">
             {/* List view */}
             <div className={cn(
-              "p-2 flex flex-col gap-4 transition-transform duration-500 ease-in-out",
+              "p-2 flex flex-col gap-4 transition-[transform,opacity] duration-[600ms] ease-[cubic-bezier(0.65,0,0.35,1)] will-change-[transform,opacity]",
               viewMode === "list"
-                ? "relative translate-x-0"
-                : "absolute inset-x-0 top-0 -translate-x-full pointer-events-none"
+                ? "relative translate-x-0 opacity-100"
+                : "absolute inset-x-0 top-0 -translate-x-[103%] opacity-0 pointer-events-none"
             )}>
               <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
             </div>
             {/* Board view — grouped by project */}
             <div className={cn(
-              "p-2 transition-transform duration-500 ease-in-out",
+              "p-2 transition-[transform,opacity] duration-[600ms] ease-[cubic-bezier(0.65,0,0.35,1)] will-change-[transform,opacity]",
               viewMode === "board"
-                ? "relative translate-x-0"
-                : "absolute inset-x-0 top-0 translate-x-full pointer-events-none"
+                ? "relative translate-x-0 opacity-100"
+                : "absolute inset-x-0 top-0 translate-x-[103%] opacity-0 pointer-events-none"
             )}>
               <BoardView items={displayedItems} onDelete={handleDelete} onStatusChange={handleStatusChange} />
             </div>
