@@ -98,17 +98,42 @@ function CommentsPanel({ itemId }: { itemId: string }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const commentsRef = useRef<Comment[]>([]);
+
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/items/${itemId}/comments`)
       .then(r => r.ok ? r.json() : [])
-      .then(d => { if (!cancelled) setComments(d); })
+      .then((d: Comment[]) => {
+        if (cancelled) return;
+        commentsRef.current = d;
+        setComments(d);
+      })
       .finally(() => { if (!cancelled) setLoading(false); });
 
     // Mark as seen
     fetch(`/api/items/${itemId}/seen`, { method: "POST" }).catch(() => {});
 
     return () => { cancelled = true; };
+  }, [itemId]);
+
+  // Poll for new comments every 5s
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      try {
+        const r = await fetch(`/api/items/${itemId}/comments`);
+        if (!r.ok) return;
+        const fresh: Comment[] = await r.json();
+        const prev = commentsRef.current;
+        if (fresh.length > prev.length) {
+          commentsRef.current = fresh;
+          setComments(fresh);
+          // Mark new ones as seen
+          fetch(`/api/items/${itemId}/seen`, { method: "POST" }).catch(() => {});
+        }
+      } catch { /* ignore */ }
+    }, 5000);
+    return () => clearInterval(timer);
   }, [itemId]);
 
   useEffect(() => {
