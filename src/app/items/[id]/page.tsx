@@ -204,15 +204,15 @@ function CommentsPanel({ itemId }: { itemId: string }) {
                   {c.authorName.charAt(0).toUpperCase()}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2 mb-0.5 flex-wrap">
-                    <span className="text-xs font-bold text-foreground">{c.authorName}</span>
-                    <span className="text-[10px] text-muted-foreground">{formatCommentTime(new Date(c.created_at), locale)}</span>
+                  <div className="flex items-baseline gap-2 mb-0.5 min-w-0">
+                    <span className="text-xs font-bold text-foreground truncate min-w-0">{c.authorName}</span>
+                    <span className="text-[10px] text-muted-foreground flex-shrink-0">{formatCommentTime(new Date(c.created_at), locale)}</span>
                     {isOwn && (
                       <button
                         type="button"
                         onClick={() => remove(c.id)}
                         disabled={deletingId === c.id}
-                        className="ml-auto opacity-0 group-hover/comment:opacity-100 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-rose-500 cursor-pointer transition-all duration-150 disabled:cursor-not-allowed"
+                        className="ml-auto flex-shrink-0 opacity-0 group-hover/comment:opacity-100 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-rose-500 cursor-pointer transition-all duration-150 disabled:cursor-not-allowed"
                       >
                         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
