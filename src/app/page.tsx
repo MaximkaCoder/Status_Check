@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, isSameDay, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import { MonthCalendar } from "@/components/calendar/MonthCalendar";
@@ -23,6 +23,15 @@ export default function DashboardPage() {
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
+
+  // Restore / persist view mode across navigation (e.g. opening a task and pressing back)
+  useEffect(() => {
+    const saved = sessionStorage.getItem("dashboardView");
+    if (saved === "board" || saved === "list") setViewMode(saved);
+  }, []);
+  useEffect(() => {
+    sessionStorage.setItem("dashboardView", viewMode);
+  }, [viewMode]);
 
   const { t, locale } = useLanguage();
   const { toast } = useToast();

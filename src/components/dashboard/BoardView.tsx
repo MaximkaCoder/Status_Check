@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ItemCard } from "./ItemCard";
@@ -50,13 +50,22 @@ export function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
   }, [items, noProjectLabel]);
 
   // All groups collapsed by default; track expanded ones.
+  // Persisted so returning from a task detail keeps the same project open.
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("boardExpanded");
+      if (saved) setExpanded(new Set(JSON.parse(saved) as string[]));
+    } catch { /* ignore */ }
+  }, []);
 
   function toggle(key: string) {
     setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
+      sessionStorage.setItem("boardExpanded", JSON.stringify([...next]));
       return next;
     });
   }
