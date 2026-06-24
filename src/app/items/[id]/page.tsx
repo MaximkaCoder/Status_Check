@@ -503,7 +503,7 @@ export default function ViewItemPage() {
       {/* Comments — below card on mobile, sticky right column on 2xl+ */}
       <div className={cn(
         "mt-6 animate-fade-in-up stagger-3",
-        "2xl:mt-0 2xl:w-[300px] 2xl:flex-shrink-0 2xl:sticky 2xl:top-[72px] 2xl:pt-36"
+        "2xl:mt-0 2xl:w-[300px] 2xl:flex-shrink-0 2xl:sticky 2xl:top-[72px] 2xl:pt-[120px]"
       )}>
         <CommentsPanel itemId={id} />
       </div>
