@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Project { id: string; name: string; created_at: string }
 
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("uk-UA", { day: "2-digit", month: "2-digit", year: "numeric" });
+function formatDate(d: string, locale: string) {
+  return new Date(d).toLocaleDateString(locale === "uk" ? "uk-UA" : "en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 export default function AdminProjectsPage() {
+  const { t, locale } = useLanguage();
   const [items, setItems] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export default function AdminProjectsPage() {
   useEffect(() => { load(); }, []);
 
   async function remove(item: Project) {
-    if (!confirm(`Видалити проєкт «${item.name}»?`)) return;
+    if (!confirm(locale === "uk" ? `Видалити проєкт «${item.name}»?` : `Delete project "${item.name}"?`)) return;
     setBusy(item.id);
     await fetch(`/api/admin/projects/${item.id}`, { method: "DELETE" });
     await load(); setBusy(null);
@@ -35,8 +37,8 @@ export default function AdminProjectsPage() {
     <div className="rounded-2xl border border-border/60 bg-card shadow-card overflow-hidden">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
         <div>
-          <h2 className="text-base font-bold text-foreground">Проєкти</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{items.length} проєктів у системі</p>
+          <h2 className="text-base font-bold text-foreground">{t("projectsPageTitle")}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{items.length} {t("projectsLabel")}</p>
         </div>
       </div>
 
@@ -46,7 +48,7 @@ export default function AdminProjectsPage() {
         </div>
       ) : (
         <div className="divide-y divide-border/40">
-          {items.length === 0 && <p className="text-sm text-muted-foreground px-6 py-8">Немає проєктів</p>}
+          {items.length === 0 && <p className="text-sm text-muted-foreground px-6 py-8">{t("noProjects")}</p>}
           {items.map((item) => (
             <div key={item.id} className="flex items-center gap-3 px-6 py-3.5 hover:bg-muted/20 transition-colors">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex-shrink-0">
@@ -59,16 +61,16 @@ export default function AdminProjectsPage() {
                 <span className="text-sm font-medium text-foreground">{item.name}</span>
               </div>
 
-              <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(item.created_at)}</span>
+              <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(item.created_at, locale)}</span>
 
               <div className="flex gap-1.5 flex-shrink-0">
                 <Link href={`/admin/projects/${item.id}/edit`}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/[0.10] cursor-pointer transition-colors">
-                  Редагувати
+                  {t("editBtn")}
                 </Link>
                 <button type="button" onClick={() => remove(item)} disabled={busy === item.id}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 hover:bg-rose-200 disabled:opacity-50 cursor-pointer transition-colors">
-                  Видалити
+                  {t("deleteBtn")}
                 </button>
               </div>
             </div>

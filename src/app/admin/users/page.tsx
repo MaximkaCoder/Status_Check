@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Department { id: string; name: string; }
 interface AdminUser {
@@ -18,8 +19,9 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString("uk-UA", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-function RolePicker({ user, busy, onChange }: {
+function RolePicker({ user, busy, onChange, adminLabel, memberLabel }: {
   user: AdminUser; busy: boolean; onChange: (isAdmin: boolean) => void;
+  adminLabel: string; memberLabel: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -32,8 +34,8 @@ function RolePicker({ user, busy, onChange }: {
   }, [open]);
 
   const roles = [
-    { label: "Адмін", value: true },
-    { label: "Учасник", value: false },
+    { label: adminLabel, value: true },
+    { label: memberLabel, value: false },
   ];
 
   return (
@@ -52,7 +54,7 @@ function RolePicker({ user, busy, onChange }: {
         )}
       >
         <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", user.isAdmin ? "bg-indigo-500" : "bg-slate-400")} />
-        {user.isAdmin ? "Адмін" : "Учасник"}
+        {user.isAdmin ? adminLabel : memberLabel}
         <svg className={cn("h-3 w-3 transition-transform", open && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
         </svg>
@@ -90,11 +92,12 @@ function RolePicker({ user, busy, onChange }: {
   );
 }
 
-function DeptPicker({ user, depts, busy, onChange }: {
+function DeptPicker({ user, depts, busy, onChange, noDeptLabel, searchLabel, notFoundLabel, allAddedLabel }: {
   user: AdminUser;
   depts: Department[];
   busy: boolean;
   onChange: (deptId: string | null) => void;
+  noDeptLabel: string; searchLabel: string; notFoundLabel: string; allAddedLabel: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -131,7 +134,7 @@ function DeptPicker({ user, depts, busy, onChange }: {
         )}
       >
         {hasDept && <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 inline-block flex-shrink-0" />}
-        <span>{user.department?.name ?? "— без департаменту —"}</span>
+        <span>{user.department?.name ?? noDeptLabel}</span>
         <svg className={cn("h-3 w-3 transition-transform", open && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
         </svg>
@@ -156,7 +159,7 @@ function DeptPicker({ user, depts, busy, onChange }: {
             )}
           >
             <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", !user.department ? "bg-indigo-500" : "bg-transparent border border-border")} />
-            — без департаменту —
+            {noDeptLabel}
           </button>
 
           <div className="my-1 h-px bg-border/40 mx-2" />
@@ -188,6 +191,7 @@ function DeptPicker({ user, depts, busy, onChange }: {
 }
 
 export default function AdminUsersPage() {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [depts, setDepts] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
@@ -203,7 +207,7 @@ export default function AdminUsersPage() {
       ]);
       setUsers(ur);
       setDepts(dr);
-    } catch { setError("Не вдалось завантажити"); }
+    } catch { setError(t("failedLoadLabel")); }
     finally { setLoading(false); }
   }
 
@@ -254,8 +258,8 @@ export default function AdminUsersPage() {
     <div className="rounded-2xl border border-border/60 bg-card shadow-card overflow-hidden">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
         <div>
-          <h2 className="text-base font-bold text-foreground">Користувачі</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{users.length} акаунтів у системі</p>
+          <h2 className="text-base font-bold text-foreground">{t("usersPageTitle")}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{users.length} {t("accountsLabel")}</p>
         </div>
       </div>
 
@@ -270,12 +274,12 @@ export default function AdminUsersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/60 bg-muted/30">
-                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-6 py-3">Ім&apos;я</th>
+                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-6 py-3">{t("tableColName")}</th>
                 <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Email</th>
-                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Роль</th>
-                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Департамент</th>
-                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Статус</th>
-                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Дата реєстрації</th>
+                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">{t("tableColRole")}</th>
+                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">{t("tableColDepartment")}</th>
+                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">{t("tableColStatus")}</th>
+                <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">{t("tableColRegDate")}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -296,6 +300,8 @@ export default function AdminUsersPage() {
                       user={u}
                       busy={busy === u.id}
                       onChange={(isAdmin) => toggleRole(u, isAdmin)}
+                      adminLabel={t("roleAdmin")}
+                      memberLabel={t("roleMember")}
                     />
                   </td>
                   <td className="px-4 py-3.5">
@@ -304,18 +310,22 @@ export default function AdminUsersPage() {
                       depts={depts}
                       busy={busy === u.id}
                       onChange={(deptId) => setDepartment(u, deptId)}
+                      noDeptLabel={t("noDepartmentOption")}
+                      searchLabel={t("searchPlaceholder")}
+                      notFoundLabel={t("notFoundLabel")}
+                      allAddedLabel={t("allAddedLabel")}
                     />
                   </td>
                   <td className="px-4 py-3.5">
                     {u.blocked ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400">
                         <span className="h-1.5 w-1.5 rounded-full bg-rose-500 inline-block" />
-                        Заблоковано
+                        {t("blockedStatus")}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
-                        Активний
+                        {t("activeStatus")}
                       </span>
                     )}
                   </td>
@@ -326,7 +336,7 @@ export default function AdminUsersPage() {
                         type="button"
                         disabled={busy === u.id || u.isAdmin}
                         onClick={() => toggleBlock(u)}
-                        title={u.isAdmin ? "Не можна заблокувати адміна" : u.blocked ? "Розблокувати" : "Заблокувати"}
+                        title={u.isAdmin ? t("cannotBlockAdmin") : u.blocked ? t("unblockUserBtn") : t("blockUserBtn")}
                         className={cn(
                           "inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed",
                           u.blocked
@@ -334,16 +344,16 @@ export default function AdminUsersPage() {
                             : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200"
                         )}
                       >
-                        {u.blocked ? "Розблокувати" : "Заблокувати"}
+                        {u.blocked ? t("unblockUserBtn") : t("blockUserBtn")}
                       </button>
                       <button
                         type="button"
                         disabled={busy === u.id || u.isAdmin}
                         onClick={() => deleteUser(u)}
-                        title={u.isAdmin ? "Не можна видалити адміна" : "Видалити"}
+                        title={u.isAdmin ? t("cannotDeleteAdmin") : t("deleteBtn")}
                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 hover:bg-rose-200 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        Видалити
+                        {t("deleteBtn")}
                       </button>
                     </div>
                   </td>

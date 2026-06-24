@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface User { id: string; name: string; email: string; }
 
@@ -13,9 +14,10 @@ const inputBase = cn(
   "transition-all duration-150"
 );
 
-function UserPicker({ allUsers, pending, onAdd, onRemove }: {
+function UserPicker({ allUsers, pending, onAdd, onRemove, searchLabel, notFoundLabel, allAddedLabel, addUserLabel }: {
   allUsers: User[]; pending: User[];
   onAdd: (u: User) => void; onRemove: (id: string) => void;
+  searchLabel: string; notFoundLabel: string; allAddedLabel: string; addUserLabel: string;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -49,7 +51,7 @@ function UserPicker({ allUsers, pending, onAdd, onRemove }: {
         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
         </svg>
-        Додати користувача
+        {addUserLabel}
       </button>
 
       {open && (
@@ -65,14 +67,14 @@ function UserPicker({ allUsers, pending, onAdd, onRemove }: {
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Пошук..."
+              placeholder={searchLabel}
               className="w-full rounded-lg px-3 py-1.5 text-xs bg-muted/30 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
           </div>
           <div className="max-h-52 overflow-y-auto py-1">
             {available.length === 0 ? (
               <p className="text-xs text-muted-foreground px-3 py-3 text-center">
-                {query ? "Не знайдено" : "Всі вже додані"}
+                {query ? notFoundLabel : allAddedLabel}
               </p>
             ) : available.map(u => (
               <button key={u.id} type="button" onClick={() => { onAdd(u); setOpen(false); setQuery(""); }}
@@ -95,6 +97,7 @@ function UserPicker({ allUsers, pending, onAdd, onRemove }: {
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -115,7 +118,7 @@ export default function NewProjectPage() {
     });
     if (!r.ok) {
       const d = await r.json();
-      setSaveErr(d.error ?? "Помилка створення");
+      setSaveErr(d.error ?? t("createError"));
       setSaving(false); return;
     }
     const project = await r.json();
@@ -138,32 +141,32 @@ export default function NewProjectPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Новий проєкт</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{t("newProjectTitle")}</h1>
         </div>
         <button type="button" onClick={() => router.push("/admin/projects")}
           className="mt-1 text-xs text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 font-medium cursor-pointer transition-colors">
-          ← Назад до проєктів
+          {t("backToProjects")}
         </button>
       </div>
 
-      {/* ── Main fields ── */}
+      {/* Main fields */}
       <div className="rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-fade-in-up stagger-2 space-y-5">
         <div>
           <label htmlFor="proj-name" className="block text-xs font-bold text-foreground/80 uppercase tracking-wider mb-1.5">
-            Назва <span className="text-rose-500">*</span>
+            {t("nameLabel")} <span className="text-rose-500">*</span>
           </label>
           <input id="proj-name" type="text" value={name} onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key === "Enter" && save()} maxLength={120}
-            className={inputBase} placeholder="Назва проєкту" autoFocus />
+            className={inputBase} placeholder={t("projectNamePlaceholder")} autoFocus />
         </div>
 
         <div>
           <label htmlFor="proj-desc" className="block text-xs font-bold text-foreground/80 uppercase tracking-wider mb-1.5">
-            Опис <span className="text-muted-foreground font-normal normal-case">(необов&apos;язково)</span>
+            {t("descLabel")} <span className="text-muted-foreground font-normal normal-case">{t("optionalLabel")}</span>
           </label>
           <textarea id="proj-desc" value={description} onChange={e => setDescription(e.target.value)}
             rows={4} maxLength={2000} className={cn(inputBase, "resize-none leading-relaxed")}
-            placeholder="Короткий опис проєкту..." />
+            placeholder={t("projectDescPlaceholder")} />
           <p className="text-xs text-muted-foreground mt-1 text-right">{description.length}/2000</p>
         </div>
 
@@ -179,33 +182,37 @@ export default function NewProjectPage() {
             {saving
               ? <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin inline-block" />
               : <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
-            {saving ? "Створення..." : "Створити проєкт"}
+            {saving ? t("creatingLabel") : t("createProjectBtn")}
           </button>
           <button type="button" onClick={() => router.push("/admin/projects")}
             className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer transition-colors">
-            Скасувати
+            {t("cancelBtn")}
           </button>
         </div>
       </div>
 
-      {/* ── Members ── */}
+      {/* Members */}
       <div className="relative z-10 rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-fade-in-up stagger-3">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-sm font-bold text-foreground">Доступ користувачів</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{pendingMembers.length} учасників</p>
+            <h2 className="text-sm font-bold text-foreground">{t("projectAccessLabel")}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{pendingMembers.length} {t("membersCountLabel")}</p>
           </div>
           <UserPicker
             allUsers={allUsers}
             pending={pendingMembers}
             onAdd={u => setPendingMembers(p => [...p, u])}
             onRemove={id => setPendingMembers(p => p.filter(u => u.id !== id))}
+            searchLabel={t("searchPlaceholder")}
+            notFoundLabel={t("notFoundLabel")}
+            allAddedLabel={t("allAddedLabel")}
+            addUserLabel={t("addUserBtn")}
           />
         </div>
 
         {pendingMembers.length === 0 ? (
           <p className="text-xs text-muted-foreground py-4 text-center border border-dashed border-border/60 rounded-xl">
-            Немає учасників
+            {t("noMembersLabel")}
           </p>
         ) : (
           <div className="flex flex-wrap gap-2">
@@ -233,12 +240,12 @@ export default function NewProjectPage() {
         )}
       </div>
 
-      {/* ── Files placeholder ── */}
+      {/* Files placeholder */}
       <div className="relative z-0 rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-fade-in-up">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-sm font-bold text-foreground">Файли</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">макс. 20 МБ</p>
+            <h2 className="text-sm font-bold text-foreground">{t("filesLabel")}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{t("maxFileSizeLabel")}</p>
           </div>
           <button
             type="button"
@@ -252,11 +259,11 @@ export default function NewProjectPage() {
             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
-            Завантажити
+            {t("uploadBtn")}
           </button>
         </div>
         <p className="text-xs text-muted-foreground py-4 text-center border border-dashed border-border/60 rounded-xl">
-          Файли можна додати після збереження проєкту
+          {t("filesAfterSaveProject")}
         </p>
       </div>
     </div>

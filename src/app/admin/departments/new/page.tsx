@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface User { id: string; name: string; email: string; }
 
@@ -13,12 +14,14 @@ const inputBase = cn(
   "transition-all duration-150"
 );
 
-function UserPicker({ allUsers, pending, onAdd }: {
+function UserPicker({ allUsers, pending, onAdd, searchLabel, notFoundLabel, allAddedLabel }: {
   allUsers: User[]; pending: User[]; onAdd: (u: User) => void;
+  searchLabel: string; notFoundLabel: string; allAddedLabel: string;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!open) return;
@@ -48,7 +51,7 @@ function UserPicker({ allUsers, pending, onAdd }: {
         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
         </svg>
-        Додати користувача
+        {t("addUserBtn")}
       </button>
 
       {open && (
@@ -64,14 +67,14 @@ function UserPicker({ allUsers, pending, onAdd }: {
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Пошук..."
+              placeholder={searchLabel}
               className="w-full rounded-lg px-3 py-1.5 text-xs bg-muted/30 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
           </div>
           <div className="max-h-52 overflow-y-auto py-1">
             {available.length === 0 ? (
               <p className="text-xs text-muted-foreground px-3 py-3 text-center">
-                {query ? "Не знайдено" : "Всі вже додані"}
+                {query ? notFoundLabel : allAddedLabel}
               </p>
             ) : available.map(u => (
               <button key={u.id} type="button" onClick={() => { onAdd(u); setOpen(false); setQuery(""); }}
@@ -94,6 +97,7 @@ function UserPicker({ allUsers, pending, onAdd }: {
 
 export default function NewDepartmentPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [name, setName] = useState("");
   const [pendingUsers, setPendingUsers] = useState<User[]>([]);
@@ -113,7 +117,7 @@ export default function NewDepartmentPage() {
     });
     if (!r.ok) {
       const d = await r.json();
-      setSaveErr(d.error ?? "Помилка створення");
+      setSaveErr(d.error ?? t("createError"));
       setSaving(false); return;
     }
     const dept = await r.json();
@@ -136,23 +140,23 @@ export default function NewDepartmentPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Новий департамент</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{t("newDeptTitle")}</h1>
         </div>
         <button type="button" onClick={() => router.push("/admin/departments")}
           className="mt-1 text-xs text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 font-medium cursor-pointer transition-colors">
-          ← Назад до департаментів
+          {t("backToDepartments")}
         </button>
       </div>
 
-      {/* ── Name ── */}
+      {/* Name */}
       <div className="rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-fade-in-up stagger-2 space-y-5">
         <div>
           <label htmlFor="dept-name" className="block text-xs font-bold text-foreground/80 uppercase tracking-wider mb-1.5">
-            Назва <span className="text-rose-500">*</span>
+            {t("nameLabel")} <span className="text-rose-500">*</span>
           </label>
           <input id="dept-name" type="text" value={name} onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key === "Enter" && save()} maxLength={120}
-            className={inputBase} placeholder="Назва департаменту" autoFocus />
+            className={inputBase} placeholder={t("deptNamePlaceholder")} autoFocus />
         </div>
 
         {saveErr && (
@@ -167,32 +171,35 @@ export default function NewDepartmentPage() {
             {saving
               ? <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin inline-block" />
               : <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
-            {saving ? "Створення..." : "Створити департамент"}
+            {saving ? t("creatingLabel") : t("createDeptBtn")}
           </button>
           <button type="button" onClick={() => router.push("/admin/departments")}
             className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer transition-colors">
-            Скасувати
+            {t("cancelBtn")}
           </button>
         </div>
       </div>
 
-      {/* ── Members ── */}
+      {/* Members */}
       <div className="relative z-10 rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-fade-in-up stagger-3">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-sm font-bold text-foreground">Учасники департаменту</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{pendingUsers.length} учасників</p>
+            <h2 className="text-sm font-bold text-foreground">{t("deptMembersTitle")}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{pendingUsers.length} {t("membersCountLabel")}</p>
           </div>
           <UserPicker
             allUsers={allUsers}
             pending={pendingUsers}
             onAdd={u => setPendingUsers(p => [...p, u])}
+            searchLabel={t("searchPlaceholder")}
+            notFoundLabel={t("notFoundLabel")}
+            allAddedLabel={t("allAddedLabel")}
           />
         </div>
 
         {pendingUsers.length === 0 ? (
           <p className="text-xs text-muted-foreground py-4 text-center border border-dashed border-border/60 rounded-xl">
-            Немає учасників
+            {t("noMembersLabel")}
           </p>
         ) : (
           <div className="flex flex-wrap gap-2">

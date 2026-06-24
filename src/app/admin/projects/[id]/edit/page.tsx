@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface User { id: string; name: string; email: string; }
 interface Member { id: string; userId: string; user: User; }
@@ -35,10 +36,10 @@ function fileIcon(name: string) {
   return "📎";
 }
 
-// ── User picker dropdown ──────────────────────────────────────────────────────
-function UserPicker({ allUsers, members, projectId, onAdd }: {
+function UserPicker({ allUsers, members, projectId, onAdd, searchLabel, notFoundLabel, allAddedLabel, addUserLabel }: {
   allUsers: User[]; members: Member[]; projectId: string;
   onAdd: (member: Member) => void;
+  searchLabel: string; notFoundLabel: string; allAddedLabel: string; addUserLabel: string;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -85,7 +86,7 @@ function UserPicker({ allUsers, members, projectId, onAdd }: {
         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
         </svg>
-        Додати користувача
+        {addUserLabel}
       </button>
 
       {open && (
@@ -101,14 +102,14 @@ function UserPicker({ allUsers, members, projectId, onAdd }: {
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Пошук..."
+              placeholder={searchLabel}
               className="w-full rounded-lg px-3 py-1.5 text-xs bg-muted/30 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
           </div>
           <div className="max-h-52 overflow-y-auto py-1">
             {available.length === 0 ? (
               <p className="text-xs text-muted-foreground px-3 py-3 text-center">
-                {query ? "Не знайдено" : "Всі вже додані"}
+                {query ? notFoundLabel : allAddedLabel}
               </p>
             ) : available.map(u => (
               <button key={u.id} type="button" onClick={() => add(u)}
@@ -129,10 +130,10 @@ function UserPicker({ allUsers, members, projectId, onAdd }: {
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
 export default function EditProjectPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { t, locale } = useLanguage();
 
   const [project, setProject] = useState<Project | null>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -157,7 +158,8 @@ export default function EditProjectPage() {
       setName(p.name);
       setDescription(p.description ?? "");
       setAllUsers(u);
-    }).catch(() => setLoadErr("Не вдалось завантажити")).finally(() => setLoading(false));
+    }).catch(() => setLoadErr(t("failedLoadLabel"))).finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   async function save() {
@@ -171,7 +173,7 @@ export default function EditProjectPage() {
       router.push("/admin/projects");
     } else {
       const d = await r.json();
-      setSaveErr(d.error ?? "Помилка збереження");
+      setSaveErr(d.error ?? t("savingError"));
     }
     setSaving(false);
   }
@@ -186,7 +188,7 @@ export default function EditProjectPage() {
   async function uploadFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) { setUploadErr("Максимальний розмір файлу 20 МБ"); return; }
+    if (file.size > 20 * 1024 * 1024) { setUploadErr(t("maxFileSizeLabel")); return; }
     setUploading(true); setUploadErr(null);
     try {
       const fd = new FormData();
@@ -197,17 +199,20 @@ export default function EditProjectPage() {
         setProject(p => p ? { ...p, files: [f, ...p.files] } : p);
       } else {
         const d = await r.json().catch(() => ({}));
-        setUploadErr(d.error ?? "Помилка завантаження");
+        setUploadErr(d.error ?? t("uploadErrorLabel"));
       }
     } catch {
-      setUploadErr("Помилка мережі");
+      setUploadErr(t("networkError"));
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
     setUploading(false);
   }
 
   async function deleteFile(file: ProjectFile) {
-    if (!confirm(`Видалити файл «${file.name}»?`)) return;
+    const msg = locale === "uk"
+      ? `Видалити файл «${file.name}»?`
+      : `Delete file "${file.name}"?`;
+    if (!confirm(msg)) return;
     setFileBusy(file.id);
     await fetch(`/api/admin/projects/${id}/files/${file.id}`, { method: "DELETE" });
     setProject(p => p ? { ...p, files: p.files.filter(f => f.id !== file.id) } : p);
@@ -225,10 +230,10 @@ export default function EditProjectPage() {
   if (!project) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <p className="text-sm text-rose-600">{loadErr ?? "Проєкт не знайдено"}</p>
+        <p className="text-sm text-rose-600">{loadErr ?? t("projectNotFound")}</p>
         <button type="button" onClick={() => router.push("/admin/projects")}
           className="mt-3 text-xs text-indigo-600 hover:underline font-semibold cursor-pointer">
-          ← Назад до проєктів
+          {t("backToProjects")}
         </button>
       </div>
     );
@@ -244,32 +249,32 @@ export default function EditProjectPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Редагування проєкту</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{t("editProjectTitle")}</h1>
         </div>
         <button type="button" onClick={() => router.push("/admin/projects")}
           className="mt-1 text-xs text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 font-medium cursor-pointer transition-colors">
-          ← Назад до проєктів
+          {t("backToProjects")}
         </button>
       </div>
 
-      {/* ── Main fields ── */}
+      {/* Main fields */}
       <div className="rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-fade-in-up stagger-2 space-y-5">
         <div>
           <label htmlFor="proj-name" className="block text-xs font-bold text-foreground/80 uppercase tracking-wider mb-1.5">
-            Назва <span className="text-rose-500">*</span>
+            {t("nameLabel")} <span className="text-rose-500">*</span>
           </label>
           <input id="proj-name" type="text" value={name} onChange={e => setName(e.target.value)}
             onKeyDown={e => e.key === "Enter" && save()} maxLength={120}
-            className={inputBase} placeholder="Назва проєкту" autoFocus />
+            className={inputBase} placeholder={t("projectNamePlaceholder")} autoFocus />
         </div>
 
         <div>
           <label htmlFor="proj-desc" className="block text-xs font-bold text-foreground/80 uppercase tracking-wider mb-1.5">
-            Опис <span className="text-muted-foreground font-normal normal-case">(необов&apos;язково)</span>
+            {t("descLabel")} <span className="text-muted-foreground font-normal normal-case">{t("optionalLabel")}</span>
           </label>
           <textarea id="proj-desc" value={description} onChange={e => setDescription(e.target.value)}
             rows={4} maxLength={2000} className={cn(inputBase, "resize-none leading-relaxed")}
-            placeholder="Короткий опис проєкту..." />
+            placeholder={t("projectDescPlaceholder")} />
           <p className="text-xs text-muted-foreground mt-1 text-right">{description.length}/2000</p>
         </div>
 
@@ -285,33 +290,37 @@ export default function EditProjectPage() {
             {saving
               ? <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin inline-block" />
               : <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
-            Зберегти
+            {t("saveBtn")}
           </button>
           <button type="button" onClick={() => router.push("/admin/projects")}
             className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer transition-colors">
-            Скасувати
+            {t("cancelBtn")}
           </button>
         </div>
       </div>
 
-      {/* ── Members ── */}
+      {/* Members */}
       <div className="relative z-10 rounded-2xl border border-border/60 bg-card shadow-card p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-sm font-bold text-foreground">Доступ користувачів</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{project.members.length} учасників</p>
+            <h2 className="text-sm font-bold text-foreground">{t("projectAccessLabel")}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{project.members.length} {t("membersCountLabel")}</p>
           </div>
           <UserPicker
             allUsers={allUsers}
             members={project.members}
             projectId={id}
             onAdd={m => setProject(p => p ? { ...p, members: [...p.members, m] } : p)}
+            searchLabel={t("searchPlaceholder")}
+            notFoundLabel={t("notFoundLabel")}
+            allAddedLabel={t("allAddedLabel")}
+            addUserLabel={t("addUserBtn")}
           />
         </div>
 
         {project.members.length === 0 ? (
           <p className="text-xs text-muted-foreground py-4 text-center border border-dashed border-border/60 rounded-xl">
-            Немає учасників
+            {t("noMembersLabel")}
           </p>
         ) : (
           <div className="flex flex-wrap gap-2">
@@ -340,12 +349,12 @@ export default function EditProjectPage() {
         )}
       </div>
 
-      {/* ── Files ── */}
+      {/* Files */}
       <div className="relative z-0 rounded-2xl border border-border/60 bg-card shadow-card p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-sm font-bold text-foreground">Файли</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{project.files.length} файлів · макс. 20 МБ</p>
+            <h2 className="text-sm font-bold text-foreground">{t("filesLabel")}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{project.files.length} · {t("maxFileSizeLabel")}</p>
           </div>
           <button
             type="button"
@@ -364,7 +373,7 @@ export default function EditProjectPage() {
               : <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>}
-            Завантажити
+            {t("uploadBtn")}
           </button>
           <input ref={fileInputRef} type="file" className="hidden" onChange={uploadFile} />
         </div>
@@ -377,7 +386,7 @@ export default function EditProjectPage() {
 
         {project.files.length === 0 ? (
           <p className="text-xs text-muted-foreground py-4 text-center border border-dashed border-border/60 rounded-xl">
-            Немає файлів
+            {t("noFilesLabel")}
           </p>
         ) : (
           <div className="space-y-2">

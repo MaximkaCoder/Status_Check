@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Department { id: string; name: string; created_at: string }
 
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("uk-UA", { day: "2-digit", month: "2-digit", year: "numeric" });
+function formatDate(d: string, locale: string) {
+  return new Date(d).toLocaleDateString(locale === "uk" ? "uk-UA" : "en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 export default function AdminDepartmentsPage() {
+  const { t, locale } = useLanguage();
   const [items, setItems] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export default function AdminDepartmentsPage() {
   }
 
   async function remove(item: Department) {
-    if (!confirm(`Видалити департамент «${item.name}»?`)) return;
+    if (!confirm(locale === "uk" ? `Видалити департамент «${item.name}»?` : `Delete department "${item.name}"?`)) return;
     setBusy(item.id);
     await fetch(`/api/admin/departments/${item.id}`, { method: "DELETE" });
     await load(); setBusy(null);
@@ -50,8 +52,8 @@ export default function AdminDepartmentsPage() {
     <div className="rounded-2xl border border-border/60 bg-card shadow-card overflow-hidden">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
         <div>
-          <h2 className="text-base font-bold text-foreground">Департаменти</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{items.length} департаментів у системі</p>
+          <h2 className="text-base font-bold text-foreground">{t("departmentsPageTitle")}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{items.length} {t("departmentsLabel")}</p>
         </div>
       </div>
 
@@ -61,7 +63,7 @@ export default function AdminDepartmentsPage() {
         </div>
       ) : (
         <div className="divide-y divide-border/40">
-          {items.length === 0 && <p className="text-sm text-muted-foreground px-6 py-8">Немає департаментів</p>}
+          {items.length === 0 && <p className="text-sm text-muted-foreground px-6 py-8">{t("noDepartments")}</p>}
           {items.map((item) => (
             <div key={item.id} className="flex items-center gap-3 px-6 py-3.5 hover:bg-muted/20 transition-colors">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30 flex-shrink-0">
@@ -83,29 +85,29 @@ export default function AdminDepartmentsPage() {
                 <span className="flex-1 text-sm font-medium text-foreground">{item.name}</span>
               )}
 
-              <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(item.created_at)}</span>
+              <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(item.created_at, locale)}</span>
 
               <div className="flex gap-1.5 flex-shrink-0">
                 {editId === item.id ? (
                   <>
                     <button type="button" onClick={() => save(item.id)} disabled={busy === item.id}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-50 cursor-pointer transition-colors">
-                      Зберегти
+                      {t("saveBtn")}
                     </button>
                     <button type="button" onClick={() => { setEditId(null); setEditErr(null); }}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer transition-colors">
-                      Скасувати
+                      {t("cancelBtn")}
                     </button>
                   </>
                 ) : (
                   <>
                     <button type="button" onClick={() => { setEditId(item.id); setEditName(item.name); setEditErr(null); }}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/[0.10] cursor-pointer transition-colors">
-                      Перейменувати
+                      {t("renameBtn")}
                     </button>
                     <button type="button" onClick={() => remove(item)} disabled={busy === item.id}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 hover:bg-rose-200 disabled:opacity-50 cursor-pointer transition-colors">
-                      Видалити
+                      {t("deleteBtn")}
                     </button>
                   </>
                 )}

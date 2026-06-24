@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const inputBase = cn(
   "w-full rounded-xl border border-border/60 bg-white dark:bg-white/[0.06]",
@@ -14,6 +15,7 @@ const inputBase = cn(
 
 export default function NewUserPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +24,7 @@ export default function NewUserPage() {
   const [error, setError] = useState<string | null>(null);
 
   async function save() {
-    if (!name.trim() || !email.trim() || !password) { setError("Всі обов'язкові поля мають бути заповнені"); return; }
+    if (!name.trim() || !email.trim() || !password) { setError(t("allFieldsRequired")); return; }
     setSaving(true); setError(null);
     const r = await fetch("/api/admin/users", {
       method: "POST",
@@ -30,7 +32,7 @@ export default function NewUserPage() {
       body: JSON.stringify({ name: name.trim(), email: email.trim(), password, isAdmin }),
     });
     const data = await r.json();
-    if (!r.ok) { setError(data.error ?? "Помилка"); setSaving(false); return; }
+    if (!r.ok) { setError(data.error ?? t("createError")); setSaving(false); return; }
     router.push("/admin/users");
   }
 
@@ -44,11 +46,11 @@ export default function NewUserPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Новий користувач</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{t("newUserTitle")}</h1>
         </div>
         <Link href="/admin/users"
           className="mt-1 text-xs text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors">
-          ← Назад до користувачів
+          {t("backToUsers")}
         </Link>
       </div>
 
@@ -56,10 +58,10 @@ export default function NewUserPage() {
       <div className="rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-fade-in-up stagger-2 space-y-5">
         <div>
           <label htmlFor="user-name" className="block text-xs font-bold text-foreground/80 uppercase tracking-wider mb-1.5">
-            Ім&apos;я <span className="text-rose-500">*</span>
+            {t("nameLabel")} <span className="text-rose-500">*</span>
           </label>
           <input id="user-name" type="text" value={name} onChange={e => setName(e.target.value)}
-            placeholder="Повне ім'я..." className={inputBase} autoFocus />
+            placeholder={t("fullNamePlaceholder")} className={inputBase} autoFocus />
         </div>
 
         <div>
@@ -72,11 +74,11 @@ export default function NewUserPage() {
 
         <div>
           <label htmlFor="user-password" className="block text-xs font-bold text-foreground/80 uppercase tracking-wider mb-1.5">
-            Пароль <span className="text-rose-500">*</span>
+            {t("passwordLabel")} <span className="text-rose-500">*</span>
           </label>
           <input id="user-password" type="password" value={password} onChange={e => setPassword(e.target.value)}
             onKeyDown={e => e.key === "Enter" && save()}
-            placeholder="Мінімум 6 символів" className={inputBase} />
+            placeholder={t("minPasswordHint")} className={inputBase} />
         </div>
 
         <div className="flex items-center gap-3 pt-1">
@@ -97,7 +99,7 @@ export default function NewUserPage() {
               isAdmin ? "translate-x-5" : "translate-x-0"
             )} />
           </button>
-          <span className="text-sm font-medium text-foreground">Адміністратор</span>
+          <span className="text-sm font-medium text-foreground">{t("isAdministratorLabel")}</span>
         </div>
 
         {error && (
@@ -112,11 +114,11 @@ export default function NewUserPage() {
             {saving
               ? <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin inline-block" />
               : <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
-            {saving ? "Створення..." : "Створити користувача"}
+            {saving ? t("creatingLabel") : t("createUserBtn")}
           </button>
           <Link href="/admin/users"
             className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-muted text-muted-foreground hover:bg-muted/80 cursor-pointer transition-colors">
-            Скасувати
+            {t("cancelBtn")}
           </Link>
         </div>
       </div>

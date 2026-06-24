@@ -4,42 +4,14 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
-
-const NAV = [
-  {
-    href: "/admin/users",
-    label: "Користувачі",
-    icon: (
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0zm6 4a2 2 0 100-4 2 2 0 000 4zM3 16a2 2 0 100-4 2 2 0 000 4z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/admin/projects",
-    label: "Проєкти",
-    icon: (
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-      </svg>
-    ),
-  },
-  {
-    href: "/admin/departments",
-    label: "Департаменти",
-    icon: (
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-      </svg>
-    ),
-  },
-];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!loading && (!user || !user.isAdmin)) router.replace("/");
@@ -48,6 +20,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (loading || !user?.isAdmin) return null;
 
   const isEditPage = /\/admin\/[^/]+\//.test(pathname);
+
+  const NAV = [
+    {
+      href: "/admin/users",
+      label: t("navUsers"),
+      icon: (
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0zm6 4a2 2 0 100-4 2 2 0 000 4zM3 16a2 2 0 100-4 2 2 0 000 4z" />
+        </svg>
+      ),
+    },
+    {
+      href: "/admin/projects",
+      label: t("navProjects"),
+      icon: (
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+        </svg>
+      ),
+    },
+    {
+      href: "/admin/departments",
+      label: t("navDepartments"),
+      icon: (
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      ),
+    },
+  ];
 
   return (
     <div className="mx-auto max-w-5xl xl:max-w-[1340px] px-4 py-8">
@@ -62,12 +64,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-extrabold tracking-tight text-foreground">Адмін панель</h1>
-                <p className="text-xs text-muted-foreground">Управління користувачами, проєктами та департаментами</p>
+                <h1 className="text-xl font-extrabold tracking-tight text-foreground">{t("adminPanel")}</h1>
+                <p className="text-xs text-muted-foreground">{t("adminSubtitle")}</p>
               </div>
             </div>
             <Link href="/" className="text-xs text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors">
-              ← Назад до дашборду
+              {t("backToDashboardLink")}
             </Link>
           </div>
 
