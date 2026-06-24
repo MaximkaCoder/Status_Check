@@ -7,6 +7,7 @@ import { MonthCalendar } from "@/components/calendar/MonthCalendar";
 import { FilterDrawer } from "@/components/dashboard/FilterDrawer";
 import { FilterPanel } from "@/components/dashboard/FilterPanel";
 import { ItemList } from "@/components/dashboard/ItemList";
+import { BoardView } from "@/components/dashboard/BoardView";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useItems } from "@/hooks/useItems";
@@ -122,7 +123,7 @@ export default function DashboardPage() {
               type="button"
               onClick={() => setViewMode("list")}
               className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 cursor-pointer outline-none",
+                "flex-1 flex items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer outline-none",
                 viewMode === "list"
                   ? "bg-white dark:bg-white/20 text-indigo-600 dark:text-white shadow-[0_1px_4px_rgba(99,102,241,0.18),0_1px_2px_rgba(0,0,0,0.08)] dark:shadow-sm"
                   : "text-slate-400 dark:text-white/50 hover:text-slate-600 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/10"
@@ -137,7 +138,7 @@ export default function DashboardPage() {
               type="button"
               onClick={() => setViewMode("board")}
               className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 cursor-pointer outline-none",
+                "flex-1 flex items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer outline-none",
                 viewMode === "board"
                   ? "bg-white dark:bg-white/20 text-indigo-600 dark:text-white shadow-[0_1px_4px_rgba(99,102,241,0.18),0_1px_2px_rgba(0,0,0,0.08)] dark:shadow-sm"
                   : "text-slate-400 dark:text-white/50 hover:text-slate-600 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/10"
@@ -190,22 +191,23 @@ export default function DashboardPage() {
           )}
 
           {/* Animated view container — clips at center-column edges. Inner padding keeps
-              card shadows from being cut by overflow-hidden. */}
-          <div className="relative overflow-hidden -m-2">
-            {/* List view — stays in flow to hold container height */}
+              card shadows from being cut by overflow-hidden. Two halves slide as one row. */}
+          <div className="overflow-hidden -m-2">
             <div className={cn(
-              "p-2 flex flex-col gap-4",
+              "flex w-[200%] items-start",
               "transition-transform duration-500 ease-in-out",
-              viewMode === "list" ? "translate-x-0" : "-translate-x-full pointer-events-none"
+              viewMode === "list" ? "translate-x-0" : "-translate-x-1/2"
             )}>
-              <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+              {/* List view */}
+              <div className="w-1/2 min-w-0 p-2 flex flex-col gap-4">
+                <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+              </div>
+              {/* Board view — grouped by project */}
+              <div className={cn("w-1/2 min-w-0 p-2", viewMode !== "board" && "pointer-events-none")}>
+                <BoardView items={displayedItems} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+              </div>
             </div>
-            {/* Board view — absolute overlay sliding in from the right */}
-            <div className={cn(
-              "absolute inset-0 p-2",
-              "transition-transform duration-500 ease-in-out",
-              viewMode === "board" ? "translate-x-0" : "translate-x-full pointer-events-none"
-            )} /></div>
+          </div>
         </div>
 
         {/* RIGHT: Inline filter panel — only on xl+ */}
