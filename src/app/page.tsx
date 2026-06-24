@@ -113,7 +113,7 @@ export default function DashboardPage() {
 
           {/* View mode switcher */}
           <div className={cn(
-            "flex rounded-xl p-0.5 gap-0.5 h-[25px] animate-fade-in-up stagger-2",
+            "flex rounded-xl p-0.5 gap-0.5 h-[50px] animate-fade-in-up stagger-2",
             "bg-white/40 dark:bg-white/[0.06]",
             "border border-white/70 dark:border-white/[0.10]",
             "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none"
@@ -190,7 +190,7 @@ export default function DashboardPage() {
           )}
 
           {/* Animated view container — clips at left edge (calendar border) */}
-          <div className="overflow-hidden">
+          <div className="overflow-hidden [clip-path:inset(0)]">
             <div className={cn(
               "flex w-[200%] transition-transform duration-500 ease-in-out",
               viewMode === "list" ? "translate-x-0" : "-translate-x-1/2"
