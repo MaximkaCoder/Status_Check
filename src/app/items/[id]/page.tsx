@@ -348,7 +348,12 @@ export default function ViewItemPage() {
   );
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="py-8 px-4 2xl:flex 2xl:gap-6 2xl:items-start 2xl:justify-center">
+      {/* Left spacer — mirrors comments width so card stays centered */}
+      <div className="hidden 2xl:block 2xl:w-[300px] 2xl:flex-shrink-0" />
+
+      {/* Main column */}
+      <div className="max-w-2xl w-full mx-auto 2xl:mx-0">
       {/* Page header */}
       <div className="mb-6 animate-fade-in-up stagger-1">
         <div className="flex items-start justify-between gap-4">
@@ -493,14 +498,12 @@ export default function ViewItemPage() {
             </div>
           )}
       </div>
+      </div>{/* end main column */}
 
-      {/* Comments — below card on mobile/desktop, fixed to the right on 2xl+ */}
+      {/* Comments — below card on mobile, sticky right column on 2xl+ */}
       <div className={cn(
         "mt-6 animate-fade-in-up stagger-3",
-        // On 2xl+ (≥1536px): fixed panel to the right of the centered card
-        // Card: max-w-2xl (672px) with px-4 = 640px content, center = 50% of viewport
-        // Card right edge = 50% + 320px. Gap 24px → comments at calc(50% + 344px)
-        "2xl:fixed 2xl:top-[200px] 2xl:mt-0 2xl:w-[300px] 2xl:left-[calc(50%+344px)]"
+        "2xl:mt-0 2xl:w-[300px] 2xl:flex-shrink-0 2xl:sticky 2xl:top-[72px] 2xl:pt-28"
       )}>
         <CommentsPanel itemId={id} />
       </div>
