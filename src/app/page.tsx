@@ -189,20 +189,26 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Animated view container — clips shadows only in board mode */}
-          <div className="overflow-hidden" style={viewMode === "board" ? { clipPath: "inset(0)" } : undefined}>
+          {/* Animated view container — no overflow-hidden, opacity fade kills shadows on exit */}
+          <div className="relative">
+            {/* List view — stays in flow to hold container height */}
             <div className={cn(
-              "flex w-[200%] transition-transform duration-500 ease-in-out",
-              viewMode === "list" ? "translate-x-0" : "-translate-x-1/2"
+              "flex flex-col gap-4",
+              "transition-[transform,opacity] duration-500 ease-in-out",
+              viewMode === "list"
+                ? "translate-x-0 opacity-100"
+                : "-translate-x-full opacity-0 pointer-events-none"
             )}>
-              {/* List view */}
-              <div className="w-1/2 flex flex-col gap-4 min-w-0">
-                <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
-              </div>
-              {/* Board view — empty for now */}
-              <div className="w-1/2 min-h-[200px] min-w-0" />
+              <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
             </div>
-          </div>
+            {/* Board view — absolute overlay, no shadow bleed since list is opacity-0 */}
+            <div className={cn(
+              "absolute inset-0",
+              "transition-[transform,opacity] duration-500 ease-in-out",
+              viewMode === "board"
+                ? "translate-x-0 opacity-100"
+                : "translate-x-full opacity-0 pointer-events-none"
+            )} /></div>
         </div>
 
         {/* RIGHT: Inline filter panel — only on xl+ */}
