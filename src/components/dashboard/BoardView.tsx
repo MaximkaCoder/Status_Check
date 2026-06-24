@@ -115,23 +115,30 @@ export function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
               </span>
             </button>
 
-            {/* Collapsible body — grid-rows trick for smooth height animation */}
+            {/* Collapsible body — grid-rows for height + opacity/translate for GPU-smooth reveal */}
             <div
               className={cn(
                 "grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none",
                 isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
               )}
+              style={{ willChange: "grid-template-rows" }}
             >
               <div className="overflow-hidden">
-                <div className="px-3 pb-3 pt-1 flex flex-col gap-3">
-                  {group.items.map((item, i) => (
+                <div
+                  className={cn(
+                    "px-3 pb-3 pt-1 flex flex-col gap-3",
+                    "transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none",
+                    isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+                  )}
+                >
+                  {group.items.map((item) => (
                     <ItemCard
                       key={item.id}
                       item={item}
                       onDelete={onDelete}
                       onStatusChange={onStatusChange}
                       onDetailClick={(it) => router.push(`/items/${it.id}`)}
-                      animationIndex={i}
+                      animate={false}
                     />
                   ))}
                 </div>

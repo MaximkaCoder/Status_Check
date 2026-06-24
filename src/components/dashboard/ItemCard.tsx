@@ -20,6 +20,7 @@ interface ItemCardProps {
   onStatusChange?: (id: string, status: Status) => Promise<void>;
   onDetailClick?: (item: StatusItem) => void;
   animationIndex?: number;
+  animate?: boolean;
 }
 
 function formatDateLocale(date: Date, locale: string, monthsEn: readonly string[], monthsUkGen: readonly string[]): string {
@@ -72,7 +73,7 @@ const STATUS_NEXT_DOTS: Record<Status, string> = {
   IDEAS_BACKLOG: "bg-violet-500",
 };
 
-export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animationIndex = 0 }: ItemCardProps) {
+export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animationIndex = 0, animate = true }: ItemCardProps) {
   const router = useRouter();
   const { t, locale } = useLanguage();
   const { toast } = useToast();
@@ -156,8 +157,8 @@ export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animat
         STATUS_HOVER_GLOW[status],
         "hover:-translate-y-0.5 transition-all duration-200",
         onDetailClick ? "cursor-pointer" : "cursor-default",
-        "animate-fade-in-up",
-        staggerClass,
+        animate && "animate-fade-in-up",
+        animate && staggerClass,
         statusMenuOpen && "z-10"
       )}
       onClick={() => onDetailClick?.(item)}
