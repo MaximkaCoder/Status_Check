@@ -189,8 +189,8 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Animated view container — clips at left edge (calendar border) */}
-          <div className="overflow-hidden" style={{ clipPath: "inset(0)" }}>
+          {/* Animated view container — clips shadows only in board mode */}
+          <div className="overflow-hidden" style={viewMode === "board" ? { clipPath: "inset(0)" } : undefined}>
             <div className={cn(
               "flex w-[200%] transition-transform duration-500 ease-in-out",
               viewMode === "list" ? "translate-x-0" : "-translate-x-1/2"
