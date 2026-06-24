@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { TabSwitcher } from "@/components/forms/TabSwitcher";
@@ -24,6 +24,15 @@ export default function NewItemPage() {
   const [activeTab, setActiveTab] = useState<Tab>("manual");
   const [prefill, setPrefill] = useState<Prefill>({});
   const [formKey, setFormKey] = useState(0);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem("newItemDeadline");
+    if (stored) {
+      setPrefill(prev => prev.deadline ? prev : { ...prev, deadline: stored });
+      setFormKey(k => k + 1);
+      sessionStorage.removeItem("newItemDeadline");
+    }
+  }, []);
 
   function handleParsed(values: { title: string; deadline?: string; project?: string; assignee?: string; reviewer?: string }) {
     const next: Prefill = { title: values.title, project: values.project, assignee: values.assignee, reviewer: values.reviewer };

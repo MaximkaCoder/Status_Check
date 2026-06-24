@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { isSameDay, startOfMonth } from "date-fns";
+import { format, isSameDay, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import { MonthCalendar } from "@/components/calendar/MonthCalendar";
 import { FilterDrawer } from "@/components/dashboard/FilterDrawer";
@@ -31,8 +31,15 @@ export default function DashboardPage() {
   });
 
   function handleDayClick(date: Date) {
-    if (selectedDay && isSameDay(selectedDay, date)) setSelectedDay(null);
-    else setSelectedDay(date);
+    if (selectedDay && isSameDay(selectedDay, date)) {
+      setSelectedDay(null);
+      sessionStorage.removeItem("newItemDeadline");
+    } else {
+      setSelectedDay(date);
+      const d = new Date(date);
+      d.setHours(12, 0, 0, 0);
+      sessionStorage.setItem("newItemDeadline", format(d, "yyyy-MM-dd'T'HH:mm"));
+    }
   }
 
   function handleMonthChange(newMonth: Date) {
