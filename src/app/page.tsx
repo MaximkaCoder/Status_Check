@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "board">("list");
 
   const { t, locale } = useLanguage();
   const { toast } = useToast();
@@ -110,6 +111,45 @@ export default function DashboardPage() {
         {/* CENTER: Task list */}
         <div className="flex-1 min-w-0 flex flex-col gap-4">
 
+          {/* View mode switcher */}
+          <div className={cn(
+            "flex rounded-xl p-0.5 gap-0.5 h-[25px] animate-fade-in-up stagger-2",
+            "bg-white/40 dark:bg-white/[0.06]",
+            "border border-white/70 dark:border-white/[0.10]",
+            "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none"
+          )}>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 cursor-pointer outline-none",
+                viewMode === "list"
+                  ? "bg-white dark:bg-white/20 text-indigo-600 dark:text-white shadow-[0_1px_4px_rgba(99,102,241,0.18),0_1px_2px_rgba(0,0,0,0.08)] dark:shadow-sm"
+                  : "text-slate-400 dark:text-white/50 hover:text-slate-600 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/10"
+              )}
+            >
+              <svg className="h-3 w-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+              {locale === "uk" ? "Список" : "List"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("board")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 cursor-pointer outline-none",
+                viewMode === "board"
+                  ? "bg-white dark:bg-white/20 text-indigo-600 dark:text-white shadow-[0_1px_4px_rgba(99,102,241,0.18),0_1px_2px_rgba(0,0,0,0.08)] dark:shadow-sm"
+                  : "text-slate-400 dark:text-white/50 hover:text-slate-600 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/10"
+              )}
+            >
+              <svg className="h-3 w-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+              </svg>
+              {locale === "uk" ? "Дошка" : "Board"}
+            </button>
+          </div>
+
           {/* Filter button — only on < xl */}
           <div className="xl:hidden flex items-center justify-between animate-fade-in-up stagger-3">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -149,7 +189,20 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+          {/* Animated view container — clips at left edge (calendar border) */}
+          <div className="overflow-hidden">
+            <div className={cn(
+              "flex w-[200%] transition-transform duration-500 ease-in-out",
+              viewMode === "list" ? "translate-x-0" : "-translate-x-1/2"
+            )}>
+              {/* List view */}
+              <div className="w-1/2 flex flex-col gap-4 min-w-0">
+                <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+              </div>
+              {/* Board view — empty for now */}
+              <div className="w-1/2 min-h-[200px] min-w-0" />
+            </div>
+          </div>
         </div>
 
         {/* RIGHT: Inline filter panel — only on xl+ */}
