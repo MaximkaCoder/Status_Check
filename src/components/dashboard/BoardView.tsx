@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ItemCard } from "./ItemCard";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -22,6 +23,7 @@ interface Group {
 
 export function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
   const { locale } = useLanguage();
+  const router = useRouter();
   const noProjectLabel = locale === "uk" ? "Без проєкту" : "No project";
 
   // Group items by project. Items are already filtered by access rights upstream,
@@ -119,6 +121,7 @@ export function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
                       item={item}
                       onDelete={onDelete}
                       onStatusChange={onStatusChange}
+                      onDetailClick={(it) => router.push(`/items/${it.id}`)}
                       animationIndex={i}
                     />
                   ))}
