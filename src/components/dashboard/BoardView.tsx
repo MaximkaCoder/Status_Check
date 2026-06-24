@@ -47,11 +47,11 @@ export function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
       });
   }, [items, noProjectLabel]);
 
-  // All groups expanded by default; track collapsed ones.
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // All groups collapsed by default; track expanded ones.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   function toggle(key: string) {
-    setCollapsed((prev) => {
+    setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
@@ -70,7 +70,7 @@ export function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
   return (
     <div className="flex flex-col gap-4">
       {groups.map((group, gi) => {
-        const isOpen = !collapsed.has(group.key);
+        const isOpen = expanded.has(group.key);
         return (
           <div
             key={group.key}
