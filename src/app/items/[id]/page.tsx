@@ -348,7 +348,7 @@ export default function ViewItemPage() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-2xl px-4 py-8">
       {/* Page header */}
       <div className="mb-6 animate-fade-in-up stagger-1">
         <div className="flex items-start justify-between gap-4">
@@ -396,10 +396,8 @@ export default function ViewItemPage() {
         </button>
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-        {/* Left: item details */}
-        <div className="rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-fade-in-up stagger-2 space-y-4">
+      {/* Task card */}
+      <div className="rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-fade-in-up stagger-2 space-y-4">
 
           {/* Description */}
           {item.description ? (
@@ -494,12 +492,17 @@ export default function ViewItemPage() {
               </div>
             </div>
           )}
-        </div>
+      </div>
 
-        {/* Right: comments */}
-        <div className="animate-fade-in-up stagger-3">
-          <CommentsPanel itemId={id} />
-        </div>
+      {/* Comments — below card on mobile/desktop, fixed to the right on 2xl+ */}
+      <div className={cn(
+        "mt-6 animate-fade-in-up stagger-3",
+        // On 2xl+ (≥1536px): fixed panel to the right of the centered card
+        // Card: max-w-2xl (672px) with px-4 = 640px content, center = 50% of viewport
+        // Card right edge = 50% + 320px. Gap 24px → comments at calc(50% + 344px)
+        "2xl:fixed 2xl:top-20 2xl:mt-0 2xl:w-[300px] 2xl:left-[calc(50%+344px)]"
+      )}>
+        <CommentsPanel itemId={id} />
       </div>
     </div>
   );
