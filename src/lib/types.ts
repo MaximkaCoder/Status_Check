@@ -1,7 +1,11 @@
 import type { StatusItem as PrismaStatusItem } from "@prisma/client";
 
 // Re-export Prisma's generated type as the canonical StatusItem shape.
-export type StatusItem = PrismaStatusItem;
+// commentCount / unreadCount are injected by the items list API.
+export type StatusItem = PrismaStatusItem & {
+  commentCount?: number;
+  unreadCount?: number;
+};
 
 // Shape returned by POST /api/ai/parse
 export interface ParsedItem {

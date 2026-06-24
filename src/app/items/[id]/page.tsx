@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { isPast, isToday, isTomorrow } from "date-fns";
@@ -12,6 +12,29 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getItemById } from "@/lib/api-client";
 import { translations } from "@/lib/i18n";
 import type { StatusItem } from "@/lib/types";
+
+interface Comment {
+  id: string;
+  authorId: string;
+  authorName: string;
+  text: string;
+  created_at: string;
+}
+
+const AVATAR_COLORS = [
+  "from-indigo-400 to-violet-500",
+  "from-rose-400 to-pink-500",
+  "from-amber-400 to-orange-500",
+  "from-emerald-400 to-teal-500",
+  "from-cyan-400 to-sky-500",
+  "from-violet-400 to-purple-500",
+];
+
+function getGradient(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
 
 function getAvatarColor(name: string): string {
   const colors = ["bg-indigo-500","bg-violet-500","bg-pink-500","bg-rose-500","bg-amber-500","bg-emerald-500","bg-cyan-500","bg-sky-500","bg-teal-500","bg-orange-500"];
@@ -29,16 +52,26 @@ function formatDate(date: Date, locale: string): string {
   return `${monthsEn[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} · ${h}:${m}`;
 }
 
+function formatCommentTime(date: Date, locale: string): string {
+  const monthsEn = translations.en.months;
+  const monthsUkGen = translations.uk.monthsGenitive;
+  const h = date.getHours().toString().padStart(2, "0");
+  const m = date.getMinutes().toString().padStart(2, "0");
+  if (locale === "uk") return `${date.getDate()} ${monthsUkGen[date.getMonth()]} · ${h}:${m}`;
+  return `${monthsEn[date.getMonth()]} ${date.getDate()} · ${h}:${m}`;
+}
+
 function formatDeadline(date: Date, locale: string, today: string, tomorrow: string): string {
   if (isToday(date)) return today;
   if (isTomorrow(date)) return tomorrow;
   return formatDate(date, locale);
 }
 
-function Avatar({ name, color }: { name: string; color?: string }) {
-  const bg = color ?? getAvatarColor(name);
+function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) {
+  const bg = getAvatarColor(name);
+  const sz = size === "md" ? "h-8 w-8 text-sm" : "h-6 w-6 text-[11px]";
   return (
-    <span className={cn("inline-flex h-6 w-6 items-center justify-center rounded-full text-white flex-shrink-0 text-[11px] font-bold", bg)}>
+    <span className={cn("inline-flex items-center justify-center rounded-full text-white flex-shrink-0 font-bold", sz, bg)}>
       {name.charAt(0).toUpperCase()}
     </span>
   );
@@ -53,6 +86,191 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+// ── Comments panel ──────────────────────────────────────────────────────────
+function CommentsPanel({ itemId }: { itemId: string }) {
+  const { t, locale } = useLanguage();
+  const { user } = useAuth();
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendErr, setSendErr] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/items/${itemId}/comments`)
+      .then(r => r.ok ? r.json() : [])
+      .then(d => { if (!cancelled) setComments(d); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    // Mark as seen
+    fetch(`/api/items/${itemId}/seen`, { method: "POST" }).catch(() => {});
+
+    return () => { cancelled = true; };
+  }, [itemId]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [comments]);
+
+  async function send() {
+    if (!text.trim() || sending) return;
+    if (text.length > 2000) { setSendErr(t("commentTooLong")); return; }
+    setSending(true); setSendErr(null);
+    const r = await fetch(`/api/items/${itemId}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text.trim() }),
+    });
+    if (r.ok) {
+      const c = await r.json();
+      setComments(prev => [...prev, c]);
+      setText("");
+    } else {
+      setSendErr(t("networkError"));
+    }
+    setSending(false);
+  }
+
+  async function remove(commentId: string) {
+    setDeletingId(commentId);
+    const r = await fetch(`/api/items/${itemId}/comments/${commentId}`, { method: "DELETE" });
+    if (r.ok) setComments(prev => prev.filter(c => c.id !== commentId));
+    setDeletingId(null);
+  }
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card shadow-card overflow-hidden flex flex-col h-full min-h-[400px] lg:min-h-0 lg:max-h-[calc(100vh-180px)] lg:sticky lg:top-20">
+      {/* Header */}
+      <div className="px-4 py-3.5 border-b border-border/60 flex items-center gap-2 flex-shrink-0">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+          <svg className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
+        <h2 className="text-sm font-bold text-foreground">{t("commentsTitle")}</h2>
+        {comments.length > 0 && (
+          <span className="ml-auto inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 text-[10px] font-bold">
+            {comments.length}
+          </span>
+        )}
+      </div>
+
+      {/* List */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 min-h-0">
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="h-5 w-5 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+          </div>
+        ) : comments.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-8">{t("noComments")}</p>
+        ) : (
+          comments.map(c => {
+            const isOwn = user?.userId === c.authorId || user?.isAdmin;
+            const grad = getGradient(c.authorName);
+            return (
+              <div key={c.id} className={cn("flex gap-2.5 group/comment", deletingId === c.id && "opacity-50")}>
+                <span className={cn(
+                  "inline-flex h-7 w-7 items-center justify-center rounded-full text-white flex-shrink-0 text-xs font-bold bg-gradient-to-br",
+                  grad
+                )}>
+                  {c.authorName.charAt(0).toUpperCase()}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2 mb-0.5 flex-wrap">
+                    <span className="text-xs font-bold text-foreground">{c.authorName}</span>
+                    <span className="text-[10px] text-muted-foreground">{formatCommentTime(new Date(c.created_at), locale)}</span>
+                    {isOwn && (
+                      <button
+                        type="button"
+                        onClick={() => remove(c.id)}
+                        disabled={deletingId === c.id}
+                        className="ml-auto opacity-0 group-hover/comment:opacity-100 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-rose-500 cursor-pointer transition-all duration-150 disabled:cursor-not-allowed"
+                      >
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        {t("deleteComment")}
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">{c.text}</p>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="border-t border-border/60 px-4 py-3 flex-shrink-0">
+        {sendErr && (
+          <p className="text-[10px] text-rose-500 mb-2">{sendErr}</p>
+        )}
+        <div className="flex gap-2 items-end">
+          {user && (
+            <span className={cn(
+              "inline-flex h-7 w-7 items-center justify-center rounded-full text-white flex-shrink-0 text-xs font-bold bg-gradient-to-br",
+              getGradient(user.name)
+            )}>
+              {user.name.charAt(0).toUpperCase()}
+            </span>
+          )}
+          <div className="flex-1 relative">
+            <textarea
+              value={text}
+              onChange={e => setText(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+              placeholder={t("commentPlaceholder")}
+              rows={1}
+              maxLength={2000}
+              className={cn(
+                "w-full rounded-xl border border-border/60 bg-muted/30 dark:bg-white/[0.04]",
+                "px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground",
+                "resize-none overflow-hidden",
+                "focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400",
+                "transition-all duration-150 leading-relaxed"
+              )}
+              style={{ minHeight: 36 }}
+              onInput={e => {
+                const el = e.currentTarget;
+                el.style.height = "auto";
+                el.style.height = Math.min(el.scrollHeight, 120) + "px";
+              }}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={send}
+            disabled={sending || !text.trim()}
+            className={cn(
+              "flex-shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-xl",
+              "bg-gradient-to-br from-indigo-500 to-violet-500 text-white",
+              "disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer",
+              "hover:from-indigo-600 hover:to-violet-600 transition-all duration-150",
+              "shadow-[0_2px_8px_rgba(99,102,241,0.4)]"
+            )}
+            aria-label={t("sendComment")}
+          >
+            {sending ? (
+              <span className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin inline-block" />
+            ) : (
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            )}
+          </button>
+        </div>
+        <p className="text-[10px] text-muted-foreground/50 mt-1.5 text-right">{text.length}/2000 · Enter {locale === "uk" ? "для надсилання" : "to send"}</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ───────────────────────────────────────────────────────────────
 export default function ViewItemPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -130,9 +348,9 @@ export default function ViewItemPage() {
   );
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       {/* Page header */}
-      <div className="mb-8 animate-fade-in-up stagger-1">
+      <div className="mb-6 animate-fade-in-up stagger-1">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-200/60 dark:border-indigo-500/30 flex-shrink-0">
@@ -178,100 +396,110 @@ export default function ViewItemPage() {
         </button>
       </div>
 
-      {/* Body */}
-      <div className="rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-fade-in-up stagger-2 space-y-4">
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+        {/* Left: item details */}
+        <div className="rounded-2xl border border-border/60 bg-card shadow-card p-6 animate-fade-in-up stagger-2 space-y-4">
 
-        {/* Description */}
-        {item.description ? (
-          <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("description")}</p>
-            <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{item.description}</p>
-          </div>
-        ) : null}
-
-        {/* Grid fields */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-          <Field label={t("createdAt")}>
-            <span className="text-sm font-medium text-foreground">
-              {formatDate(new Date(item.created_at), locale)}
-            </span>
-          </Field>
-
-          <Field label={t("deadline")}>
-            <span className={cn("text-sm font-medium", isPastDeadline ? "text-rose-600" : "text-foreground")}>
-              {deadline
-                ? formatDeadline(deadline, locale, t("today"), t("tomorrow"))
-                : t("noDeadline")}
-              {isPastDeadline && (
-                <span className="block text-[10px] font-normal text-rose-500/80 mt-0.5">{t("expired")}</span>
-              )}
-            </span>
-          </Field>
-
-          <Field label={locale === "uk" ? "Автор" : "Created by"}>
-            <div className="flex items-center gap-2">
-              <Avatar name={item.creator_name} color={avatarColor} />
-              <span className="text-sm font-medium text-foreground">{item.creator_name}</span>
+          {/* Description */}
+          {item.description ? (
+            <div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">{t("description")}</p>
+              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{item.description}</p>
             </div>
-          </Field>
+          ) : null}
 
-          {item.project && (
-            <Field label={t("project")}>
-              <span className="text-sm font-medium text-foreground">{item.project}</span>
+          {/* Grid fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+            <Field label={t("createdAt")}>
+              <span className="text-sm font-medium text-foreground">
+                {formatDate(new Date(item.created_at), locale)}
+              </span>
             </Field>
-          )}
 
-          {item.assignee && (
-            <Field label={t("assignee")}>
+            <Field label={t("deadline")}>
+              <span className={cn("text-sm font-medium", isPastDeadline ? "text-rose-600" : "text-foreground")}>
+                {deadline
+                  ? formatDeadline(deadline, locale, t("today"), t("tomorrow"))
+                  : t("noDeadline")}
+                {isPastDeadline && (
+                  <span className="block text-[10px] font-normal text-rose-500/80 mt-0.5">{t("expired")}</span>
+                )}
+              </span>
+            </Field>
+
+            <Field label={locale === "uk" ? "Автор" : "Created by"}>
               <div className="flex items-center gap-2">
-                <Avatar name={item.assignee} />
-                <span className="text-sm font-medium text-foreground">{item.assignee}</span>
+                <Avatar name={item.creator_name} />
+                <span className="text-sm font-medium text-foreground">{item.creator_name}</span>
               </div>
             </Field>
-          )}
 
-          {item.reviewer && (
-            <Field label={t("reviewer")}>
-              <div className="flex items-center gap-2">
-                <Avatar name={item.reviewer} />
-                <span className="text-sm font-medium text-foreground">{item.reviewer}</span>
+            {item.project && (
+              <Field label={t("project")}>
+                <span className="text-sm font-medium text-foreground">{item.project}</span>
+              </Field>
+            )}
+
+            {item.assignee && (
+              <Field label={t("assignee")}>
+                <div className="flex items-center gap-2">
+                  <Avatar name={item.assignee} />
+                  <span className="text-sm font-medium text-foreground">{item.assignee}</span>
+                </div>
+              </Field>
+            )}
+
+            {item.reviewer && (
+              <Field label={t("reviewer")}>
+                <div className="flex items-center gap-2">
+                  <Avatar name={item.reviewer} />
+                  <span className="text-sm font-medium text-foreground">{item.reviewer}</span>
+                </div>
+              </Field>
+            )}
+          </div>
+
+          {/* Files */}
+          {files.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                {locale === "uk" ? "Файли" : "Files"}
+              </p>
+              <div className="space-y-2">
+                {files.map(f => {
+                  const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+                  const icon = ["jpg","jpeg","png","gif","webp","svg"].includes(ext) ? "🖼"
+                    : ext === "pdf" ? "📄"
+                    : ["doc","docx"].includes(ext) ? "📝"
+                    : ["xls","xlsx","csv"].includes(ext) ? "📊"
+                    : ["zip","rar","7z"].includes(ext) ? "📦" : "📎";
+                  const size = f.size < 1024 ? `${f.size} B`
+                    : f.size < 1024*1024 ? `${(f.size/1024).toFixed(1)} KB`
+                    : `${(f.size/1024/1024).toFixed(1)} MB`;
+                  return (
+                    <div key={f.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/60 bg-muted/20">
+                      <span className="text-lg flex-shrink-0 leading-none">{icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <a href={f.url} target="_blank" rel="noreferrer"
+                          className="text-xs font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 truncate block transition-colors">
+                          {f.name}
+                        </a>
+                        <p className="text-[10px] text-muted-foreground">{size}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </Field>
+            </div>
           )}
         </div>
 
-        {/* Files */}
-        {files.length > 0 && (
-          <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Файли</p>
-            <div className="space-y-2">
-              {files.map(f => {
-                const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-                const icon = ["jpg","jpeg","png","gif","webp","svg"].includes(ext) ? "🖼"
-                  : ext === "pdf" ? "📄"
-                  : ["doc","docx"].includes(ext) ? "📝"
-                  : ["xls","xlsx","csv"].includes(ext) ? "📊"
-                  : ["zip","rar","7z"].includes(ext) ? "📦" : "📎";
-                const size = f.size < 1024 ? `${f.size} B`
-                  : f.size < 1024*1024 ? `${(f.size/1024).toFixed(1)} KB`
-                  : `${(f.size/1024/1024).toFixed(1)} MB`;
-                return (
-                  <div key={f.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/60 bg-muted/20">
-                    <span className="text-lg flex-shrink-0 leading-none">{icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <a href={f.url} target="_blank" rel="noreferrer"
-                        className="text-xs font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 truncate block transition-colors">
-                        {f.name}
-                      </a>
-                      <p className="text-[10px] text-muted-foreground">{size}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Right: comments */}
+        <div className="animate-fade-in-up stagger-3">
+          <CommentsPanel itemId={id} />
+        </div>
       </div>
     </div>
   );

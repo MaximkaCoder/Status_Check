@@ -99,6 +99,28 @@ export async function GET(request: NextRequest) {
       orderBy: { deadline: "asc" },
     });
 
+    // Attach comment stats (total + unread per current user) in one raw query
+    if (items.length > 0) {
+      const itemIds = items.map((i) => i.id);
+      const stats = await prisma.$queryRaw<Array<{ itemId: string; commentCount: number; unreadCount: number }>>`
+        SELECT
+          c."itemId",
+          COUNT(*)::int AS "commentCount",
+          COUNT(CASE WHEN c.created_at > COALESCE(ics.seen_at, '1970-01-01'::timestamptz) THEN 1 END)::int AS "unreadCount"
+        FROM comments c
+        LEFT JOIN item_comment_seen ics
+          ON ics."itemId" = c."itemId" AND ics."userId" = ${session.userId}
+        WHERE c."itemId" = ANY(${itemIds})
+        GROUP BY c."itemId", ics.seen_at
+      `;
+      const statsMap = new Map(stats.map((s) => [s.itemId, s]));
+      const enriched = items.map((item) => {
+        const s = statsMap.get(item.id);
+        return s ? { ...item, commentCount: s.commentCount, unreadCount: s.unreadCount } : item;
+      });
+      return NextResponse.json(enriched);
+    }
+
     return NextResponse.json(items);
   } catch (error) {
     console.error("GET /api/items error:", error);

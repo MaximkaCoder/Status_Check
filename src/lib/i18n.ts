@@ -186,6 +186,13 @@ export const translations = {
     optionalLabel: '(optional)',
     filesLabel: 'Files',
     uploadErrorLabel: 'Upload error',
+    // Comments
+    commentsTitle: 'Comments',
+    commentPlaceholder: 'Write a comment...',
+    sendComment: 'Send',
+    noComments: 'No comments yet. Be first!',
+    deleteComment: 'Delete',
+    commentTooLong: 'Comment too long (max 2000 chars)',
   },
   uk: {
     appName: 'Status Check',
@@ -360,6 +367,13 @@ export const translations = {
     optionalLabel: '(необов\'язково)',
     filesLabel: 'Файли',
     uploadErrorLabel: 'Помилка завантаження',
+    // Comments
+    commentsTitle: 'Коментарі',
+    commentPlaceholder: 'Написати коментар...',
+    sendComment: 'Надіслати',
+    noComments: 'Коментарів ще немає. Будьте першим!',
+    deleteComment: 'Видалити',
+    commentTooLong: 'Коментар занадто довгий (макс. 2000 символів)',
   },
 } as const
 

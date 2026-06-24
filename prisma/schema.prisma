@@ -60,6 +60,7 @@ model User {
   created_at     DateTime       @default(now()) @map("created_at")
   notifications   Notification[]
   projectMembers  ProjectMember[]
+  comments        Comment[]
 
   @@index([departmentId])
   @@map("users")
@@ -107,6 +108,7 @@ model StatusItem {
   created_at   DateTime   @default(now()) @map("created_at")
   updated_at   DateTime   @updatedAt @map("updated_at")
   files        ItemFile[]
+  comments     Comment[]
 
   @@index([deadline])
   @@index([status])
@@ -125,4 +127,27 @@ model ItemFile {
   created_at DateTime   @default(now()) @map("created_at")
 
   @@map("item_files")
+}
+
+model Comment {
+  id         String     @id @default(cuid())
+  itemId     String
+  item       StatusItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorName String
+  text       String     @db.Text
+  created_at DateTime   @default(now()) @map("created_at")
+
+  @@index([itemId, created_at])
+  @@map("comments")
+}
+
+model ItemCommentSeen {
+  itemId String
+  userId String
+  seenAt DateTime @map("seen_at")
+
+  @@id([itemId, userId])
+  @@map("item_comment_seen")
 }
