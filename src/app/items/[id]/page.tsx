@@ -372,7 +372,7 @@ export default function ViewItemPage() {
   return (
     <div className="py-8 px-4 2xl:flex 2xl:gap-6 2xl:items-start 2xl:justify-center">
       {/* Left spacer — mirrors comments width so card stays centered */}
-      <div className="hidden 2xl:block 2xl:w-[300px] 2xl:flex-shrink-0" />
+      <div className="hidden 2xl:block 2xl:w-[315px] 2xl:flex-shrink-0" />
 
       {/* Main column */}
       <div className="max-w-2xl w-full mx-auto 2xl:mx-0">
@@ -525,7 +525,7 @@ export default function ViewItemPage() {
       {/* Comments — below card on mobile, sticky right column on 2xl+ */}
       <div className={cn(
         "mt-6 animate-fade-in-up stagger-3 max-w-2xl mx-auto w-full",
-        "2xl:mx-0 2xl:mt-0 2xl:w-[300px] 2xl:max-w-none 2xl:flex-shrink-0 2xl:sticky 2xl:top-[72px] 2xl:pt-[118px]"
+        "2xl:mx-0 2xl:mt-0 2xl:w-[315px] 2xl:max-w-none 2xl:flex-shrink-0 2xl:sticky 2xl:top-[72px] 2xl:pt-[118px]"
       )}>
         <CommentsPanel itemId={id} />
       </div>
