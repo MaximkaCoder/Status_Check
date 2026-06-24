@@ -500,7 +500,7 @@ export default function ViewItemPage() {
         // On 2xl+ (≥1536px): fixed panel to the right of the centered card
         // Card: max-w-2xl (672px) with px-4 = 640px content, center = 50% of viewport
         // Card right edge = 50% + 320px. Gap 24px → comments at calc(50% + 344px)
-        "2xl:fixed 2xl:top-20 2xl:mt-0 2xl:w-[300px] 2xl:left-[calc(50%+344px)]"
+        "2xl:fixed 2xl:top-[200px] 2xl:mt-0 2xl:w-[300px] 2xl:left-[calc(50%+344px)]"
       )}>
         <CommentsPanel itemId={id} />
       </div>
