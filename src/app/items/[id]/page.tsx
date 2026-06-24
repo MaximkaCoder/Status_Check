@@ -174,7 +174,7 @@ function CommentsPanel({ itemId }: { itemId: string }) {
               <div key={c.id} className={cn("flex gap-2.5 group/comment", deletingId === c.id && "opacity-50")}>
                 <span className={cn(
                   "inline-flex h-7 w-7 items-center justify-center rounded-full text-white flex-shrink-0 text-xs font-bold bg-gradient-to-br",
-                  grad
+                  c.authorId === user?.userId ? "from-indigo-400 to-violet-500" : grad
                 )}>
                   {c.authorName.charAt(0).toUpperCase()}
                 </span>
