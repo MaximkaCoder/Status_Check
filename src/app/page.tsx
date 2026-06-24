@@ -96,8 +96,8 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-5xl xl:max-w-[1340px] px-4 py-8">
       <div className="flex flex-col lg:flex-row lg:items-start gap-6">
 
-        {/* LEFT: Calendar + Stats — sticky, raised above task list so cards slide under it */}
-        <div className="relative z-20 lg:sticky lg:top-[68px] lg:self-start lg:w-[360px] lg:flex-shrink-0 flex flex-col gap-4 animate-fade-in-up stagger-2">
+        {/* LEFT: Calendar + Stats — sticky */}
+        <div className="lg:sticky lg:top-[68px] lg:self-start lg:w-[360px] lg:flex-shrink-0 flex flex-col gap-4 animate-fade-in-up stagger-2">
           <MonthCalendar
             items={items}
             selectedDay={selectedDay}
@@ -108,8 +108,8 @@ export default function DashboardPage() {
           <StatsPanel items={displayedItems} />
         </div>
 
-        {/* CENTER: Task list — sits below calendar/stats z-layer */}
-        <div className="relative z-0 flex-1 min-w-0 flex flex-col gap-4">
+        {/* CENTER: Task list */}
+        <div className="flex-1 min-w-0 flex flex-col gap-4">
 
           {/* View mode switcher */}
           <div className={cn(
@@ -189,25 +189,22 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Animated view container — cards slide left UNDER the calendar (z-layered), no clipping */}
-          <div className="relative">
+          {/* Animated view container — clips at center-column edges. Inner padding keeps
+              card shadows from being cut by overflow-hidden. */}
+          <div className="relative overflow-hidden -m-2">
             {/* List view — stays in flow to hold container height */}
             <div className={cn(
-              "flex flex-col gap-4",
+              "p-2 flex flex-col gap-4",
               "transition-transform duration-500 ease-in-out",
-              viewMode === "list"
-                ? "translate-x-0"
-                : "-translate-x-[140%] pointer-events-none"
+              viewMode === "list" ? "translate-x-0" : "-translate-x-full pointer-events-none"
             )}>
               <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
             </div>
             {/* Board view — absolute overlay sliding in from the right */}
             <div className={cn(
-              "absolute inset-0",
+              "absolute inset-0 p-2",
               "transition-transform duration-500 ease-in-out",
-              viewMode === "board"
-                ? "translate-x-0"
-                : "translate-x-[140%] pointer-events-none"
+              viewMode === "board" ? "translate-x-0" : "translate-x-full pointer-events-none"
             )} /></div>
         </div>
 
