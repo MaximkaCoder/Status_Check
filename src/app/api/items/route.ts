@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getUnblockedSession as getSession } from "@/lib/auth";
 import { CreateItemSchema, GetItemsQuerySchema } from "@/lib/validations";
 import { notifyAssignees } from "@/lib/notify";
 

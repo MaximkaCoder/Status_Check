@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getUnblockedSession as getSession } from "@/lib/auth";
 import { UpdateStatusSchema } from "@/lib/validations";
 
 type RouteParams = { params: { id: string } };

@@ -6,6 +6,9 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
+import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { BlockedScreen } from "@/components/layout/BlockedScreen";
 
 export const metadata: Metadata = {
   title: "Status Check — Shared Commitment Tracker",
@@ -19,7 +22,28 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSession();
+  if (session) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { blocked: true },
+    });
+    if (user?.blocked) {
+      return (
+        <html lang="en" suppressHydrationWarning>
+          <body>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <div className="min-h-screen bg-gradient-to-br from-slate-200/90 via-blue-50/80 to-indigo-100/70 dark:[background:#0a0b1a]">
+                <BlockedScreen />
+              </div>
+            </ThemeProvider>
+          </body>
+        </html>
+      );
+    }
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body>

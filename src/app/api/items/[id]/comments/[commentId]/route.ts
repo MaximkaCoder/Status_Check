@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getUnblockedSession as getSession } from "@/lib/auth";
 
 export async function DELETE(
   _req: NextRequest,

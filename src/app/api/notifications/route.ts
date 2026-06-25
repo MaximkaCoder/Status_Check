@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getUnblockedSession as getSession } from "@/lib/auth";
 
 // GET /api/notifications — list current user's notifications (newest first, max 50)
 export async function GET(_request: NextRequest) {

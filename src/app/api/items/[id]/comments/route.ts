@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getUnblockedSession as getSession } from "@/lib/auth";
 
 async function canAccess(userId: string, userName: string, isAdmin: boolean, itemId: string) {
   const item = await prisma.statusItem.findUnique({ where: { id: itemId } });
