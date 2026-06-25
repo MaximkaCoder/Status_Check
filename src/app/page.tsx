@@ -25,13 +25,21 @@ export default function DashboardPage() {
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
   const [transitioning, setTransitioning] = useState(false);
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const viewContainerRef = useRef<HTMLDivElement>(null);
 
   function switchView(mode: "list" | "board") {
     if (mode === viewMode) return;
     if (transitionTimer.current) clearTimeout(transitionTimer.current);
+    // Lock container height so overflow-hidden doesn't clip the sliding-out view
+    if (viewContainerRef.current) {
+      viewContainerRef.current.style.minHeight = `${viewContainerRef.current.offsetHeight}px`;
+    }
     setTransitioning(true);
     setViewMode(mode);
-    transitionTimer.current = setTimeout(() => setTransitioning(false), 650);
+    transitionTimer.current = setTimeout(() => {
+      setTransitioning(false);
+      if (viewContainerRef.current) viewContainerRef.current.style.minHeight = "";
+    }, 650);
   }
 
   // Restore / persist view mode across navigation (e.g. opening a task and pressing back)
@@ -212,7 +220,7 @@ export default function DashboardPage() {
           {/* Animated view container — clips at center-column edges. Inner padding keeps
               card shadows from being cut by overflow-hidden. The active view is in-flow
               (sets the height); the inactive one is absolute so it never adds extra height. */}
-          <div className="relative overflow-hidden -m-2">
+          <div ref={viewContainerRef} className="relative overflow-hidden -m-2">
             {/* List view */}
             <div className={cn(
               "p-2 flex flex-col gap-4 transition-[transform,opacity] duration-[600ms] ease-[cubic-bezier(0.65,0,0.35,1)]",
