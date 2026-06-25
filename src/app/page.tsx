@@ -221,9 +221,7 @@ export default function DashboardPage() {
                 ? "relative opacity-100"
                 : "absolute inset-x-0 top-0 -translate-x-[103%] opacity-0 pointer-events-none"
             )}>
-              <div className={transitioning ? "opacity-0" : "opacity-100 transition-opacity duration-300"}>
-                <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
-              </div>
+              <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
             </div>
             {/* Board view — grouped by project */}
             <div className={cn(
@@ -233,9 +231,7 @@ export default function DashboardPage() {
                 ? "relative opacity-100"
                 : "absolute inset-x-0 top-0 translate-x-[103%] opacity-0 pointer-events-none"
             )}>
-              <div className={transitioning ? "opacity-0" : "opacity-100 transition-opacity duration-300"}>
-                <BoardView items={displayedItems} onDelete={handleDelete} onStatusChange={handleStatusChange} />
-              </div>
+              <BoardView items={displayedItems} onDelete={handleDelete} onStatusChange={handleStatusChange} />
             </div>
           </div>
         </div>
