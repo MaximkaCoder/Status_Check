@@ -85,9 +85,13 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const canEdit = !!user && (
-    (user.isAdmin) ||
-    item.creator_name === user.name ||
+  const canModify = !!user && (
+    user.isAdmin ||
+    (item.creator_id ? item.creator_id === user.userId : item.creator_name === user.name)
+  );
+  const canChangeStatus = !!user && (
+    user.isAdmin ||
+    (item.creator_id ? item.creator_id === user.userId : item.creator_name === user.name) ||
     item.assignee === user.name ||
     item.reviewer === user.name
   );
@@ -183,7 +187,7 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
           </h3>
 
           {/* Action buttons — only for users with permission */}
-          {canEdit && (
+          {canModify && (
             <div className="flex gap-1 flex-shrink-0">
               <button
                 onClick={(e) => { e.stopPropagation(); router.push(`/items/${item.id}/edit`); }}
@@ -210,8 +214,8 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
           <div className="relative flex-shrink-0" ref={menuRef}>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); if (canEdit) setStatusMenuOpen((v) => !v); }}
-              disabled={changingStatus || !onStatusChange || !canEdit}
+              onClick={(e) => { e.stopPropagation(); if (canChangeStatus) setStatusMenuOpen((v) => !v); }}
+              disabled={changingStatus || !onStatusChange || !canChangeStatus}
               className={cn(
                 "transition-opacity duration-150",
                 onStatusChange ? "cursor-pointer hover:opacity-75" : "cursor-default",

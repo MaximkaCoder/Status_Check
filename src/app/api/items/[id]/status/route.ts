@@ -17,8 +17,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const isAdmin = session.isAdmin ?? false;
+    const isCreator = existing.creator_id
+      ? existing.creator_id === session.userId
+      : existing.creator_name === session.name;
     const canModify = isAdmin ||
-      existing.creator_name === session.name ||
+      isCreator ||
       existing.assignee === session.name ||
       existing.reviewer === session.name;
     if (!canModify) {
