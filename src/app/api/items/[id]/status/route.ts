@@ -51,7 +51,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
 
     notifyStatusChange(
-      updated.id, updated.title, updated.assignee, updated.reviewer, newStatus, session.name
+      updated.id, updated.title, updated.assignee, updated.reviewer, updated.creator_name, newStatus, session.name
     ).catch(() => {});
 
     return NextResponse.json(updated);

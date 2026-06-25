@@ -31,10 +31,11 @@ export async function notifyStatusChange(
   itemTitle: string,
   assigneeName: string | null | undefined,
   reviewerName: string | null | undefined,
+  creatorName: string | null | undefined,
   newStatus: string,
   changedBy: string
 ): Promise<void> {
-  const names = [...new Set([assigneeName, reviewerName].filter(Boolean) as string[])].filter(
+  const names = [...new Set([assigneeName, reviewerName, creatorName].filter(Boolean) as string[])].filter(
     (n) => n !== changedBy
   );
 
