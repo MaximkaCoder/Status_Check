@@ -19,6 +19,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email already in use" }, { status: 409 });
     }
 
+    const nameTaken = await prisma.user.findFirst({ where: { name: name.trim() } });
+    if (nameTaken) {
+      return NextResponse.json({ error: "Name already in use" }, { status: 409 });
+    }
+
     const hashed = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: { name: name.trim(), email: email.toLowerCase(), password: hashed },

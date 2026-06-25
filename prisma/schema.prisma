@@ -50,7 +50,7 @@ model ProjectFile {
 
 model User {
   id             String         @id @default(cuid())
-  name           String
+  name           String         @unique
   email          String         @unique
   password       String
   isAdmin        Boolean        @default(false)
