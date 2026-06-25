@@ -14,6 +14,7 @@ import { createItem, updateItem } from "@/lib/api-client";
 import type { TranslationKey } from "@/lib/i18n";
 
 type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
+type Priority = "LOW" | "MEDIUM" | "HIGH";
 
 export interface ItemFormValues {
   title: string;
@@ -24,6 +25,7 @@ export interface ItemFormValues {
   assignee?: string;
   reviewer?: string;
   status?: Status;
+  priority?: Priority;
 }
 
 interface ItemFormProps {
@@ -129,6 +131,8 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
   const [assignee, setAssignee] = useState(defaultValues?.assignee ?? "");
   const [reviewer, setReviewer] = useState(defaultValues?.reviewer ?? "");
 
+  const [priority, setPriority] = useState<Priority>((defaultValues?.priority as Priority | undefined) ?? "MEDIUM");
+
   const [userNames,     setUserNames]     = useState<string[]>([]);
   const [projectNames,  setProjectNames]  = useState<string[]>([]);
   const [newProjectPending, setNewProjectPending] = useState<string | null>(null);
@@ -176,6 +180,7 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
           project:  project.trim()  || null,
           assignee: assignee.trim() || null,
           reviewer: reviewer.trim() || null,
+          priority,
         });
         toast(
           locale === "uk" ? "Задачу створено" : "Item created successfully",
@@ -193,6 +198,7 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
           assignee: assignee.trim() || null,
           reviewer: reviewer.trim() || null,
           status,
+          priority,
         });
         toast(
           locale === "uk" ? "Зміни збережено" : "Changes saved successfully",
@@ -372,6 +378,36 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
           placeholder={locale === "uk" ? "Перевіряючий..." : "Reviewer..."}
         />
         <FieldError message={errors.reviewer} id="reviewer-error" />
+      </div>
+
+      {/* Priority */}
+      <div>
+        <FieldLabel>{locale === "uk" ? "Пріоритет" : "Priority"}</FieldLabel>
+        <div className="flex gap-2" role="group">
+          {(["LOW", "MEDIUM", "HIGH"] as Priority[]).map((p) => {
+            const active = priority === p;
+            const cfg = {
+              LOW:    { label: locale === "uk" ? "Низький" : "Low",    active: "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",   dot: "bg-blue-500"   },
+              MEDIUM: { label: locale === "uk" ? "Середній" : "Medium", active: "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300", dot: "bg-amber-500" },
+              HIGH:   { label: locale === "uk" ? "Високий" : "High",   active: "border-rose-500 bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300",     dot: "bg-rose-500"   },
+            }[p];
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPriority(p)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
+                  "text-xs font-semibold border-2 transition-all duration-150 cursor-pointer",
+                  active ? cfg.active : "border-border text-muted-foreground hover:border-slate-400"
+                )}
+              >
+                <span className={cn("h-1.5 w-1.5 rounded-full inline-block", active ? cfg.dot : "bg-muted-foreground/40")} />
+                {cfg.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Status — edit mode only */}

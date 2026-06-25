@@ -13,6 +13,13 @@ import { translations } from "@/lib/i18n";
 import type { StatusItem } from "@/lib/types";
 
 type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
+type Priority = "LOW" | "MEDIUM" | "HIGH";
+
+const PRIORITY_CFG: Record<Priority, { dot: string; badge: string; label: (uk: boolean) => string }> = {
+  LOW:    { dot: "bg-blue-400",  badge: "bg-blue-50/80 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 border-blue-100 dark:border-blue-500/20",   label: (uk) => uk ? "Низький"  : "Low"    },
+  MEDIUM: { dot: "bg-amber-400", badge: "bg-amber-50/80 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300 border-amber-100 dark:border-amber-500/20", label: (uk) => uk ? "Середній" : "Medium" },
+  HIGH:   { dot: "bg-rose-500",  badge: "bg-rose-50/80 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300 border-rose-100 dark:border-rose-500/20",   label: (uk) => uk ? "Високий"  : "High"   },
+};
 
 interface ItemCardProps {
   item: StatusItem;
@@ -262,9 +269,15 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
           <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed pl-[18px]">{item.description}</p>
         )}
 
-        {/* Project / assignee / reviewer pills */}
-        {(item.project || item.assignee || item.reviewer) && (
+        {/* Project / assignee / reviewer / priority pills */}
+        {(item.project || item.assignee || item.reviewer || item.priority) && (
           <div className="flex flex-wrap gap-1.5 pl-[18px]">
+            {item.priority && item.priority !== "MEDIUM" && (
+              <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border", PRIORITY_CFG[item.priority as Priority].badge)}>
+                <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", PRIORITY_CFG[item.priority as Priority].dot)} />
+                {PRIORITY_CFG[item.priority as Priority].label(locale === "uk")}
+              </span>
+            )}
             {item.project && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50/80 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 text-[10px] font-semibold border border-indigo-100 dark:border-indigo-500/20">
                 <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>

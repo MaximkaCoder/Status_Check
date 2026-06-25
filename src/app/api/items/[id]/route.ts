@@ -120,6 +120,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(data.project  !== undefined && { project:  data.project }),
         ...(data.assignee !== undefined && { assignee: data.assignee }),
         ...(data.reviewer !== undefined && { reviewer: data.reviewer }),
+        ...(data.priority !== undefined && { priority: data.priority }),
         ...departmentUpdate,
         ...doneFields,
       },

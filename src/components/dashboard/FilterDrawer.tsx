@@ -6,6 +6,13 @@ import { StatusFilterChips } from "./StatusFilterChips";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
+type Priority = "LOW" | "MEDIUM" | "HIGH";
+
+const PRIORITY_DRAWER_CFG: Record<Priority, { dot: string; activeCls: string; checkCls: string; label: (uk: boolean) => string }> = {
+  LOW:    { dot: "bg-blue-500",  activeCls: "bg-blue-50 dark:bg-blue-900/25 text-blue-700 dark:text-blue-300 font-semibold",   checkCls: "text-blue-500",  label: (uk) => uk ? "Низький"  : "Low"    },
+  MEDIUM: { dot: "bg-amber-500", activeCls: "bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-300 font-semibold", checkCls: "text-amber-500", label: (uk) => uk ? "Середній" : "Medium" },
+  HIGH:   { dot: "bg-rose-500",  activeCls: "bg-rose-50 dark:bg-rose-900/25 text-rose-700 dark:text-rose-300 font-semibold",   checkCls: "text-rose-500",  label: (uk) => uk ? "Високий"  : "High"   },
+};
 
 interface FilterDrawerProps {
   open: boolean;
@@ -21,6 +28,9 @@ interface FilterDrawerProps {
   selectedDepartments: string[];
   onDepartmentToggle: (d: string) => void;
   onDepartmentClear: () => void;
+  selectedPriorities: Priority[];
+  onPriorityToggle: (p: Priority) => void;
+  onPriorityClear: () => void;
   uniqueProjects: string[];
   uniqueAssignees: string[];
   uniqueDepartments: string[];
@@ -65,6 +75,7 @@ export function FilterDrawer({
   selectedProjects, onProjectToggle, onProjectClear,
   selectedAssignees, onAssigneeToggle, onAssigneeClear,
   selectedDepartments, onDepartmentToggle, onDepartmentClear,
+  selectedPriorities, onPriorityToggle, onPriorityClear,
   uniqueProjects, uniqueAssignees, uniqueDepartments,
   onClearAll, activeCount,
 }: FilterDrawerProps) {
@@ -296,6 +307,43 @@ export function FilterDrawer({
               </div>
             </section>
           )}
+
+          {/* Priority */}
+          <section>
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest">
+                {uk ? "Пріоритет" : "Priority"}
+              </p>
+              {selectedPriorities.length > 0 && (
+                <button type="button" onClick={onPriorityClear}
+                  className="text-[10px] text-muted-foreground hover:text-rose-500 cursor-pointer transition-colors">
+                  {uk ? "Очистити" : "Clear"}
+                </button>
+              )}
+            </div>
+            <div className="flex flex-col gap-0.5">
+              {(["HIGH", "MEDIUM", "LOW"] as Priority[]).map((p) => {
+                const active = selectedPriorities.includes(p);
+                const cfg = PRIORITY_DRAWER_CFG[p];
+                return (
+                  <button key={p} type="button" onClick={() => onPriorityToggle(p)}
+                    className={cn(
+                      "flex items-center gap-2.5 w-full px-2.5 py-2 rounded-xl text-sm text-left transition-all duration-150 cursor-pointer outline-none",
+                      active ? cfg.activeCls : "text-slate-700 dark:text-white/70 hover:bg-black/[0.04] dark:hover:bg-white/[0.05]"
+                    )}
+                  >
+                    <span className={cn("h-2 w-2 rounded-full flex-shrink-0 transition-colors", active ? cfg.dot : "bg-slate-300 dark:bg-white/20")} />
+                    <span className="flex-1">{cfg.label(uk)}</span>
+                    {active && (
+                      <svg className={cn("h-3.5 w-3.5 flex-shrink-0", cfg.checkCls)} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
         </div>
       </aside>

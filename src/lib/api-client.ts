@@ -50,6 +50,8 @@ export async function getItems(params?: GetItemsParams): Promise<StatusItem[]> {
   return apiFetch<StatusItem[]>(`/api/items${query ? `?${query}` : ""}`);
 }
 
+export type Priority = "LOW" | "MEDIUM" | "HIGH";
+
 export interface CreateItemPayload {
   title: string;
   description?: string;
@@ -58,6 +60,7 @@ export interface CreateItemPayload {
   project?:  string | null;
   assignee?: string | null;
   reviewer?: string | null;
+  priority?: Priority;
 }
 
 export async function createItem(payload: CreateItemPayload): Promise<StatusItem> {
@@ -78,6 +81,7 @@ export interface UpdateItemPayload {
   project?:  string | null;
   assignee?: string | null;
   reviewer?: string | null;
+  priority?: Priority;
 }
 
 export async function updateItem(id: string, payload: UpdateItemPayload): Promise<StatusItem> {

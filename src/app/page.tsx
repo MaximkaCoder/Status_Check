@@ -22,6 +22,8 @@ export default function DashboardPage() {
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  type Priority = "LOW" | "MEDIUM" | "HIGH";
+  const [selectedPriorities, setSelectedPriorities] = useState<Priority[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
@@ -111,14 +113,16 @@ export default function DashboardPage() {
       result = result.filter((item) => item.assignee && selectedAssignees.includes(item.assignee));
     if (selectedDepartments.length > 0)
       result = result.filter((item) => item.department && selectedDepartments.includes(item.department));
+    if (selectedPriorities.length > 0)
+      result = result.filter((item) => item.priority && selectedPriorities.includes(item.priority as Priority));
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter((item) => item.title.toLowerCase().includes(q));
     }
     return result;
-  }, [items, selectedDay, selectedProjects, selectedAssignees, selectedDepartments, searchQuery]);
+  }, [items, selectedDay, selectedProjects, selectedAssignees, selectedDepartments, selectedPriorities, searchQuery]);
 
-  const activeFilterCount = selectedStatuses.length + selectedProjects.length + selectedAssignees.length + selectedDepartments.length;
+  const activeFilterCount = selectedStatuses.length + selectedProjects.length + selectedAssignees.length + selectedDepartments.length + selectedPriorities.length;
 
   const filterProps = {
     selectedStatuses, onStatusChange: setSelectedStatuses,
@@ -128,8 +132,10 @@ export default function DashboardPage() {
     onAssigneeClear: () => setSelectedAssignees([]),
     selectedDepartments, onDepartmentToggle: (d: string) => setSelectedDepartments((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]),
     onDepartmentClear: () => setSelectedDepartments([]),
+    selectedPriorities, onPriorityToggle: (p: Priority) => setSelectedPriorities((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]),
+    onPriorityClear: () => setSelectedPriorities([]),
     uniqueProjects, uniqueAssignees, uniqueDepartments,
-    onClearAll: () => { setSelectedStatuses([]); setSelectedProjects([]); setSelectedAssignees([]); setSelectedDepartments([]); },
+    onClearAll: () => { setSelectedStatuses([]); setSelectedProjects([]); setSelectedAssignees([]); setSelectedDepartments([]); setSelectedPriorities([]); },
     activeCount: activeFilterCount,
   };
 

@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, description, deadline, creator_name, project, assignee, reviewer } = parseResult.data;
+    const { title, description, deadline, creator_name, project, assignee, reviewer, priority } = parseResult.data;
 
     const session = await getSession();
     const resolvedName = session?.name ?? creator_name;
@@ -171,6 +171,7 @@ export async function POST(request: NextRequest) {
         assignee: assignee ?? null,
         reviewer: reviewer ?? null,
         department,
+        priority: priority ?? "MEDIUM",
         status: "TO_CHECK",
       },
     });

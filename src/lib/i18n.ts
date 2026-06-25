@@ -186,6 +186,11 @@ export const translations = {
     optionalLabel: '(optional)',
     filesLabel: 'Files',
     uploadErrorLabel: 'Upload error',
+    // Priority
+    priority: 'Priority',
+    priorityLow: 'Low',
+    priorityMedium: 'Medium',
+    priorityHigh: 'High',
     // Comments
     commentsTitle: 'Comments',
     commentPlaceholder: 'Write a comment...',
@@ -367,6 +372,11 @@ export const translations = {
     optionalLabel: '(необов\'язково)',
     filesLabel: 'Файли',
     uploadErrorLabel: 'Помилка завантаження',
+    // Priority
+    priority: 'Пріоритет',
+    priorityLow: 'Низький',
+    priorityMedium: 'Середній',
+    priorityHigh: 'Високий',
     // Comments
     commentsTitle: 'Коментарі',
     commentPlaceholder: 'Написати коментар...',

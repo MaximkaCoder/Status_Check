@@ -3,6 +3,8 @@ import { z } from "zod";
 export const StatusSchema = z.enum(["TO_CHECK", "EXPIRED", "DONE", "NOT_ACTUAL", "IDEAS_BACKLOG"]);
 export type Status = z.infer<typeof StatusSchema>;
 
+export const PrioritySchema = z.enum(["LOW", "MEDIUM", "HIGH"]);
+
 export const CreateItemSchema = z.object({
   title:        z.string().min(1, "title cannot be empty").max(200),
   description:  z.string().max(2000).optional(),
@@ -11,6 +13,7 @@ export const CreateItemSchema = z.object({
   project:      z.string().max(200).nullable().optional(),
   assignee:     z.string().max(100).nullable().optional(),
   reviewer:     z.string().max(100).nullable().optional(),
+  priority:     PrioritySchema.optional(),
 });
 export type CreateItemInput = z.infer<typeof CreateItemSchema>;
 
@@ -23,6 +26,7 @@ export const UpdateItemSchema = z.object({
   project:      z.string().max(200).nullable().optional(),
   assignee:     z.string().max(100).nullable().optional(),
   reviewer:     z.string().max(100).nullable().optional(),
+  priority:     PrioritySchema.optional(),
 });
 export type UpdateItemInput = z.infer<typeof UpdateItemSchema>;
 

@@ -75,6 +75,12 @@ model Department {
   @@map("departments")
 }
 
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 enum NotificationType {
   ASSIGNED_ASSIGNEE
   ASSIGNED_REVIEWER
@@ -109,6 +115,7 @@ model StatusItem {
   assignee     String?
   reviewer     String?
   department   String?
+  priority     Priority   @default(MEDIUM)
   done_at      DateTime?  @map("done_at")
   done_by      String?    @map("done_by")
   created_at   DateTime   @default(now()) @map("created_at")
