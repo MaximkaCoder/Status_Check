@@ -33,6 +33,9 @@ prisma/dev.db
 prisma/dev.db-shm
 prisma/dev.db-wal
 
+# Local work logs
+WORK_LOG_*.md
+
 # Misc
 .DS_Store
 *.pem
