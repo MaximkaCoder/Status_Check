@@ -372,7 +372,7 @@ export default function ViewItemPage() {
 
   const canEdit = user && (
     user.isAdmin ||
-    item.creator_name === user.name
+    (item.creator_id ? item.creator_id === user.userId : item.creator_name === user.name)
   );
 
   return (

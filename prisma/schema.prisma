@@ -111,6 +111,7 @@ model StatusItem {
   deadline     DateTime?
   status       Status     @default(TO_CHECK)
   creator_name String
+  creator_id   String?  @map("creator_id")
   project      String?
   assignee     String?
   reviewer     String?

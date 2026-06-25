@@ -167,6 +167,7 @@ export async function POST(request: NextRequest) {
         description: description ?? null,
         deadline: deadline ? new Date(deadline) : null,
         creator_name: resolvedName,
+        creator_id: session?.userId ?? null,
         project:  project  ?? null,
         assignee: assignee ?? null,
         reviewer: reviewer ?? null,

@@ -17,8 +17,9 @@ async function canView(userId: string, userName: string, isAdmin: boolean, item:
   return false;
 }
 
-function canModify(userName: string, isAdmin: boolean, item: StatusItem): boolean {
+function canModify(userId: string, userName: string, isAdmin: boolean, item: StatusItem): boolean {
   if (isAdmin) return true;
+  if (item.creator_id) return item.creator_id === userId;
   return item.creator_name === userName;
 }
 
@@ -68,7 +69,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Item not found", code: "NOT_FOUND" }, { status: 404 });
     }
 
-    if (!canModify(session.name, session.isAdmin ?? false, existing)) {
+    if (!canModify(session.userId, session.name, session.isAdmin ?? false, existing)) {
       return NextResponse.json({ error: "You do not have permission to edit this item", code: "FORBIDDEN" }, { status: 403 });
     }
 
@@ -159,7 +160,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Item not found", code: "NOT_FOUND" }, { status: 404 });
     }
 
-    if (!canModify(session.name, session.isAdmin ?? false, existing)) {
+    if (!canModify(session.userId, session.name, session.isAdmin ?? false, existing)) {
       return NextResponse.json({ error: "You do not have permission to delete this item", code: "FORBIDDEN" }, { status: 403 });
     }
 
