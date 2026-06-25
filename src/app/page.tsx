@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
   const [transitioning, setTransitioning] = useState(false);
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -103,8 +104,17 @@ export default function DashboardPage() {
       result = result.filter((item) => item.project && selectedProjects.includes(item.project));
     if (selectedAssignees.length > 0)
       result = result.filter((item) => item.assignee && selectedAssignees.includes(item.assignee));
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((item) =>
+        item.title.toLowerCase().includes(q) ||
+        item.project?.toLowerCase().includes(q) ||
+        item.assignee?.toLowerCase().includes(q) ||
+        item.reviewer?.toLowerCase().includes(q)
+      );
+    }
     return result;
-  }, [items, selectedDay, selectedProjects, selectedAssignees]);
+  }, [items, selectedDay, selectedProjects, selectedAssignees, searchQuery]);
 
   const activeFilterCount = selectedStatuses.length + selectedProjects.length + selectedAssignees.length;
 
@@ -138,6 +148,37 @@ export default function DashboardPage() {
 
         {/* CENTER: Task list */}
         <div className="flex-1 min-w-0 flex flex-col gap-4">
+
+          {/* Search */}
+          <div className={cn(
+            "flex items-center gap-2.5 px-3.5 h-[50px] rounded-xl animate-fade-in-up stagger-2",
+            "bg-white/40 dark:bg-white/[0.06]",
+            "border border-white/70 dark:border-white/[0.10]",
+            "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none"
+          )}>
+            <svg className="h-4 w-4 flex-shrink-0 text-slate-400 dark:text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={locale === "uk" ? "Пошук задач..." : "Search tasks..."}
+              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-slate-400 dark:placeholder:text-white/30 outline-none"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="flex-shrink-0 text-slate-400 dark:text-white/30 hover:text-slate-600 dark:hover:text-white/60 transition-colors cursor-pointer"
+                aria-label="Clear search"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
 
           {/* View mode switcher */}
           <div className={cn(
