@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/email";
 
 export async function notifyAssignees(
   itemId: string,
@@ -13,19 +12,13 @@ export async function notifyAssignees(
   const toCreate: Row[] = [];
 
   if (changedAssignee && assigneeName) {
-    const user = await prisma.user.findFirst({ where: { name: assigneeName }, select: { id: true, email: true } });
-    if (user) {
-      toCreate.push({ userId: user.id, type: "ASSIGNED_ASSIGNEE", itemId, itemTitle });
-      sendEmail(user.email, { type: "ASSIGNED_ASSIGNEE", itemId, itemTitle }).catch(() => {});
-    }
+    const user = await prisma.user.findFirst({ where: { name: assigneeName }, select: { id: true } });
+    if (user) toCreate.push({ userId: user.id, type: "ASSIGNED_ASSIGNEE", itemId, itemTitle });
   }
 
   if (changedReviewer && reviewerName) {
-    const user = await prisma.user.findFirst({ where: { name: reviewerName }, select: { id: true, email: true } });
-    if (user) {
-      toCreate.push({ userId: user.id, type: "ASSIGNED_REVIEWER", itemId, itemTitle });
-      sendEmail(user.email, { type: "ASSIGNED_REVIEWER", itemId, itemTitle }).catch(() => {});
-    }
+    const user = await prisma.user.findFirst({ where: { name: reviewerName }, select: { id: true } });
+    if (user) toCreate.push({ userId: user.id, type: "ASSIGNED_REVIEWER", itemId, itemTitle });
   }
 
   if (toCreate.length > 0) {
@@ -48,10 +41,8 @@ export async function notifyStatusChange(
   const toCreate: { userId: string; type: "STATUS_CHANGED"; itemId: string; itemTitle: string }[] = [];
 
   for (const name of names) {
-    const user = await prisma.user.findFirst({ where: { name }, select: { id: true, email: true } });
-    if (!user) continue;
-    toCreate.push({ userId: user.id, type: "STATUS_CHANGED", itemId, itemTitle });
-    sendEmail(user.email, { type: "STATUS_CHANGED", itemId, itemTitle, newStatus, changedBy }).catch(() => {});
+    const user = await prisma.user.findFirst({ where: { name }, select: { id: true } });
+    if (user) toCreate.push({ userId: user.id, type: "STATUS_CHANGED", itemId, itemTitle });
   }
 
   if (toCreate.length > 0) {

@@ -109,7 +109,7 @@ export async function getItemById(id: string): Promise<StatusItem> {
 // Notifications
 // ---------------------------------------------------------------------------
 
-export type NotificationType = "ASSIGNED_ASSIGNEE" | "ASSIGNED_REVIEWER";
+export type NotificationType = "ASSIGNED_ASSIGNEE" | "ASSIGNED_REVIEWER" | "STATUS_CHANGED" | "DEADLINE_APPROACHING";
 
 export interface Notification {
   id: string;

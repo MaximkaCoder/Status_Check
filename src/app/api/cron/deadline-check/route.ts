@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -20,10 +19,10 @@ export async function GET(request: NextRequest) {
       deadline: { gt: now, lt: in25h },
       status: { notIn: ["DONE", "NOT_ACTUAL"] },
     },
-    select: { id: true, title: true, deadline: true, assignee: true, reviewer: true },
+    select: { id: true, title: true, assignee: true, reviewer: true },
   });
 
-  let sent = 0;
+  let created = 0;
 
   for (const item of items) {
     const names = [...new Set([item.assignee, item.reviewer].filter(Boolean) as string[])];
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
     for (const name of names) {
       const user = await prisma.user.findFirst({
         where: { name, blocked: false },
-        select: { id: true, email: true },
+        select: { id: true },
       });
       if (!user) continue;
 
@@ -43,18 +42,9 @@ export async function GET(request: NextRequest) {
       await prisma.notification.create({
         data: { userId: user.id, type: "DEADLINE_APPROACHING", itemId: item.id, itemTitle: item.title },
       });
-
-      if (item.deadline) {
-        await sendEmail(user.email, {
-          type: "DEADLINE_APPROACHING",
-          itemTitle: item.title,
-          itemId: item.id,
-          deadline: item.deadline,
-        }).catch(() => {});
-        sent++;
-      }
+      created++;
     }
   }
 
-  return NextResponse.json({ ok: true, sent, checked: items.length });
+  return NextResponse.json({ ok: true, created, checked: items.length });
 }

@@ -89,10 +89,17 @@ export function NotificationBell() {
   }
 
   function getNotifMessage(n: Notification): string {
-    const label = n.type === "ASSIGNED_ASSIGNEE"
-      ? t("notifAssignedAssignee")
-      : t("notifAssignedReviewer");
-    return `${label}: «${n.itemTitle}»`;
+    const uk = locale === "uk";
+    switch (n.type) {
+      case "ASSIGNED_ASSIGNEE":
+        return `${t("notifAssignedAssignee")}: «${n.itemTitle}»`;
+      case "ASSIGNED_REVIEWER":
+        return `${t("notifAssignedReviewer")}: «${n.itemTitle}»`;
+      case "STATUS_CHANGED":
+        return `${uk ? "Статус змінено" : "Status changed"}: «${n.itemTitle}»`;
+      case "DEADLINE_APPROACHING":
+        return `${uk ? "Дедлайн завтра" : "Deadline tomorrow"}: «${n.itemTitle}»`;
+    }
   }
 
   return (
