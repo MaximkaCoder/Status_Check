@@ -98,9 +98,11 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
   const monthsEn = translations.en.months;
   const monthsUkGen = translations.uk.monthsGenitive;
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const statusBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!statusMenuOpen) return;
@@ -213,8 +215,17 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
           {/* Status badge + dropdown */}
           <div className="relative flex-shrink-0" ref={menuRef}>
             <button
+              ref={statusBtnRef}
               type="button"
-              onClick={(e) => { e.stopPropagation(); if (canChangeStatus) setStatusMenuOpen((v) => !v); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!canChangeStatus) return;
+                if (!statusMenuOpen && statusBtnRef.current) {
+                  const rect = statusBtnRef.current.getBoundingClientRect();
+                  setDropUp(rect.bottom + 220 > window.innerHeight);
+                }
+                setStatusMenuOpen((v) => !v);
+              }}
               disabled={changingStatus || !onStatusChange || !canChangeStatus}
               className={cn(
                 "transition-opacity duration-150",
@@ -238,7 +249,8 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
               <div
                 role="menu"
                 className={cn(
-                  "absolute right-0 top-full mt-1.5 z-[60] min-w-[170px]",
+                  "absolute right-0 z-[60] min-w-[170px]",
+                  dropUp ? "bottom-full mb-1.5" : "top-full mt-1.5",
                   "rounded-xl border border-border/60 bg-card shadow-xl",
                   "dark:border-white/10 dark:shadow-black/40",
                   "animate-scale-in overflow-hidden"
