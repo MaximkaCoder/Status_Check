@@ -232,7 +232,7 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
     const trimmedProject = project.trim();
     if (trimmedProject && !projectNames.includes(trimmedProject)) {
       if (!user?.isAdmin) {
-        toast({ message: locale === "uk" ? `Проєкт "${trimmedProject}" не знайдено. Тільки адмін може створювати проєкти.` : `Project "${trimmedProject}" not found. Only admins can create projects.`, type: "error" });
+        toast(locale === "uk" ? `Проєкт "${trimmedProject}" не знайдено. Тільки адмін може створювати проєкти.` : `Project "${trimmedProject}" not found. Only admins can create projects.`, "error");
         return;
       }
       setNewProjectPending(trimmedProject);
