@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { memo } from "react";
 import { ItemCard } from "./ItemCard";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -39,9 +39,8 @@ function SkeletonCard({ index }: { index: number }) {
   );
 }
 
-export function ItemList({ items, loading, onDelete, onStatusChange }: ItemListProps) {
+export const ItemList = memo(function ItemList({ items, loading, onDelete, onStatusChange }: ItemListProps) {
   const { t } = useLanguage();
-  const router = useRouter();
 
   if (loading) {
     return (
@@ -120,7 +119,6 @@ export function ItemList({ items, loading, onDelete, onStatusChange }: ItemListP
               item={item}
               onDelete={onDelete}
               onStatusChange={onStatusChange}
-              onDetailClick={(i) => router.push(`/items/${i.id}`)}
               animationIndex={index}
             />
           </div>
@@ -129,4 +127,4 @@ export function ItemList({ items, loading, onDelete, onStatusChange }: ItemListP
 
     </>
   );
-}
+});

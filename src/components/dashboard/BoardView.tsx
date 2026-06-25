@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ItemCard } from "./ItemCard";
@@ -21,7 +21,7 @@ interface Group {
   items: StatusItem[];
 }
 
-export function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
+export const BoardView = memo(function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
   const { locale } = useLanguage();
   const router = useRouter();
   const noProjectLabel = locale === "uk" ? "Без проєкту" : "No project";
@@ -121,7 +121,6 @@ export function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
                 "grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none",
                 isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
               )}
-              style={{ willChange: "grid-template-rows" }}
             >
               <div className="overflow-hidden">
                 <div
@@ -137,7 +136,6 @@ export function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
                       item={item}
                       onDelete={onDelete}
                       onStatusChange={onStatusChange}
-                      onDetailClick={(it) => router.push(`/items/${it.id}`)}
                       animate={false}
                     />
                   ))}
@@ -149,4 +147,4 @@ export function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
       })}
     </div>
   );
-}
+});

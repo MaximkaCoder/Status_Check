@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { memo, useState, useEffect, useRef } from "react";
 import { isPast, isToday, isTomorrow, differenceInDays } from "date-fns";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,6 @@ interface ItemCardProps {
   item: StatusItem;
   onDelete: (id: string) => Promise<void>;
   onStatusChange?: (id: string, status: Status) => Promise<void>;
-  onDetailClick?: (item: StatusItem) => void;
   animationIndex?: number;
   animate?: boolean;
 }
@@ -73,7 +72,7 @@ const STATUS_NEXT_DOTS: Record<Status, string> = {
   IDEAS_BACKLOG: "bg-violet-500",
 };
 
-export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animationIndex = 0, animate = true }: ItemCardProps) {
+export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange, animationIndex = 0, animate = true }: ItemCardProps) {
   const router = useRouter();
   const { t, locale } = useLanguage();
   const { toast } = useToast();
@@ -155,16 +154,15 @@ export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animat
         "shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_16px_rgba(0,0,0,0.04)]",
         "dark:shadow-[0_2px_16px_rgba(0,0,0,0.5)]",
         STATUS_HOVER_GLOW[status],
-        "hover:-translate-y-0.5 transition-all duration-200",
-        onDetailClick ? "cursor-pointer" : "cursor-default",
+        "hover:-translate-y-0.5 transition-all duration-200 cursor-pointer",
         animate && "animate-fade-in-up",
         animate && staggerClass,
         statusMenuOpen && "z-10"
       )}
-      onClick={() => onDetailClick?.(item)}
-      role={onDetailClick ? "button" : undefined}
-      tabIndex={onDetailClick ? 0 : undefined}
-      onKeyDown={onDetailClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDetailClick(item); } } : undefined}
+      onClick={() => router.push(`/items/${item.id}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/items/${item.id}`); } }}
     >
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/40 to-transparent dark:from-white/[0.03] dark:to-transparent pointer-events-none" />
 
@@ -355,4 +353,4 @@ export function ItemCard({ item, onDelete, onStatusChange, onDetailClick, animat
       )}
     </div>
   );
-}
+});

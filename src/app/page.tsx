@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format, isSameDay, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import { MonthCalendar } from "@/components/calendar/MonthCalendar";
@@ -23,6 +23,16 @@ export default function DashboardPage() {
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
+  const [transitioning, setTransitioning] = useState(false);
+  const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function switchView(mode: "list" | "board") {
+    if (mode === viewMode) return;
+    if (transitionTimer.current) clearTimeout(transitionTimer.current);
+    setTransitioning(true);
+    setViewMode(mode);
+    transitionTimer.current = setTimeout(() => setTransitioning(false), 650);
+  }
 
   // Restore / persist view mode across navigation (e.g. opening a task and pressing back)
   useEffect(() => {
@@ -58,15 +68,15 @@ export default function DashboardPage() {
     setSelectedDay(null);
   }
 
-  async function handleDelete(id: string) {
+  const handleDelete = useCallback(async (id: string) => {
     try { await removeItem(id); }
     catch { toast(t("networkError"), "error"); }
-  }
+  }, [removeItem, toast, t]);
 
-  async function handleStatusChange(id: string, status: Status) {
+  const handleStatusChange = useCallback(async (id: string, status: Status) => {
     await changeStatus(id, status);
     silentRefresh();
-  }
+  }, [changeStatus, silentRefresh]);
 
   const uniqueProjects = useMemo(
     () => [...new Set(items.map((i) => i.project).filter(Boolean))].sort() as string[],
@@ -130,7 +140,7 @@ export default function DashboardPage() {
           )}>
             <button
               type="button"
-              onClick={() => setViewMode("list")}
+              onClick={() => switchView("list")}
               className={cn(
                 "flex-1 flex items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer outline-none",
                 viewMode === "list"
@@ -145,7 +155,7 @@ export default function DashboardPage() {
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("board")}
+              onClick={() => switchView("board")}
               className={cn(
                 "flex-1 flex items-center justify-center gap-1.5 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer outline-none",
                 viewMode === "board"
@@ -206,18 +216,20 @@ export default function DashboardPage() {
             {/* List view */}
             <div className={cn(
               "p-2 flex flex-col gap-4 transition-[transform,opacity] duration-[600ms] ease-[cubic-bezier(0.65,0,0.35,1)]",
+              transitioning && "will-change-[transform,opacity]",
               viewMode === "list"
                 ? "relative opacity-100"
-                : "absolute inset-x-0 top-0 -translate-x-[103%] opacity-0 pointer-events-none will-change-[transform,opacity]"
+                : "absolute inset-x-0 top-0 -translate-x-[103%] opacity-0 pointer-events-none"
             )}>
               <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
             </div>
             {/* Board view — grouped by project */}
             <div className={cn(
               "p-2 transition-[transform,opacity] duration-[600ms] ease-[cubic-bezier(0.65,0,0.35,1)]",
+              transitioning && "will-change-[transform,opacity]",
               viewMode === "board"
                 ? "relative opacity-100"
-                : "absolute inset-x-0 top-0 translate-x-[103%] opacity-0 pointer-events-none will-change-[transform,opacity]"
+                : "absolute inset-x-0 top-0 translate-x-[103%] opacity-0 pointer-events-none"
             )}>
               <BoardView items={displayedItems} onDelete={handleDelete} onStatusChange={handleStatusChange} />
             </div>
