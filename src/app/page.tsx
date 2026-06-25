@@ -116,7 +116,7 @@ export default function DashboardPage() {
       result = result.filter((item) => item.title.toLowerCase().includes(q));
     }
     return result;
-  }, [items, selectedDay, selectedProjects, selectedAssignees, searchQuery]);
+  }, [items, selectedDay, selectedProjects, selectedAssignees, selectedDepartments, searchQuery]);
 
   const activeFilterCount = selectedStatuses.length + selectedProjects.length + selectedAssignees.length + selectedDepartments.length;
 
