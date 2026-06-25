@@ -18,8 +18,12 @@ interface FilterDrawerProps {
   selectedAssignees: string[];
   onAssigneeToggle: (a: string) => void;
   onAssigneeClear: () => void;
+  selectedDepartments: string[];
+  onDepartmentToggle: (d: string) => void;
+  onDepartmentClear: () => void;
   uniqueProjects: string[];
   uniqueAssignees: string[];
+  uniqueDepartments: string[];
   onClearAll: () => void;
   activeCount: number;
 }
@@ -60,7 +64,8 @@ export function FilterDrawer({
   selectedStatuses, onStatusChange,
   selectedProjects, onProjectToggle, onProjectClear,
   selectedAssignees, onAssigneeToggle, onAssigneeClear,
-  uniqueProjects, uniqueAssignees,
+  selectedDepartments, onDepartmentToggle, onDepartmentClear,
+  uniqueProjects, uniqueAssignees, uniqueDepartments,
   onClearAll, activeCount,
 }: FilterDrawerProps) {
   const { t, locale } = useLanguage();
@@ -74,6 +79,8 @@ export function FilterDrawer({
     if (!open) { setProjectSearch(""); setAssigneeSearch(""); }
   }, [open]);
 
+  const uk = locale === "uk";
+
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "";
@@ -85,8 +92,6 @@ export function FilterDrawer({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
-
-  const uk = locale === "uk";
 
   return (
     <>
@@ -252,6 +257,46 @@ export function FilterDrawer({
               </div>
             </section>
           )}
+          {/* Departments */}
+          {uniqueDepartments.length > 0 && (
+            <section>
+              <div className="flex items-center justify-between mb-2.5">
+                <p className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest">
+                  {uk ? "Відділ" : "Department"}
+                </p>
+                {selectedDepartments.length > 0 && (
+                  <button type="button" onClick={onDepartmentClear}
+                    className="text-[10px] text-muted-foreground hover:text-rose-500 cursor-pointer transition-colors">
+                    {uk ? "Очистити" : "Clear"}
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-col gap-0.5">
+                {uniqueDepartments.map((dept) => {
+                  const active = selectedDepartments.includes(dept);
+                  return (
+                    <button key={dept} type="button" onClick={() => onDepartmentToggle(dept)}
+                      className={cn(
+                        "flex items-center gap-2.5 w-full px-2.5 py-2 rounded-xl text-sm text-left transition-all duration-150 cursor-pointer outline-none",
+                        active
+                          ? "bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-300 font-semibold"
+                          : "text-slate-700 dark:text-white/70 hover:bg-black/[0.04] dark:hover:bg-white/[0.05]"
+                      )}
+                    >
+                      <span className={cn("h-2 w-2 rounded-full flex-shrink-0 transition-colors", active ? "bg-amber-500" : "bg-slate-300 dark:bg-white/20")} />
+                      <span className="flex-1 truncate">{dept}</span>
+                      {active && (
+                        <svg className="h-3.5 w-3.5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
         </div>
       </aside>
     </>

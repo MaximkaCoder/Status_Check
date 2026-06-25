@@ -16,8 +16,12 @@ interface Props {
   selectedAssignees: string[];
   onAssigneeToggle: (a: string) => void;
   onAssigneeClear: () => void;
+  selectedDepartments: string[];
+  onDepartmentToggle: (d: string) => void;
+  onDepartmentClear: () => void;
   uniqueProjects: string[];
   uniqueAssignees: string[];
+  uniqueDepartments: string[];
   onClearAll: () => void;
   activeCount: number;
 }
@@ -57,7 +61,8 @@ export function FilterPanel({
   selectedStatuses, onStatusChange,
   selectedProjects, onProjectToggle, onProjectClear,
   selectedAssignees, onAssigneeToggle, onAssigneeClear,
-  uniqueProjects, uniqueAssignees,
+  selectedDepartments, onDepartmentToggle, onDepartmentClear,
+  uniqueProjects, uniqueAssignees, uniqueDepartments,
   onClearAll, activeCount,
 }: Props) {
   const { t, locale } = useLanguage();
@@ -206,6 +211,35 @@ export function FilterPanel({
             </div>
           </section>
         )}
+        {/* Departments */}
+        {uniqueDepartments.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest">{uk ? "Відділ" : "Department"}</p>
+              {selectedDepartments.length > 0 && (
+                <button type="button" onClick={onDepartmentClear} className="text-[9px] text-muted-foreground hover:text-rose-500 cursor-pointer transition-colors">{uk ? "Очистити" : "Clear"}</button>
+              )}
+            </div>
+            <div className="flex flex-col gap-0.5">
+              {uniqueDepartments.map((dept) => {
+                const active = selectedDepartments.includes(dept);
+                return (
+                  <button key={dept} type="button" onClick={() => onDepartmentToggle(dept)}
+                    className={cn(
+                      "flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs text-left transition-all duration-150 cursor-pointer outline-none",
+                      active ? "bg-amber-50 dark:bg-amber-900/25 text-amber-700 dark:text-amber-300 font-semibold" : "text-foreground hover:bg-black/[0.04] dark:hover:bg-white/[0.05]"
+                    )}
+                  >
+                    <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0 transition-colors", active ? "bg-amber-500" : "bg-slate-300 dark:bg-white/20")} />
+                    <span className="flex-1 truncate">{dept}</span>
+                    {active && <svg className="h-3 w-3 flex-shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
       </div>
     </div>
   );

@@ -21,6 +21,8 @@ export default function DashboardPage() {
   const [selectedStatuses, setSelectedStatuses] = useState<Status[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [userDeptMap, setUserDeptMap] = useState<Map<string, string>>(new Map());
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
@@ -51,6 +53,15 @@ export default function DashboardPage() {
   useEffect(() => {
     sessionStorage.setItem("dashboardView", viewMode);
   }, [viewMode]);
+
+  useEffect(() => {
+    fetch("/api/users").then((r) => r.ok ? r.json() : [])
+      .then((data: { name: string; department: { name: string } | null }[]) => {
+        const map = new Map<string, string>();
+        for (const u of data) if (u.department) map.set(u.name, u.department.name);
+        setUserDeptMap(map);
+      }).catch(() => {});
+  }, []);
 
   const { t, locale } = useLanguage();
   const { toast } = useToast();
@@ -95,6 +106,14 @@ export default function DashboardPage() {
     () => [...new Set(items.map((i) => i.assignee).filter(Boolean))].sort() as string[],
     [items]
   );
+  const uniqueDepartments = useMemo(() => {
+    const depts = new Set<string>();
+    for (const item of items) {
+      if (item.assignee) { const d = userDeptMap.get(item.assignee); if (d) depts.add(d); }
+      if (item.reviewer) { const d = userDeptMap.get(item.reviewer); if (d) depts.add(d); }
+    }
+    return [...depts].sort();
+  }, [items, userDeptMap]);
 
   const displayedItems = useMemo(() => {
     let result = selectedDay
@@ -104,6 +123,12 @@ export default function DashboardPage() {
       result = result.filter((item) => item.project && selectedProjects.includes(item.project));
     if (selectedAssignees.length > 0)
       result = result.filter((item) => item.assignee && selectedAssignees.includes(item.assignee));
+    if (selectedDepartments.length > 0)
+      result = result.filter((item) => {
+        const ad = item.assignee ? userDeptMap.get(item.assignee) : undefined;
+        const rd = item.reviewer ? userDeptMap.get(item.reviewer) : undefined;
+        return (ad && selectedDepartments.includes(ad)) || (rd && selectedDepartments.includes(rd));
+      });
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter((item) => item.title.toLowerCase().includes(q));
@@ -111,7 +136,7 @@ export default function DashboardPage() {
     return result;
   }, [items, selectedDay, selectedProjects, selectedAssignees, searchQuery]);
 
-  const activeFilterCount = selectedStatuses.length + selectedProjects.length + selectedAssignees.length;
+  const activeFilterCount = selectedStatuses.length + selectedProjects.length + selectedAssignees.length + selectedDepartments.length;
 
   const filterProps = {
     selectedStatuses, onStatusChange: setSelectedStatuses,
@@ -119,8 +144,10 @@ export default function DashboardPage() {
     onProjectClear: () => setSelectedProjects([]),
     selectedAssignees, onAssigneeToggle: (a: string) => setSelectedAssignees((prev) => prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]),
     onAssigneeClear: () => setSelectedAssignees([]),
-    uniqueProjects, uniqueAssignees,
-    onClearAll: () => { setSelectedStatuses([]); setSelectedProjects([]); setSelectedAssignees([]); },
+    selectedDepartments, onDepartmentToggle: (d: string) => setSelectedDepartments((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]),
+    onDepartmentClear: () => setSelectedDepartments([]),
+    uniqueProjects, uniqueAssignees, uniqueDepartments,
+    onClearAll: () => { setSelectedStatuses([]); setSelectedProjects([]); setSelectedAssignees([]); setSelectedDepartments([]); },
     activeCount: activeFilterCount,
   };
 
