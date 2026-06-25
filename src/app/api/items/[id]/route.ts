@@ -19,9 +19,7 @@ async function canView(userId: string, userName: string, isAdmin: boolean, item:
 
 function canModify(userName: string, isAdmin: boolean, item: StatusItem): boolean {
   if (isAdmin) return true;
-  return item.creator_name === userName ||
-         item.assignee === userName ||
-         item.reviewer === userName;
+  return item.creator_name === userName;
 }
 
 // ---------------------------------------------------------------------------
