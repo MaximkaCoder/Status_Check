@@ -13,6 +13,7 @@ interface BoardViewProps {
   items: StatusItem[];
   onDelete: (id: string) => Promise<void>;
   onStatusChange?: (id: string, status: Status) => Promise<void>;
+  forceExpand?: boolean;
 }
 
 interface Group {
@@ -21,7 +22,7 @@ interface Group {
   items: StatusItem[];
 }
 
-export const BoardView = memo(function BoardView({ items, onDelete, onStatusChange }: BoardViewProps) {
+export const BoardView = memo(function BoardView({ items, onDelete, onStatusChange, forceExpand }: BoardViewProps) {
   const { locale } = useLanguage();
   const router = useRouter();
   const noProjectLabel = locale === "uk" ? "Без проєкту" : "No project";
@@ -81,7 +82,7 @@ export const BoardView = memo(function BoardView({ items, onDelete, onStatusChan
   return (
     <div className="flex flex-col gap-4">
       {groups.map((group, gi) => {
-        const isOpen = expanded.has(group.key);
+        const isOpen = forceExpand || expanded.has(group.key);
         return (
           <div
             key={group.key}

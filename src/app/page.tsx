@@ -106,12 +106,7 @@ export default function DashboardPage() {
       result = result.filter((item) => item.assignee && selectedAssignees.includes(item.assignee));
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter((item) =>
-        item.title.toLowerCase().includes(q) ||
-        item.project?.toLowerCase().includes(q) ||
-        item.assignee?.toLowerCase().includes(q) ||
-        item.reviewer?.toLowerCase().includes(q)
-      );
+      result = result.filter((item) => item.title.toLowerCase().includes(q));
     }
     return result;
   }, [items, selectedDay, selectedProjects, selectedAssignees, searchQuery]);
@@ -280,7 +275,7 @@ export default function DashboardPage() {
                 ? "relative opacity-100"
                 : "absolute inset-x-0 top-0 translate-x-[103%] opacity-0 pointer-events-none"
             )}>
-              <BoardView items={displayedItems} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+              <BoardView items={displayedItems} onDelete={handleDelete} onStatusChange={handleStatusChange} forceExpand={!!searchQuery.trim()} />
             </div>
           </div>
         </div>
