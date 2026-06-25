@@ -3,9 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { getUnblockedSession as getSession } from "@/lib/auth";
 
 export async function GET() {
-  if (!await getSession()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const projects = await prisma.project.findMany({
+      where: session.isAdmin
+        ? undefined
+        : { members: { some: { userId: session.userId } } },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     });
