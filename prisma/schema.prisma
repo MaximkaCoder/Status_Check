@@ -79,6 +79,8 @@ enum NotificationType {
   ASSIGNED_ASSIGNEE
   ASSIGNED_REVIEWER
   NEW_COMMENT
+  STATUS_CHANGED
+  DEADLINE_APPROACHING
 }
 
 model Notification {

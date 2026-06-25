@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/email";
 
 export async function notifyAssignees(
   itemId: string,
@@ -8,20 +9,49 @@ export async function notifyAssignees(
   changedAssignee: boolean,
   changedReviewer: boolean
 ): Promise<void> {
-  const toCreate: { userId: string; type: "ASSIGNED_ASSIGNEE" | "ASSIGNED_REVIEWER"; itemId: string; itemTitle: string }[] = [];
+  type Row = { userId: string; type: "ASSIGNED_ASSIGNEE" | "ASSIGNED_REVIEWER"; itemId: string; itemTitle: string };
+  const toCreate: Row[] = [];
 
   if (changedAssignee && assigneeName) {
-    const user = await prisma.user.findFirst({ where: { name: assigneeName }, select: { id: true } });
+    const user = await prisma.user.findFirst({ where: { name: assigneeName }, select: { id: true, email: true } });
     if (user) {
       toCreate.push({ userId: user.id, type: "ASSIGNED_ASSIGNEE", itemId, itemTitle });
+      sendEmail(user.email, { type: "ASSIGNED_ASSIGNEE", itemId, itemTitle }).catch(() => {});
     }
   }
 
   if (changedReviewer && reviewerName) {
-    const user = await prisma.user.findFirst({ where: { name: reviewerName }, select: { id: true } });
+    const user = await prisma.user.findFirst({ where: { name: reviewerName }, select: { id: true, email: true } });
     if (user) {
       toCreate.push({ userId: user.id, type: "ASSIGNED_REVIEWER", itemId, itemTitle });
+      sendEmail(user.email, { type: "ASSIGNED_REVIEWER", itemId, itemTitle }).catch(() => {});
     }
+  }
+
+  if (toCreate.length > 0) {
+    await prisma.notification.createMany({ data: toCreate });
+  }
+}
+
+export async function notifyStatusChange(
+  itemId: string,
+  itemTitle: string,
+  assigneeName: string | null | undefined,
+  reviewerName: string | null | undefined,
+  newStatus: string,
+  changedBy: string
+): Promise<void> {
+  const names = [...new Set([assigneeName, reviewerName].filter(Boolean) as string[])].filter(
+    (n) => n !== changedBy
+  );
+
+  const toCreate: { userId: string; type: "STATUS_CHANGED"; itemId: string; itemTitle: string }[] = [];
+
+  for (const name of names) {
+    const user = await prisma.user.findFirst({ where: { name }, select: { id: true, email: true } });
+    if (!user) continue;
+    toCreate.push({ userId: user.id, type: "STATUS_CHANGED", itemId, itemTitle });
+    sendEmail(user.email, { type: "STATUS_CHANGED", itemId, itemTitle, newStatus, changedBy }).catch(() => {});
   }
 
   if (toCreate.length > 0) {

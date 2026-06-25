@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUnblockedSession as getSession } from "@/lib/auth";
 import { UpdateStatusSchema } from "@/lib/validations";
+import { notifyStatusChange } from "@/lib/notify";
 
 type RouteParams = { params: { id: string } };
 
@@ -48,6 +49,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       where: { id: params.id },
       data: { status: newStatus, ...doneFields },
     });
+
+    notifyStatusChange(
+      updated.id, updated.title, updated.assignee, updated.reviewer, newStatus, session.name
+    ).catch(() => {});
 
     return NextResponse.json(updated);
   } catch (error) {
