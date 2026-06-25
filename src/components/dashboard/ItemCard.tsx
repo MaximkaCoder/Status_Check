@@ -272,7 +272,7 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
         {/* Project / assignee / reviewer / priority pills */}
         {(item.project || item.assignee || item.reviewer || item.priority) && (
           <div className="flex flex-wrap gap-1.5 pl-[18px]">
-            {item.priority && item.priority !== "MEDIUM" && (
+            {item.priority && (
               <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border", PRIORITY_CFG[item.priority as Priority].badge)}>
                 <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", PRIORITY_CFG[item.priority as Priority].dot)} />
                 {PRIORITY_CFG[item.priority as Priority].label(locale === "uk")}

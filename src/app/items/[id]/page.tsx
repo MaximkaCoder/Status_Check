@@ -67,6 +67,14 @@ function formatDeadline(date: Date, locale: string, today: string, tomorrow: str
   return formatDate(date, locale);
 }
 
+type Priority = "LOW" | "MEDIUM" | "HIGH";
+
+const PRIORITY_DETAIL_CFG: Record<Priority, { dot: string; badge: string; label: (uk: boolean) => string }> = {
+  LOW:    { dot: "bg-blue-400",  badge: "bg-blue-50 border border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-500/30 dark:text-blue-300",   label: (uk) => uk ? "Низький"  : "Low"    },
+  MEDIUM: { dot: "bg-amber-400", badge: "bg-amber-50 border border-amber-200 text-amber-700 dark:bg-amber-900/30 dark:border-amber-500/30 dark:text-amber-300", label: (uk) => uk ? "Середній" : "Medium" },
+  HIGH:   { dot: "bg-rose-500",  badge: "bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-900/30 dark:border-rose-500/30 dark:text-rose-300",   label: (uk) => uk ? "Високий"  : "High"   },
+};
+
 function Avatar({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) {
   const bg = getAvatarColor(name);
   const sz = size === "md" ? "h-8 w-8 text-sm" : "h-6 w-6 text-[11px]";
@@ -453,6 +461,15 @@ export default function ViewItemPage() {
                 )}
               </span>
             </Field>
+
+            {item.priority && (
+              <Field label={locale === "uk" ? "Пріоритет" : "Priority"}>
+                <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold", PRIORITY_DETAIL_CFG[item.priority as Priority].badge)}>
+                  <span className={cn("h-2 w-2 rounded-full flex-shrink-0", PRIORITY_DETAIL_CFG[item.priority as Priority].dot)} />
+                  {PRIORITY_DETAIL_CFG[item.priority as Priority].label(locale === "uk")}
+                </span>
+              </Field>
+            )}
 
             <Field label={locale === "uk" ? "Автор" : "Created by"}>
               <div className="flex items-center gap-2">
