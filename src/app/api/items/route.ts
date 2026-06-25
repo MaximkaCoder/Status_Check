@@ -155,6 +155,12 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
     const resolvedName = session?.name ?? creator_name;
 
+    let department: string | null = null;
+    if (assignee) {
+      const u = await prisma.user.findFirst({ where: { name: assignee }, select: { department: { select: { name: true } } } });
+      department = u?.department?.name ?? null;
+    }
+
     const item = await prisma.statusItem.create({
       data: {
         title,
@@ -164,6 +170,7 @@ export async function POST(request: NextRequest) {
         project:  project  ?? null,
         assignee: assignee ?? null,
         reviewer: reviewer ?? null,
+        department,
         status: "TO_CHECK",
       },
     });

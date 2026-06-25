@@ -22,7 +22,6 @@ export default function DashboardPage() {
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
-  const [userDeptMap, setUserDeptMap] = useState<Map<string, string>>(new Map());
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
@@ -53,15 +52,6 @@ export default function DashboardPage() {
   useEffect(() => {
     sessionStorage.setItem("dashboardView", viewMode);
   }, [viewMode]);
-
-  useEffect(() => {
-    fetch("/api/users").then((r) => r.ok ? r.json() : [])
-      .then((data: { name: string; department: { name: string } | null }[]) => {
-        const map = new Map<string, string>();
-        for (const u of data) if (u.department) map.set(u.name, u.department.name);
-        setUserDeptMap(map);
-      }).catch(() => {});
-  }, []);
 
   const { t, locale } = useLanguage();
   const { toast } = useToast();
@@ -106,14 +96,10 @@ export default function DashboardPage() {
     () => [...new Set(items.map((i) => i.assignee).filter(Boolean))].sort() as string[],
     [items]
   );
-  const uniqueDepartments = useMemo(() => {
-    const depts = new Set<string>();
-    for (const item of items) {
-      if (item.assignee) { const d = userDeptMap.get(item.assignee); if (d) depts.add(d); }
-      if (item.reviewer) { const d = userDeptMap.get(item.reviewer); if (d) depts.add(d); }
-    }
-    return [...depts].sort();
-  }, [items, userDeptMap]);
+  const uniqueDepartments = useMemo(
+    () => [...new Set(items.map((i) => i.department).filter(Boolean))].sort() as string[],
+    [items]
+  );
 
   const displayedItems = useMemo(() => {
     let result = selectedDay
@@ -124,11 +110,7 @@ export default function DashboardPage() {
     if (selectedAssignees.length > 0)
       result = result.filter((item) => item.assignee && selectedAssignees.includes(item.assignee));
     if (selectedDepartments.length > 0)
-      result = result.filter((item) => {
-        const ad = item.assignee ? userDeptMap.get(item.assignee) : undefined;
-        const rd = item.reviewer ? userDeptMap.get(item.reviewer) : undefined;
-        return (ad && selectedDepartments.includes(ad)) || (rd && selectedDepartments.includes(rd));
-      });
+      result = result.filter((item) => item.department && selectedDepartments.includes(item.department));
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter((item) => item.title.toLowerCase().includes(q));

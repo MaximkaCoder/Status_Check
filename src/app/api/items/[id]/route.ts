@@ -99,6 +99,16 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ? { done_at: null, done_by: null }
         : {};
 
+    let departmentUpdate: { department: string | null } | undefined;
+    if (data.assignee !== undefined) {
+      if (data.assignee) {
+        const u = await prisma.user.findFirst({ where: { name: data.assignee }, select: { department: { select: { name: true } } } });
+        departmentUpdate = { department: u?.department?.name ?? null };
+      } else {
+        departmentUpdate = { department: null };
+      }
+    }
+
     const updated = await prisma.statusItem.update({
       where: { id: params.id },
       data: {
@@ -110,6 +120,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(data.project  !== undefined && { project:  data.project }),
         ...(data.assignee !== undefined && { assignee: data.assignee }),
         ...(data.reviewer !== undefined && { reviewer: data.reviewer }),
+        ...departmentUpdate,
         ...doneFields,
       },
     });
