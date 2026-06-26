@@ -122,6 +122,15 @@ export default function DashboardPage() {
     return result;
   }, [items, selectedDay, selectedProjects, selectedAssignees, selectedDepartments, selectedPriorities, searchQuery]);
 
+  // List view archives completed tasks (hidden) unless DONE is explicitly filtered.
+  // Board view always shows everything, including completed.
+  const listItems = useMemo(
+    () => selectedStatuses.includes("DONE")
+      ? displayedItems
+      : displayedItems.filter((item) => item.status !== "DONE"),
+    [displayedItems, selectedStatuses]
+  );
+
   const activeFilterCount = selectedStatuses.length + selectedProjects.length + selectedAssignees.length + selectedDepartments.length + selectedPriorities.length;
 
   const filterProps = {
@@ -280,7 +289,7 @@ export default function DashboardPage() {
                 ? "relative opacity-100"
                 : "absolute inset-x-0 top-0 -translate-x-[103%] opacity-0 pointer-events-none"
             )}>
-              <ItemList items={displayedItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+              <ItemList items={listItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
             </div>
             {/* Board view — grouped by project */}
             <div className={cn(
