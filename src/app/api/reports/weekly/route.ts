@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   ] = await Promise.all([
     prisma.statusItem.findMany({
       where: { done_at: { gte: start, lte: end } },
-      select: { id: true, title: true, done_by: true, done_at: true, created_at: true, department: true },
+      select: { id: true, title: true, done_by: true, done_at: true, created_at: true, department: true, project: true },
       orderBy: { done_at: "desc" },
     }),
     prisma.statusItem.count({ where: { created_at: { gte: start, lte: end } } }),
@@ -95,6 +95,7 @@ export async function GET(req: NextRequest) {
       doneBy: t.done_by,
       doneAt: t.done_at,
       department: t.department,
+      project: t.project,
       leadDays: leadDays === null ? null : Math.round(leadDays * 10) / 10,
     };
   });

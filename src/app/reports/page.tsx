@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { translations } from "@/lib/i18n";
 
 interface LeaderRow { name: string; closed: number; activity: number; comments: number; perDay: number[]; score: number }
-interface ClosedRow { id: string; title: string; doneBy: string | null; doneAt: string | null; department: string | null; leadDays: number | null }
+interface ClosedRow { id: string; title: string; doneBy: string | null; doneAt: string | null; department: string | null; project: string | null; leadDays: number | null }
 interface Report {
   range: { start: string; end: string };
   kpis: { closed: number; created: number; inProgress: number; overdue: number; closedDelta: number; createdDelta: number };
@@ -112,6 +112,13 @@ export default function ReportsPage() {
   const [offset, setOffset] = useState(0);
   const [data, setData] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggle = (name: string) => setExpanded(prev => {
+    const next = new Set(prev);
+    if (next.has(name)) next.delete(name); else next.add(name);
+    return next;
+  });
 
   useEffect(() => {
     if (!authLoading && user && !user.isAdmin) router.replace("/");
@@ -222,46 +229,85 @@ export default function ReportsPage() {
                 <p className="text-xs text-muted-foreground text-center py-8">{uk ? "Активності за цей тиждень немає" : "No activity this week"}</p>
               ) : data.leaderboard.map((r, i) => {
                 const tasks = closedByPerson.get(r.name) ?? [];
+                const isOpen = expanded.has(r.name);
+                const byProject = new Map<string, ClosedRow[]>();
+                for (const t of tasks) {
+                  const key = t.project ?? "__none__";
+                  const arr = byProject.get(key) ?? [];
+                  arr.push(t);
+                  byProject.set(key, arr);
+                }
                 return (
-                  <div key={r.name} className="px-4 py-3.5">
-                    {/* Top row: rank + person + closed count */}
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-muted-foreground/50 w-4 text-center tabular-nums flex-shrink-0">{i + 1}</span>
-                      <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-full text-white text-sm font-bold flex-shrink-0", avatarColor(r.name))}>
-                        {r.name.charAt(0).toUpperCase()}
-                      </span>
-                      <p className="text-sm font-bold text-foreground truncate flex-1 min-w-0">{r.name}</p>
-                      {r.closed > 0 && (
-                        <span className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/70 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-500/30">
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                          {r.closed} {uk ? "закрито" : "closed"}
-                        </span>
+                  <div key={r.name}>
+                    {/* Header — clickable to expand when there are closed tasks */}
+                    <button
+                      type="button"
+                      onClick={() => tasks.length > 0 && toggle(r.name)}
+                      className={cn(
+                        "w-full px-4 py-3.5 flex flex-col gap-2.5 text-left transition-colors",
+                        tasks.length > 0 ? "cursor-pointer hover:bg-muted/40" : "cursor-default"
                       )}
-                    </div>
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <span className="text-xs font-bold text-muted-foreground/50 w-4 text-center tabular-nums flex-shrink-0">{i + 1}</span>
+                        <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-full text-white text-sm font-bold flex-shrink-0", avatarColor(r.name))}>
+                          {r.name.charAt(0).toUpperCase()}
+                        </span>
+                        <p className="text-sm font-bold text-foreground truncate flex-1 min-w-0">{r.name}</p>
+                        {r.closed > 0 && (
+                          <span className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/70 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-500/30">
+                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                            {r.closed} {uk ? "закрито" : "closed"}
+                          </span>
+                        )}
+                        {tasks.length > 0 && (
+                          <svg className={cn("h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-200", isOpen && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        )}
+                      </div>
 
-                    {/* Labeled metrics */}
-                    <div className="flex flex-wrap gap-1.5 mt-2.5 pl-11">
-                      <StatChip
-                        value={r.comments}
-                        label={uk ? "коментарів" : "comments"}
-                        icon={<svg className="h-3 w-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>}
-                      />
-                      <StatChip
-                        value={r.activity}
-                        label={uk ? "змін у задачах" : "task changes"}
-                        icon={<svg className="h-3 w-3 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>}
-                      />
-                    </div>
+                      {/* Labeled metrics */}
+                      <div className="flex flex-wrap gap-1.5 pl-11">
+                        <StatChip
+                          value={r.comments}
+                          label={uk ? "коментарів" : "comments"}
+                          icon={<svg className="h-3 w-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>}
+                        />
+                        <StatChip
+                          value={r.activity}
+                          label={uk ? "змін у задачах" : "task changes"}
+                          icon={<svg className="h-3 w-3 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>}
+                        />
+                      </div>
+                    </button>
 
-                    {/* What they actually closed */}
-                    {tasks.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2 pl-11">
-                        {tasks.map(t => (
-                          <Link key={t.id} href={`/items/${t.id}`}
-                            className="inline-flex items-center gap-1 max-w-[220px] px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50/60 text-emerald-700 border border-emerald-200/50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-500/20 dark:hover:bg-emerald-900/40 transition-colors">
-                            <svg className="h-2.5 w-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                            <span className="truncate">{t.title}</span>
-                          </Link>
+                    {/* Expanded — closed tasks grouped by project */}
+                    {isOpen && tasks.length > 0 && (
+                      <div className="px-4 pb-4 pl-11 space-y-3 animate-fade-in">
+                        {[...byProject.entries()].map(([proj, list]) => (
+                          <div key={proj}>
+                            <p className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                              <svg className="h-3 w-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+                              {proj === "__none__" ? (uk ? "Без проєкту" : "No project") : proj}
+                              <span className="text-muted-foreground/50">· {list.length}</span>
+                            </p>
+                            <div className="space-y-1">
+                              {list.map(t => (
+                                <Link key={t.id} href={`/items/${t.id}`}
+                                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted/60 transition-colors group">
+                                  <svg className="h-3 w-3 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                                  <span className="text-xs text-foreground truncate flex-1 min-w-0 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{t.title}</span>
+                                  {t.doneAt && <span className="text-[10px] text-muted-foreground flex-shrink-0">{fmtDay(t.doneAt, locale)}</span>}
+                                  {t.leadDays !== null && (
+                                    <span className="flex-shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-500/30 px-1.5 py-0.5 rounded">
+                                      {t.leadDays} {uk ? "дн." : "d"}
+                                    </span>
+                                  )}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     )}
@@ -271,37 +317,6 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {/* Closed list */}
-          <div className="rounded-2xl border border-border/60 bg-card shadow-card overflow-hidden animate-fade-in-up stagger-7">
-            <div className="px-4 py-3.5 border-b border-border/60 flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                <svg className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              </div>
-              <h2 className="text-sm font-bold text-foreground">{uk ? "Закриті задачі" : "Closed tasks"}</h2>
-              {data.closed.length > 0 && <span className="ml-auto text-[10px] font-bold text-muted-foreground">{data.closed.length}</span>}
-            </div>
-            <div className="divide-y divide-border/50 max-h-[420px] overflow-y-auto">
-              {data.closed.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-8">{uk ? "За цей тиждень нічого не закрито" : "Nothing closed this week"}</p>
-              ) : data.closed.map((c) => (
-                <Link key={c.id} href={`/items/${c.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/40 transition-colors group">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{c.title}</p>
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                      {c.doneBy && <span className="inline-flex items-center gap-1"><span className={cn("inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-white text-[8px] font-bold", avatarColor(c.doneBy))}>{c.doneBy.charAt(0).toUpperCase()}</span>{c.doneBy}</span>}
-                      {c.doneAt && <span>· {fmtDay(c.doneAt, locale)}</span>}
-                      {c.department && <span>· {c.department}</span>}
-                    </div>
-                  </div>
-                  {c.leadDays !== null && (
-                    <span className="flex-shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-500/30 px-2 py-0.5 rounded-md">
-                      {c.leadDays} {uk ? "дн." : "d"}
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </div>
         </div>
       )}
     </div>
