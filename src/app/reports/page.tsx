@@ -161,7 +161,7 @@ export default function ReportsPage() {
           </div>
           <div className="min-w-0">
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground leading-tight">
-              {uk ? "Тижневий пульс" : "Weekly Pulse"}
+              {uk ? "Тижневий звіт" : "Weekly Report"}
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               {uk ? "Огляд продуктивності за тиждень" : "Weekly productivity overview"}
