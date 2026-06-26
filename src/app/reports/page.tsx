@@ -78,16 +78,13 @@ function Delta({ value }: { value: number }) {
   );
 }
 
-function Sparkline({ data, color }: { data: number[]; color: string }) {
-  const max = Math.max(1, ...data);
+function StatChip({ icon, value, label, tone }: { icon: React.ReactNode; value: number; label: string; tone?: string }) {
   return (
-    <div className="flex items-end gap-[3px] h-8">
-      {data.map((v, i) => (
-        <div key={i} className="w-1.5 rounded-full bg-current/10 flex items-end overflow-hidden" style={{ height: "100%" }}>
-          <div className={cn("w-full rounded-full transition-all duration-500", color)} style={{ height: `${(v / max) * 100}%`, minHeight: v > 0 ? 3 : 0 }} />
-        </div>
-      ))}
-    </div>
+    <span className={cn("inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium bg-muted/60 border border-border/50", tone)}>
+      {icon}
+      <span className="font-bold tabular-nums">{value}</span>
+      <span className="text-muted-foreground">{label}</span>
+    </span>
   );
 }
 
@@ -134,7 +131,16 @@ export default function ReportsPage() {
     return <div className="flex justify-center items-center min-h-[300px]"><Spinner size="lg" /></div>;
   }
 
-  const maxScore = data?.leaderboard[0]?.score ?? 1;
+  // Group closed tasks by who closed them — for the "what they closed" chips
+  const closedByPerson = new Map<string, ClosedRow[]>();
+  if (data) {
+    for (const c of data.closed) {
+      if (!c.doneBy) continue;
+      const arr = closedByPerson.get(c.doneBy) ?? [];
+      arr.push(c);
+      closedByPerson.set(c.doneBy, arr);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -214,32 +220,54 @@ export default function ReportsPage() {
             <div className="divide-y divide-border/50">
               {data.leaderboard.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-8">{uk ? "Активності за цей тиждень немає" : "No activity this week"}</p>
-              ) : data.leaderboard.map((r, i) => (
-                <div key={r.name} className="flex items-center gap-3 px-4 py-3">
-                  <span className="text-xs font-bold text-muted-foreground/50 w-4 text-center tabular-nums">{i + 1}</span>
-                  <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-full text-white text-sm font-bold flex-shrink-0", avatarColor(r.name))}>
-                    {r.name.charAt(0).toUpperCase()}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground truncate">{r.name}</p>
-                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
-                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                        {r.closed} {uk ? "закрито" : "closed"}
+              ) : data.leaderboard.map((r, i) => {
+                const tasks = closedByPerson.get(r.name) ?? [];
+                return (
+                  <div key={r.name} className="px-4 py-3.5">
+                    {/* Top row: rank + person + closed count */}
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-muted-foreground/50 w-4 text-center tabular-nums flex-shrink-0">{i + 1}</span>
+                      <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-full text-white text-sm font-bold flex-shrink-0", avatarColor(r.name))}>
+                        {r.name.charAt(0).toUpperCase()}
                       </span>
-                      <span>{r.activity} {uk ? "дій" : "actions"}</span>
-                      <span>{r.comments} {uk ? "комент." : "comments"}</span>
+                      <p className="text-sm font-bold text-foreground truncate flex-1 min-w-0">{r.name}</p>
+                      {r.closed > 0 && (
+                        <span className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/70 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-500/30">
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                          {r.closed} {uk ? "закрито" : "closed"}
+                        </span>
+                      )}
                     </div>
-                  </div>
-                  {/* contribution bar */}
-                  <div className="hidden sm:flex flex-col items-end gap-1 w-28">
-                    <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700" style={{ width: `${(r.score / maxScore) * 100}%` }} />
+
+                    {/* Labeled metrics */}
+                    <div className="flex flex-wrap gap-1.5 mt-2.5 pl-11">
+                      <StatChip
+                        value={r.comments}
+                        label={uk ? "коментарів" : "comments"}
+                        icon={<svg className="h-3 w-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>}
+                      />
+                      <StatChip
+                        value={r.activity}
+                        label={uk ? "змін у задачах" : "task changes"}
+                        icon={<svg className="h-3 w-3 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>}
+                      />
                     </div>
+
+                    {/* What they actually closed */}
+                    {tasks.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2 pl-11">
+                        {tasks.map(t => (
+                          <Link key={t.id} href={`/items/${t.id}`}
+                            className="inline-flex items-center gap-1 max-w-[220px] px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50/60 text-emerald-700 border border-emerald-200/50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-500/20 dark:hover:bg-emerald-900/40 transition-colors">
+                            <svg className="h-2.5 w-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                            <span className="truncate">{t.title}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-emerald-500 flex-shrink-0"><Sparkline data={r.perDay} color="bg-emerald-500" /></div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
