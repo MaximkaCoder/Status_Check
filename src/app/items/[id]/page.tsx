@@ -68,6 +68,20 @@ function formatDeadline(date: Date, locale: string, today: string, tomorrow: str
   return formatDate(date, locale);
 }
 
+function formatDuration(ms: number, locale: string): string {
+  const uk = locale === "uk";
+  const totalMin = Math.floor(ms / 60000);
+  const days = Math.floor(totalMin / 1440);
+  const hours = Math.floor((totalMin % 1440) / 60);
+  const mins = totalMin % 60;
+  const parts: string[] = [];
+  if (days) parts.push(`${days} ${uk ? "дн." : "d"}`);
+  if (hours) parts.push(`${hours} ${uk ? "год" : "h"}`);
+  if (!days && mins) parts.push(`${mins} ${uk ? "хв" : "m"}`);
+  if (parts.length === 0) parts.push(uk ? "менше хвилини" : "<1m");
+  return parts.join(" ");
+}
+
 type Priority = "LOW" | "MEDIUM" | "HIGH";
 
 const PRIORITY_DETAIL_CFG: Record<Priority, { dot: string; badge: string; label: (uk: boolean) => string }> = {
@@ -516,6 +530,23 @@ export default function ViewItemPage() {
                     · {formatDate(new Date(item.done_at), locale)}
                   </span>
                 </div>
+
+                {/* Was overdue — show how late it was completed */}
+                {deadline && new Date(item.done_at) > deadline && (
+                  <div className="mt-2.5 pt-2.5 border-t border-emerald-200/50 dark:border-emerald-500/20 flex items-start gap-1.5 text-xs text-rose-600 dark:text-rose-400">
+                    <svg className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
+                    </svg>
+                    <span>
+                      <span className="font-semibold">{locale === "uk" ? "Було прострочено" : "Was overdue"}</span>
+                      {" — "}
+                      {locale === "uk" ? "виконано із запізненням на " : "completed "}
+                      <span className="font-semibold">{formatDuration(new Date(item.done_at).getTime() - deadline.getTime(), locale)}</span>
+                      {locale === "uk" ? "" : " late"}
+                      <span className="text-rose-500/70 dark:text-rose-400/70"> ({locale === "uk" ? "дедлайн був" : "deadline was"} {formatDate(deadline, locale)})</span>
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
