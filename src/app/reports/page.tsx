@@ -164,26 +164,33 @@ export default function ReportsPage() {
               {uk ? "Тижневий пульс" : "Weekly Pulse"}
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {data ? fmtRange(data.range.start, data.range.end, locale) : "—"}
+              {uk ? "Огляд продуктивності за тиждень" : "Weekly productivity overview"}
             </p>
           </div>
         </div>
 
-        {/* Week nav */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <button type="button" onClick={() => setOffset(o => o - 1)}
-            className="flex h-8 w-8 items-center justify-center rounded-xl border border-border/60 bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          </button>
-          <button type="button" onClick={() => setOffset(0)} disabled={offset === 0}
-            className={cn("px-3 h-8 rounded-xl text-xs font-semibold border transition-colors cursor-pointer",
-              offset === 0 ? "border-indigo-300 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-500/30 dark:text-indigo-300 cursor-default" : "border-border/60 bg-card hover:bg-muted text-muted-foreground")}>
-            {uk ? "Цей тиждень" : "This week"}
-          </button>
-          <button type="button" onClick={() => setOffset(o => Math.min(0, o + 1))} disabled={offset === 0}
-            className="flex h-8 w-8 items-center justify-center rounded-xl border border-border/60 bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-          </button>
+        {/* Week nav — prominent period */}
+        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-1.5">
+            <button type="button" onClick={() => setOffset(o => o - 1)} aria-label={uk ? "Попередній тиждень" : "Previous week"}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <div className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl bg-indigo-50 border border-indigo-200/70 text-indigo-700 dark:bg-indigo-900/30 dark:border-indigo-500/30 dark:text-indigo-200 font-bold text-sm whitespace-nowrap">
+              <svg className="h-4 w-4 flex-shrink-0 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              {data ? fmtRange(data.range.start, data.range.end, locale) : "—"}
+            </div>
+            <button type="button" onClick={() => setOffset(o => Math.min(0, o + 1))} disabled={offset === 0} aria-label={uk ? "Наступний тиждень" : "Next week"}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+          {offset !== 0 && (
+            <button type="button" onClick={() => setOffset(0)}
+              className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline underline-offset-2 cursor-pointer">
+              {uk ? "← До поточного тижня" : "← Back to current week"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -206,15 +213,6 @@ export default function ReportsPage() {
               tone="bg-rose-100 dark:bg-rose-900/30"
               icon={<svg className="h-4 w-4 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" /></svg>} />
           </div>
-
-          {/* Avg lead time */}
-          {data.avgLeadTime !== null && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground animate-fade-in-up stagger-5">
-              <svg className="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-              {uk ? "Середній час закриття:" : "Average lead time:"}
-              <span className="font-bold text-foreground">{data.avgLeadTime} {uk ? "дн." : "d"}</span>
-            </div>
-          )}
 
           {/* Leaderboard */}
           <div className="rounded-2xl border border-border/60 bg-card shadow-card overflow-hidden animate-fade-in-up stagger-6">
