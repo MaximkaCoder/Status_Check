@@ -116,6 +116,8 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
   const status = item.status as Status;
   const deadline = item.deadline ? new Date(item.deadline) : null;
   const isPastDeadline = deadline ? (isPast(deadline) && status !== "DONE") : false;
+  const wasOverdueDone = !!(deadline && status === "DONE" && item.done_at && new Date(item.done_at) > deadline);
+  const showOverdue = isPastDeadline || wasOverdueDone;
   const isNearDeadline = deadline ? (!isPastDeadline && differenceInDays(deadline, new Date()) <= 3 && differenceInDays(deadline, new Date()) >= 0) : false;
   const deadlineLabel = deadline
     ? formatDeadlineRelative(deadline, t("today"), t("tomorrow"), locale, monthsEn, monthsUkGen)
@@ -128,7 +130,7 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
   const deadlineClass = cn(
     "inline-flex items-center gap-1 font-medium",
     !deadline ? "text-muted-foreground/50" :
-    isPastDeadline ? "text-rose-600 dark:text-rose-400" :
+    showOverdue ? "text-rose-600 dark:text-rose-400" :
     isNearDeadline ? "text-amber-600 dark:text-amber-400" :
     "text-muted-foreground"
   );
@@ -322,7 +324,7 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <span>{deadlineLabel}</span>
-            {isPastDeadline && (
+            {showOverdue && (
               <span className="font-normal text-rose-500/80 dark:text-rose-400/70">· {t("expired").toLowerCase()}</span>
             )}
           </span>
