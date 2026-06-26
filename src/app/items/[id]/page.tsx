@@ -6,6 +6,7 @@ import Link from "next/link";
 import { isPast, isToday, isTomorrow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ActivityTimeline } from "@/components/items/ActivityTimeline";
 import { Spinner } from "@/components/ui/Spinner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -552,6 +553,11 @@ export default function ViewItemPage() {
               </div>
             </div>
           )}
+      </div>
+
+      {/* Activity timeline */}
+      <div className="mt-6 animate-fade-in-up stagger-3">
+        <ActivityTimeline itemId={id} />
       </div>
       </div>{/* end main column */}
 

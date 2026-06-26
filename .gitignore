@@ -48,3 +48,7 @@ yarn-error.log*
 .env*
 
 .env*
+
+# Installed agent skills (cybersecurity skill pack) — not project code
+.agents/
+skills-lock.json

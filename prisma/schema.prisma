@@ -165,3 +165,18 @@ model ItemCommentSeen {
   @@id([itemId, userId])
   @@map("item_comment_seen")
 }
+
+model ItemActivity {
+  id         String   @id @default(cuid())
+  itemId     String
+  userId     String?
+  userName   String
+  action     String   // CREATED | STATUS_CHANGED | FIELD_CHANGED
+  field      String?  // status | assignee | reviewer | deadline | priority | title | description | project
+  oldValue   String?
+  newValue   String?
+  created_at DateTime @default(now()) @map("created_at")
+
+  @@index([itemId, created_at])
+  @@map("item_activity")
+}

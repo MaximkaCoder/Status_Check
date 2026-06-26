@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getUnblockedSession as getSession } from "@/lib/auth";
 import { CreateItemSchema, GetItemsQuerySchema } from "@/lib/validations";
 import { notifyAssignees } from "@/lib/notify";
+import { logActivity } from "@/lib/activity";
 
 // ---------------------------------------------------------------------------
 // Helper — run auto-expire in a single UPDATE query
@@ -179,6 +180,9 @@ export async function POST(request: NextRequest) {
 
     // Notify assignee and reviewer (fire-and-forget)
     notifyAssignees(item.id, item.title, assignee, reviewer, !!assignee, !!reviewer).catch(() => {});
+
+    // Activity log — task created
+    logActivity(item.id, session?.userId ?? null, resolvedName, [{ action: "CREATED" }]).catch(() => {});
 
     return NextResponse.json(item, { status: 201 });
   } catch (error) {

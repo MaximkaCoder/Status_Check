@@ -198,6 +198,9 @@ export const translations = {
     noComments: 'No comments yet. Be first!',
     deleteComment: 'Delete',
     commentTooLong: 'Comment too long (max 2000 chars)',
+    // Activity log
+    activityTitle: 'Activity',
+    activityEmpty: 'No history yet',
   },
   uk: {
     appName: 'Status Check',
@@ -384,6 +387,9 @@ export const translations = {
     noComments: 'Коментарів ще немає. Будьте першим!',
     deleteComment: 'Видалити',
     commentTooLong: 'Коментар занадто довгий (макс. 2000 символів)',
+    // Activity log
+    activityTitle: 'Історія',
+    activityEmpty: 'Поки що немає змін',
   },
 } as const
 

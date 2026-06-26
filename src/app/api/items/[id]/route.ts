@@ -4,6 +4,7 @@ import { getUnblockedSession as getSession } from "@/lib/auth";
 import { UpdateItemSchema } from "@/lib/validations";
 import type { StatusItem } from "@prisma/client";
 import { notifyAssignees } from "@/lib/notify";
+import { logActivity, type ActivityEntry } from "@/lib/activity";
 
 async function canView(userId: string, userName: string, isAdmin: boolean, item: StatusItem): Promise<boolean> {
   if (isAdmin) return true;
@@ -131,6 +132,31 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const assigneeChanged = data.assignee !== undefined && data.assignee !== existing.assignee;
     const reviewerChanged = data.reviewer !== undefined && data.reviewer !== existing.reviewer;
     notifyAssignees(updated.id, updated.title, newAssignee, newReviewer, assigneeChanged, reviewerChanged).catch(() => {});
+
+    // Activity log — record each changed field
+    const acts: ActivityEntry[] = [];
+    const norm = (v: string | null | undefined) => (v ?? "");
+    if (data.title !== undefined && data.title !== existing.title)
+      acts.push({ action: "FIELD_CHANGED", field: "title", oldValue: existing.title, newValue: data.title });
+    if (data.description !== undefined && norm(data.description) !== norm(existing.description))
+      acts.push({ action: "FIELD_CHANGED", field: "description", oldValue: existing.description, newValue: data.description ?? null });
+    if (data.status !== undefined && data.status !== existing.status)
+      acts.push({ action: "STATUS_CHANGED", field: "status", oldValue: existing.status, newValue: data.status });
+    if (data.priority !== undefined && data.priority !== existing.priority)
+      acts.push({ action: "FIELD_CHANGED", field: "priority", oldValue: existing.priority, newValue: data.priority });
+    if (data.project !== undefined && norm(data.project) !== norm(existing.project))
+      acts.push({ action: "FIELD_CHANGED", field: "project", oldValue: existing.project, newValue: data.project ?? null });
+    if (data.assignee !== undefined && norm(data.assignee) !== norm(existing.assignee))
+      acts.push({ action: "FIELD_CHANGED", field: "assignee", oldValue: existing.assignee, newValue: data.assignee ?? null });
+    if (data.reviewer !== undefined && norm(data.reviewer) !== norm(existing.reviewer))
+      acts.push({ action: "FIELD_CHANGED", field: "reviewer", oldValue: existing.reviewer, newValue: data.reviewer ?? null });
+    if (data.deadline !== undefined) {
+      const oldD = existing.deadline ? existing.deadline.toISOString() : null;
+      const newD = data.deadline ? new Date(data.deadline).toISOString() : null;
+      if (oldD !== newD)
+        acts.push({ action: "FIELD_CHANGED", field: "deadline", oldValue: oldD, newValue: newD });
+    }
+    logActivity(updated.id, session.userId, session.name, acts).catch(() => {});
 
     return NextResponse.json(updated);
   } catch (error) {

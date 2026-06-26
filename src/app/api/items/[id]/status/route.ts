@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getUnblockedSession as getSession } from "@/lib/auth";
 import { UpdateStatusSchema } from "@/lib/validations";
 import { notifyStatusChange } from "@/lib/notify";
+import { logActivity } from "@/lib/activity";
 
 type RouteParams = { params: { id: string } };
 
@@ -56,6 +57,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     notifyStatusChange(
       updated.id, updated.title, updated.assignee, updated.reviewer, updated.creator_name, newStatus, session.name
     ).catch(() => {});
+
+    if (newStatus !== existing.status) {
+      logActivity(updated.id, session.userId, session.name, [
+        { action: "STATUS_CHANGED", field: "status", oldValue: existing.status, newValue: newStatus },
+      ]).catch(() => {});
+    }
 
     return NextResponse.json(updated);
   } catch (error) {
