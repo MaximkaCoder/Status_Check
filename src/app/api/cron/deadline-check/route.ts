@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
   }
 
   const now = new Date();
-  const WINDOW_MS = 30 * 60 * 1000; // ±30 min window per threshold
+  // ±12h window — works with daily cron; on self-hosted with hourly cron reduce to 30min
+  const WINDOW_MS = 12 * 60 * 60 * 1000;
 
   // Find all items with upcoming deadlines (up to 1 week ahead)
   const maxHours = 168;
