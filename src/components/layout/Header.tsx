@@ -113,46 +113,29 @@ export function Header() {
             </Link>
           )}
 
-          {/* Settings link */}
-          {user && (
-            <Link
-              href="/settings"
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-xl",
-                "bg-white/40 dark:bg-white/[0.06]",
-                "border border-white/70 dark:border-white/[0.10]",
-                "text-slate-500 dark:text-white/50",
-                "hover:bg-white/60 dark:hover:bg-white/[0.10] hover:text-indigo-500 dark:hover:text-indigo-400",
-                "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none",
-                "transition-all duration-150",
-                pathname.startsWith("/settings") && "text-indigo-500 dark:text-indigo-400"
-              )}
-              aria-label="Налаштування"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </Link>
-          )}
-
           {/* Notification bell */}
           {user && <NotificationBell />}
 
           {/* User pill + logout */}
           {user && (
             <div className="flex items-center gap-1.5">
-              <div className={cn(
-                "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium",
-                "bg-white/40 dark:bg-white/[0.06]",
-                "border border-white/70 dark:border-white/[0.10]",
-                "text-slate-700 dark:text-white/80",
-                "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none"
-              )}>
+              <Link
+                href="/settings"
+                className={cn(
+                  "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium",
+                  "bg-white/40 dark:bg-white/[0.06]",
+                  "border border-white/70 dark:border-white/[0.10]",
+                  "text-slate-700 dark:text-white/80",
+                  "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none",
+                  "hover:bg-white/60 dark:hover:bg-white/[0.10] transition-colors duration-150",
+                  pathname.startsWith("/settings") && "border-indigo-400/50 text-indigo-600 dark:text-indigo-300"
+                )}
+              >
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-white text-[10px] font-bold flex-shrink-0">
                   {user.name.charAt(0).toUpperCase()}
                 </span>
                 <span className="max-w-[96px] truncate">{user.name}</span>
-              </div>
+              </Link>
               <button
                 type="button"
                 onClick={logout}
