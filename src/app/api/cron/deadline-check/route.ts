@@ -6,6 +6,17 @@ export const runtime = "nodejs";
 
 const DEFAULT_THRESHOLDS = [24];
 
+function dayLabel(hours: number): string {
+  if (hours < 24) return `${hours} год`;
+  const days = Math.round(hours / 24);
+  const mod10 = days % 10;
+  const mod100 = days % 100;
+  let word = "днів";
+  if (mod10 === 1 && mod100 !== 11) word = "день";
+  else if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) word = "дні";
+  return `${days} ${word}`;
+}
+
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -13,8 +24,11 @@ export async function GET(request: NextRequest) {
   }
 
   const now = new Date();
-  // ±12h window — works with daily cron; on self-hosted with hourly cron reduce to 30min
-  const WINDOW_MS = 12 * 60 * 60 * 1000;
+  // The cron interval determines the reminder window so thresholds tile without
+  // gaps or duplicate bursts. Vercel Hobby runs daily (24h); a self-hosted hourly
+  // cron should set CRON_INTERVAL_HOURS=1 for precise sub-day reminders.
+  const intervalH = Number(process.env.CRON_INTERVAL_HOURS) || 24;
+  const intervalMs = intervalH * 60 * 60 * 1000;
 
   // Find all items with upcoming deadlines (up to 1 week ahead)
   const maxHours = 168;
@@ -61,7 +75,9 @@ export async function GET(request: NextRequest) {
 
       for (const hours of thresholds) {
         const targetMs = hours * 60 * 60 * 1000;
-        const inWindow = Math.abs(msUntilDeadline - targetMs) <= WINDOW_MS;
+        // Fire once as the deadline descends past the threshold: it is now within
+        // `hours`, but was still beyond it at the previous cron run one interval ago.
+        const inWindow = msUntilDeadline <= targetMs && msUntilDeadline > targetMs - intervalMs;
         if (!inWindow) continue;
 
         // Dedup: one notification per user+item+threshold
@@ -91,14 +107,14 @@ export async function GET(request: NextRequest) {
 
         // Telegram notification
         if (notifyVia.includes("telegram") && user.settings?.telegramChatId) {
-          const hoursLabel = hours >= 24
-            ? `${hours / 24} ${hours / 24 === 1 ? "день" : "дні"}`
-            : `${hours} год`;
+          const deadlineStr = item.deadline.toLocaleString("uk-UA", {
+            day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+          });
           const text =
             `⏰ <b>Нагадування про дедлайн</b>\n\n` +
             `Задача: <b>${item.title}</b>\n` +
-            `Дедлайн через: <b>${hoursLabel}</b>\n` +
-            `Дедлайн: ${item.deadline.toLocaleDateString("uk-UA")}`;
+            `Залишилось: <b>менше ${dayLabel(hours)}</b>\n` +
+            `Дедлайн: ${deadlineStr}`;
           const ok = await sendTelegramMessage(user.settings.telegramChatId, text);
           if (ok) sent++;
         }
