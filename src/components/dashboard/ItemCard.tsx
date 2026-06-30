@@ -98,7 +98,7 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
   const monthsEn = translations.en.months;
   const monthsUkGen = translations.uk.monthsGenitive;
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
-  const [dropUp, setDropUp] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number } | null>(null);
   const [changingStatus, setChangingStatus] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -109,8 +109,13 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
     function handleClick(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setStatusMenuOpen(false);
     }
+    function handleScroll() { setStatusMenuOpen(false); }
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
   }, [statusMenuOpen]);
 
   const status = item.status as Status;
@@ -224,7 +229,13 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
                 if (!canChangeStatus) return;
                 if (!statusMenuOpen && statusBtnRef.current) {
                   const rect = statusBtnRef.current.getBoundingClientRect();
-                  setDropUp(rect.bottom + 220 > window.innerHeight);
+                  const right = window.innerWidth - rect.right;
+                  const spaceBelow = window.innerHeight - rect.bottom;
+                  if (spaceBelow < 220) {
+                    setMenuPos({ bottom: window.innerHeight - rect.top + 6, right });
+                  } else {
+                    setMenuPos({ top: rect.bottom + 6, right });
+                  }
                 }
                 setStatusMenuOpen((v) => !v);
               }}
@@ -247,12 +258,12 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
               )}
             </button>
 
-            {statusMenuOpen && onStatusChange && (
+            {statusMenuOpen && onStatusChange && menuPos && (
               <div
                 role="menu"
+                style={{ position: "fixed", top: menuPos.top, bottom: menuPos.bottom, right: menuPos.right }}
                 className={cn(
-                  "absolute right-0 z-[60] min-w-[170px]",
-                  dropUp ? "bottom-full mb-1.5" : "top-full mt-1.5",
+                  "z-[200] min-w-[170px]",
                   "rounded-xl border border-border/60 bg-card shadow-xl",
                   "dark:border-white/10 dark:shadow-black/40",
                   "animate-scale-in overflow-hidden"
