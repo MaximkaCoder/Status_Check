@@ -61,9 +61,26 @@ model User {
   notifications   Notification[]
   projectMembers  ProjectMember[]
   comments        Comment[]
+  settings        UserSettings?
 
   @@index([departmentId])
   @@map("users")
+}
+
+model UserSettings {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  telegramChatId  String?
+  telegramToken   String?
+  notifyVia       String[] @default(["app"])
+  notifyOnAssign  Boolean  @default(true)
+  notifyOnComment Boolean  @default(true)
+  notifyOnStatus  Boolean  @default(true)
+  deadlineHours   Int[]    @default([24])
+  updated_at      DateTime @updatedAt @map("updated_at")
+
+  @@map("user_settings")
 }
 
 model Department {
@@ -90,14 +107,15 @@ enum NotificationType {
 }
 
 model Notification {
-  id         String           @id @default(cuid())
-  userId     String
-  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type       NotificationType
-  itemId     String
-  itemTitle  String
-  read       Boolean          @default(false)
-  created_at DateTime         @default(now()) @map("created_at")
+  id             String           @id @default(cuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           NotificationType
+  itemId         String
+  itemTitle      String
+  read           Boolean          @default(false)
+  thresholdHours Int?
+  created_at     DateTime         @default(now()) @map("created_at")
 
   @@index([userId, read])
   @@index([userId, created_at])

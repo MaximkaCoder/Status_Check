@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUnblockedSession as getSession } from "@/lib/auth";
+import { notifyNewComment } from "@/lib/notify";
 
 async function canAccess(userId: string, userName: string, isAdmin: boolean, itemId: string) {
   const item = await prisma.statusItem.findUnique({ where: { id: itemId } });
@@ -53,14 +54,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     select: { id: true, authorId: true, authorName: true, text: true, created_at: true },
   });
 
-  // Notify assignee (if different from commenter)
-  if (item && item.assignee && item.assignee !== session.name) {
-    const assigneeUser = await prisma.user.findFirst({ where: { name: item.assignee } });
-    if (assigneeUser) {
-      await prisma.notification.create({
-        data: { userId: assigneeUser.id, type: "NEW_COMMENT", itemId: id, itemTitle: item.title },
-      });
-    }
+  if (item) {
+    await notifyNewComment(id, item.title, item.assignee, item.reviewer, session.name);
   }
 
   return NextResponse.json(comment, { status: 201 });
