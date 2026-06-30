@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-guard";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function weekRange(base: Date) {
   const d = new Date(base);
