@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { isPast, isToday, isTomorrow, differenceInDays } from "date-fns";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -102,12 +103,18 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
   const [changingStatus, setChangingStatus] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuContentRef = useRef<HTMLDivElement>(null);
   const statusBtnRef = useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!statusMenuOpen) return;
     function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setStatusMenuOpen(false);
+      const target = e.target as Node;
+      const inButton = menuRef.current?.contains(target);
+      const inMenu = menuContentRef.current?.contains(target);
+      if (!inButton && !inMenu) setStatusMenuOpen(false);
     }
     function handleScroll() { setStatusMenuOpen(false); }
     document.addEventListener("mousedown", handleClick);
@@ -258,8 +265,9 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
               )}
             </button>
 
-            {statusMenuOpen && onStatusChange && menuPos && (
+            {statusMenuOpen && onStatusChange && menuPos && mounted && createPortal(
               <div
+                ref={menuContentRef}
                 role="menu"
                 style={{ position: "fixed", top: menuPos.top, bottom: menuPos.bottom, right: menuPos.right }}
                 className={cn(
@@ -288,7 +296,8 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
                     </button>
                   );
                 })}
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         </div>
