@@ -49,8 +49,8 @@ export async function GET(req: NextRequest) {
     prisma.statusItem.count({ where: { created_at: { gte: start, lte: end } } }),
     prisma.statusItem.count({ where: { done_at: { gte: pStart, lte: pEnd } } }),
     prisma.statusItem.count({ where: { created_at: { gte: pStart, lte: pEnd } } }),
-    prisma.statusItem.count({ where: { status: "TO_CHECK" } }),
-    prisma.statusItem.count({ where: { status: "EXPIRED" } }),
+    prisma.statusItem.count({ where: { status: "TO_CHECK", created_at: { gte: start, lte: end } } }),
+    prisma.statusItem.count({ where: { status: "EXPIRED", created_at: { gte: start, lte: end } } }),
     prisma.itemActivity.findMany({
       where: { created_at: { gte: start, lte: end } },
       select: { userName: true },
