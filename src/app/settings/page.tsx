@@ -256,25 +256,28 @@ export default function SettingsPage() {
                     <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
                     <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Очікуємо підключення...</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Відкрийте Telegram, знайдіть бота <span className="font-semibold text-foreground">@{tgBot || "ваш_бот"}</span> та надішліть:
+                  <a
+                    href={`https://t.me/${tgBot || "reminder_7_growth_bot"}?start=${tgCode}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl",
+                      "bg-[#229ED9] hover:bg-[#1e8ec2] text-white text-sm font-semibold",
+                      "transition-colors cursor-pointer"
+                    )}
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current flex-shrink-0">
+                      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                    </svg>
+                    Відкрити @{tgBot || "reminder_7_growth_bot"} в Telegram
+                  </a>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Натисніть <b>Start</b> у боті — підключення відбудеться автоматично
                   </p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 px-3 py-2 rounded-lg bg-background border border-border/60 text-sm font-mono font-bold tracking-widest text-indigo-600 dark:text-indigo-400 select-all">
-                      /connect {tgCode}
-                    </code>
-                    <button
-                      type="button"
-                      onClick={() => { navigator.clipboard.writeText(`/connect ${tgCode}`); }}
-                      className="px-3 py-2 rounded-lg border border-border/60 bg-background text-xs font-medium hover:bg-muted/50 transition-colors cursor-pointer"
-                    >
-                      Копія
-                    </button>
-                  </div>
                   <button
                     type="button"
                     onClick={() => { setTgCode(null); setTgPolling(false); }}
-                    className="text-xs text-muted-foreground hover:underline cursor-pointer"
+                    className="text-xs text-muted-foreground hover:underline cursor-pointer w-full text-center"
                   >
                     Скасувати
                   </button>
