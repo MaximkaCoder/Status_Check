@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 const AUTH_PAGES = ["/login", "/register"];
-const PUBLIC_API  = ["/api/auth/login", "/api/auth/register"];
+const PUBLIC_API  = [
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/telegram/webhook",  // authenticated by Telegram secret token header
+  "/api/cron/",             // authenticated by CRON_SECRET bearer token
+];
 
 function secret() {
   return new TextEncoder().encode(process.env.JWT_SECRET!);
