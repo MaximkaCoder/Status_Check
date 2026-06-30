@@ -43,6 +43,36 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
   );
 }
 
+function TestButton() {
+  const [state, setState] = useState<"idle" | "sending" | "ok" | "err">("idle");
+
+  async function send() {
+    setState("sending");
+    const res = await fetch("/api/telegram/test", { method: "POST" });
+    setState(res.ok ? "ok" : "err");
+    setTimeout(() => setState("idle"), 3000);
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={state === "sending"}
+      onClick={send}
+      className={cn(
+        "w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50",
+        state === "ok"  && "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
+        state === "err" && "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400",
+        (state === "idle" || state === "sending") && "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground"
+      )}
+    >
+      {state === "sending" && <span className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />}
+      {state === "ok"      && "✓ Повідомлення надіслано"}
+      {state === "err"     && "Помилка — перевірте з'єднання"}
+      {(state === "idle" || state === "sending") && (state === "idle" ? "Надіслати тестове повідомлення" : "Надсилаємо...")}
+    </button>
+  );
+}
+
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-card shadow-card overflow-hidden">
@@ -237,19 +267,21 @@ export default function SettingsPage() {
                 : "border-border/60 bg-muted/30"
             )}>
               {tgConnected ? (
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Telegram підключено</span>
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                      <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Telegram підключено</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={disconnectTelegram}
+                      className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                    >
+                      Від&apos;єднати
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={disconnectTelegram}
-                    className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
-                  >
-                    Від&apos;єднати
-                  </button>
-                </div>
+                  <TestButton /></div>
               ) : tgCode ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
