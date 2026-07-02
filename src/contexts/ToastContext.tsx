@@ -38,11 +38,11 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 const VARIANT_STYLES: Record<ToastVariant, string> = {
   success:
-    "bg-emerald-600 text-white border-emerald-500/40 shadow-[0_4px_24px_rgba(16,185,129,0.25)]",
+    "bg-emerald-500/15 border-emerald-500/30 text-emerald-800 dark:text-emerald-100 shadow-[0_8px_32px_rgba(16,185,129,0.2)]",
   error:
-    "bg-rose-600 text-white border-rose-500/40 shadow-[0_4px_24px_rgba(239,68,68,0.25)]",
+    "bg-rose-500/15 border-rose-500/30 text-rose-800 dark:text-rose-100 shadow-[0_8px_32px_rgba(239,68,68,0.2)]",
   info:
-    "bg-indigo-600 text-white border-indigo-500/40 shadow-[0_4px_24px_rgba(99,102,241,0.25)]",
+    "bg-indigo-500/15 border-indigo-500/30 text-indigo-800 dark:text-indigo-100 shadow-[0_8px_32px_rgba(99,102,241,0.2)]",
 };
 
 const VARIANT_ICONS: Record<ToastVariant, React.ReactNode> = {
@@ -88,7 +88,8 @@ function ToastItem({
       role="alert"
       aria-live="polite"
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium",
+        "flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-medium",
+        "backdrop-blur-xl backdrop-saturate-150",
         "transition-all duration-300 ease-out cursor-default select-none",
         VARIANT_STYLES[toast.variant],
         visible

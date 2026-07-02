@@ -283,8 +283,9 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
     {projectBannerMsg && typeof window !== "undefined" && createPortal(
       <div
         className={cn(
-          "fixed top-4 left-1/2 z-[9999] flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium",
-          "bg-rose-600 text-white border-rose-500/40 shadow-[0_4px_24px_rgba(239,68,68,0.35)]",
+          "fixed top-4 left-1/2 z-[9999] flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-medium",
+          "bg-rose-500/15 border-rose-500/30 text-rose-800 dark:text-rose-100 shadow-[0_8px_32px_rgba(239,68,68,0.2)]",
+          "backdrop-blur-xl backdrop-saturate-150",
           "-translate-x-1/2"
         )}
         style={{ maxWidth: "min(420px, calc(100vw - 2rem))" }}
