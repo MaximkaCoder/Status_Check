@@ -131,7 +131,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const newReviewer = data.reviewer !== undefined ? data.reviewer : existing.reviewer;
     const assigneeChanged = data.assignee !== undefined && data.assignee !== existing.assignee;
     const reviewerChanged = data.reviewer !== undefined && data.reviewer !== existing.reviewer;
-    notifyAssignees(updated.id, updated.title, newAssignee, newReviewer, assigneeChanged, reviewerChanged).catch(() => {});
+    // Awaited: serverless freezes right after the response, killing floating promises.
+    await notifyAssignees(updated.id, updated.title, newAssignee, newReviewer, assigneeChanged, reviewerChanged).catch(() => {});
 
     // Activity log — record each changed field
     const acts: ActivityEntry[] = [];
@@ -156,7 +157,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       if (oldD !== newD)
         acts.push({ action: "FIELD_CHANGED", field: "deadline", oldValue: oldD, newValue: newD });
     }
-    logActivity(updated.id, session.userId, session.name, acts).catch(() => {});
+    await logActivity(updated.id, session.userId, session.name, acts).catch(() => {});
 
     return NextResponse.json(updated);
   } catch (error) {

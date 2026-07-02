@@ -178,11 +178,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Notify assignee and reviewer (fire-and-forget)
-    notifyAssignees(item.id, item.title, assignee, reviewer, !!assignee, !!reviewer).catch(() => {});
-
-    // Activity log — task created
-    logActivity(item.id, session?.userId ?? null, resolvedName, [{ action: "CREATED" }]).catch(() => {});
+    // Awaited: serverless freezes right after the response, killing floating promises.
+    // Errors are still swallowed so notification failures never break the request.
+    await notifyAssignees(item.id, item.title, assignee, reviewer, !!assignee, !!reviewer).catch(() => {});
+    await logActivity(item.id, session?.userId ?? null, resolvedName, [{ action: "CREATED" }]).catch(() => {});
 
     return NextResponse.json(item, { status: 201 });
   } catch (error) {

@@ -54,12 +54,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       data: { status: newStatus, ...doneFields },
     });
 
-    notifyStatusChange(
+    // Awaited: serverless freezes right after the response, killing floating promises.
+    await notifyStatusChange(
       updated.id, updated.title, updated.assignee, updated.reviewer, updated.creator_name, newStatus, session.name
     ).catch(() => {});
 
     if (newStatus !== existing.status) {
-      logActivity(updated.id, session.userId, session.name, [
+      await logActivity(updated.id, session.userId, session.name, [
         { action: "STATUS_CHANGED", field: "status", oldValue: existing.status, newValue: newStatus },
       ]).catch(() => {});
     }
