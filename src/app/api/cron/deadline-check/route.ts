@@ -67,9 +67,10 @@ export async function GET(request: NextRequest) {
       });
       if (!user) continue;
 
-      const thresholds = user.settings?.deadlineHours?.length
+      const thresholds = (user.settings?.deadlineHours?.length
         ? user.settings.deadlineHours
-        : DEFAULT_THRESHOLDS;
+        : DEFAULT_THRESHOLDS
+      ).slice().sort((a, b) => a - b); // ascending: most urgent first
 
       const notifyVia = user.settings?.notifyVia ?? ["app"];
 
@@ -118,6 +119,9 @@ export async function GET(request: NextRequest) {
           const ok = await sendTelegramMessage(user.settings.telegramChatId, text);
           if (ok) sent++;
         }
+
+        // One notification per item+user per cron run — stop after the most urgent threshold fires.
+        break;
       }
     }
   }
