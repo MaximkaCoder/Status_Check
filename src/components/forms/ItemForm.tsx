@@ -193,7 +193,6 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
           title: title.trim(),
           description: description.trim() || null,
           deadline: deadline ? new Date(deadline).toISOString() : null,
-          creator_name: user?.name || creatorName.trim(),
           project:  project.trim()  || null,
           assignee: assignee.trim() || null,
           reviewer: reviewer.trim() || null,
