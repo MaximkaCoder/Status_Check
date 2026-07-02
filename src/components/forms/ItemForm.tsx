@@ -226,16 +226,25 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Check project membership before field validation so the toast always shows.
+    if (mode === "create" && !user?.isAdmin) {
+      const trimmedProject = project.trim();
+      if (projectNames.length === 0) {
+        toast(locale === "uk" ? "Вас не додано до жодного з проєктів" : "You are not a member of any project", "error");
+        return;
+      }
+      if (trimmedProject && !projectNames.includes(trimmedProject)) {
+        toast(locale === "uk" ? `Проєкт "${trimmedProject}" не знайдено. Тільки адмін може створювати проєкти.` : `Project "${trimmedProject}" not found. Only admins can create projects.`, "error");
+        return;
+      }
+    }
+
     if (!validate()) return;
 
     const trimmedProject = project.trim();
     if (trimmedProject && !projectNames.includes(trimmedProject)) {
       if (!user?.isAdmin) {
-        if (projectNames.length === 0) {
-          toast(locale === "uk" ? "Вас не додано до жодного з проєктів" : "You are not a member of any project", "error");
-        } else {
-          toast(locale === "uk" ? `Проєкт "${trimmedProject}" не знайдено. Тільки адмін може створювати проєкти.` : `Project "${trimmedProject}" not found. Only admins can create projects.`, "error");
-        }
         return;
       }
       setNewProjectPending(trimmedProject);
