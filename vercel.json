@@ -1,5 +1,5 @@
 {
-  "buildCommand": "prisma generate && prisma db push --skip-generate && next build",
+  "buildCommand": "prisma generate && prisma db push && next build",
   "crons": [
     {
       "path": "/api/cron/deadline-check",
