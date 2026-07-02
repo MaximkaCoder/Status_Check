@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -239,12 +240,8 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
     // Check project membership before field validation so the banner always shows.
     if (mode === "create" && !user?.isAdmin) {
       const trimmedProject = project.trim();
-      if (projectNames.length === 0) {
-        showProjectBanner(locale === "uk" ? "Вас не додано до жодного з проєктів" : "You are not a member of any project");
-        return;
-      }
-      if (trimmedProject && !projectNames.includes(trimmedProject)) {
-        showProjectBanner(locale === "uk" ? `Проєкт "${trimmedProject}" не знайдено. Тільки адмін може створювати проєкти.` : `Project "${trimmedProject}" not found. Only admins can create projects.`);
+      if (projectNames.length === 0 || (trimmedProject && !projectNames.includes(trimmedProject))) {
+        showProjectBanner(locale === "uk" ? "Проєкт не знайдено або у вас немає доступу до нього" : "Project not found or you don't have access to it");
         return;
       }
     }
@@ -283,15 +280,14 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
 
   return (
     <>
-    {projectBannerMsg && (
+    {projectBannerMsg && typeof window !== "undefined" && createPortal(
       <div
         className={cn(
           "fixed top-4 left-1/2 z-[9999] flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium",
           "bg-rose-600 text-white border-rose-500/40 shadow-[0_4px_24px_rgba(239,68,68,0.35)]",
-          "-translate-x-1/2 transition-all duration-300 ease-out",
-          "opacity-100 translate-y-0 scale-100"
+          "-translate-x-1/2"
         )}
-        style={{ maxWidth: "min(420px, calc(100vw - 2rem))", pointerEvents: "auto" }}
+        style={{ maxWidth: "min(420px, calc(100vw - 2rem))" }}
         role="alert"
       >
         <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -307,7 +303,8 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-      </div>
+      </div>,
+      document.body
     )}
     {newProjectPending && (
       <ConfirmDialog
