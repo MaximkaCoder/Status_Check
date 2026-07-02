@@ -20,6 +20,7 @@ export interface Toast {
   id: string;
   message: string;
   variant: ToastVariant;
+  leaving?: boolean;
 }
 
 interface ToastContextValue {
@@ -70,17 +71,20 @@ function ToastItem({
   toast: Toast;
   onDismiss: (id: string) => void;
 }) {
-  const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [dismissing, setDismissing] = useState(false);
 
   // Animate in on mount
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setVisible(true));
+    const raf = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(raf);
   }, []);
 
+  const visible = mounted && !toast.leaving && !dismissing;
+
   function handleDismiss() {
-    setVisible(false);
-    setTimeout(() => onDismiss(toast.id), 300);
+    setDismissing(true);
+    setTimeout(() => onDismiss(toast.id), 500);
   }
 
   return (
@@ -90,11 +94,11 @@ function ToastItem({
       className={cn(
         "flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-medium",
         "backdrop-blur-xl backdrop-saturate-150",
-        "transition-all duration-300 ease-out cursor-default select-none",
+        "transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-default select-none",
         VARIANT_STYLES[toast.variant],
         visible
           ? "opacity-100 translate-y-0 scale-100"
-          : "opacity-0 -translate-y-2 scale-95"
+          : "opacity-0 -translate-y-3 scale-95"
       )}
     >
       {VARIANT_ICONS[toast.variant]}
@@ -140,8 +144,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       const id = nextId();
       setToasts((prev) => [...prev, { id, message, variant }]);
 
-      // Auto-dismiss after 3.5 s
-      const timer = setTimeout(() => dismiss(id), 3500);
+      // Auto-dismiss: animate out at 3.5s, remove after the 500ms transition
+      const timer = setTimeout(() => {
+        setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, leaving: true } : t)));
+        const removeTimer = setTimeout(() => dismiss(id), 500);
+        timersRef.current.set(id, removeTimer);
+      }, 3500);
       timersRef.current.set(id, timer);
     },
     [dismiss]

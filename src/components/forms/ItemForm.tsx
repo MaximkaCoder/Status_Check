@@ -148,12 +148,24 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
   const [status, setStatus] = useState<Status>(initialStatus);
 
   const [projectBannerMsg, setProjectBannerMsg] = useState<string | null>(null);
-  const projectBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [bannerVisible, setBannerVisible] = useState(false);
+  const projectBannerTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   function showProjectBanner(msg: string) {
-    if (projectBannerTimer.current) clearTimeout(projectBannerTimer.current);
+    projectBannerTimers.current.forEach(clearTimeout);
     setProjectBannerMsg(msg);
-    projectBannerTimer.current = setTimeout(() => setProjectBannerMsg(null), 4000);
+    setBannerVisible(false);
+    projectBannerTimers.current = [
+      setTimeout(() => setBannerVisible(true), 20),
+      setTimeout(() => setBannerVisible(false), 3500),
+      setTimeout(() => setProjectBannerMsg(null), 4000),
+    ];
+  }
+
+  function hideProjectBanner() {
+    projectBannerTimers.current.forEach(clearTimeout);
+    setBannerVisible(false);
+    projectBannerTimers.current = [setTimeout(() => setProjectBannerMsg(null), 500)];
   }
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -286,7 +298,10 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
           "fixed top-4 left-1/2 z-[9999] flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-medium",
           "bg-rose-500/15 border-rose-500/30 text-rose-800 dark:text-rose-100 shadow-[0_8px_32px_rgba(239,68,68,0.2)]",
           "backdrop-blur-xl backdrop-saturate-150",
-          "-translate-x-1/2"
+          "transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          bannerVisible
+            ? "opacity-100 -translate-x-1/2 translate-y-0 scale-100"
+            : "opacity-0 -translate-x-1/2 -translate-y-3 scale-95"
         )}
         style={{ maxWidth: "min(420px, calc(100vw - 2rem))" }}
         role="alert"
@@ -297,7 +312,7 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
         <span className="flex-1 leading-snug">{projectBannerMsg}</span>
         <button
           type="button"
-          onClick={() => setProjectBannerMsg(null)}
+          onClick={hideProjectBanner}
           className="flex-shrink-0 ml-1 opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
         >
           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

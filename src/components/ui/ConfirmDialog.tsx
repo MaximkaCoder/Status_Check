@@ -61,7 +61,7 @@ export function ConfirmDialog({
       {/* Backdrop */}
       <div
         className={cn(
-          "fixed inset-0 bg-black/50 z-[300]",
+          "fixed inset-0 bg-black/40 backdrop-blur-sm z-[300]",
           closing ? "animate-fade-out" : "animate-backdrop-in"
         )}
         onClick={() => close(onCancel)}
@@ -72,7 +72,8 @@ export function ConfirmDialog({
       <div className="fixed inset-0 flex items-center justify-center z-[301] p-4" role="dialog" aria-modal="true">
         <div
           className={cn(
-            "bg-card rounded-2xl shadow-2xl w-full max-w-sm",
+            "bg-card/70 backdrop-blur-xl backdrop-saturate-150 rounded-2xl shadow-2xl w-full max-w-sm",
+            "border border-white/20 dark:border-white/10",
             closing ? "animate-overlay-out" : "animate-overlay-in"
           )}
           onClick={(e) => e.stopPropagation()}
