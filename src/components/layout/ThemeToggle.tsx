@@ -2,6 +2,7 @@
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { withViewTransition } from '@/lib/view-transition'
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -13,7 +14,7 @@ export function ThemeToggle() {
 
   return (
     <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={() => withViewTransition(() => setTheme(theme === 'dark' ? 'light' : 'dark'))}
       className={cn(
         "flex h-8 w-8 items-center justify-center rounded-xl",
         "bg-white/40 dark:bg-white/[0.06]",

@@ -35,11 +35,24 @@ function timeAgo(dateStr: string, locale: string): string {
 export function NotificationBell() {
   const { t, locale } = useLanguage();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);        // panel is mounted
+  const [visible, setVisible] = useState(false);  // panel is animated in
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openPanel = useCallback(() => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setOpen(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+  }, []);
+
+  const closePanel = useCallback(() => {
+    setVisible(false);
+    closeTimer.current = setTimeout(() => setOpen(false), 250);
+  }, []);
 
   const fetchNotifs = useCallback(async () => {
     try {
@@ -65,12 +78,12 @@ export function NotificationBell() {
         panelRef.current && !panelRef.current.contains(e.target as Node) &&
         btnRef.current && !btnRef.current.contains(e.target as Node)
       ) {
-        setOpen(false);
+        closePanel();
       }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  }, [open, closePanel]);
 
   async function handleClick(n: Notification) {
     if (!n.read) {
@@ -78,7 +91,7 @@ export function NotificationBell() {
       setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
       setUnreadCount((c) => Math.max(0, c - 1));
     }
-    setOpen(false);
+    closePanel();
     router.push(`/items/${n.itemId}`);
   }
 
@@ -107,7 +120,7 @@ export function NotificationBell() {
       <button
         ref={btnRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open ? closePanel() : openPanel())}
         aria-label={t("notifications")}
         className={cn(
           "relative flex h-8 w-8 items-center justify-center rounded-xl",
@@ -146,7 +159,11 @@ export function NotificationBell() {
             "border border-slate-200 dark:border-white/[0.10]",
             "shadow-[0_8px_32px_rgba(0,0,0,0.18),0_1px_0_rgba(255,255,255,0.9)]",
             "dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)]",
-            "overflow-hidden"
+            "overflow-hidden",
+            "origin-top-right transition-all duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+            visible
+              ? "opacity-100 scale-100 translate-y-0"
+              : "opacity-0 scale-95 -translate-y-1.5"
           )}
         >
           {/* Header */}

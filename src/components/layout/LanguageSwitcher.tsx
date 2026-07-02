@@ -2,6 +2,7 @@
 
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import { withViewTransition } from "@/lib/view-transition";
 
 export function LanguageSwitcher() {
   const { locale, setLocale } = useLanguage();
@@ -21,7 +22,7 @@ export function LanguageSwitcher() {
         <button
           key={lang}
           type="button"
-          onClick={() => setLocale(lang)}
+          onClick={() => { if (lang !== locale) withViewTransition(() => setLocale(lang)); }}
           aria-pressed={locale === lang}
           className={cn(
             "px-2.5 py-1 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer outline-none",

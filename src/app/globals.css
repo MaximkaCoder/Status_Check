@@ -258,6 +258,15 @@
 }
 
 /* =====================================================================
+   VIEW TRANSITIONS — smooth crossfade for theme/language switch
+   ===================================================================== */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.35s;
+  animation-timing-function: ease-in-out;
+}
+
+/* =====================================================================
    SHIMMER SKELETON
    ===================================================================== */
 
