@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -146,6 +146,15 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
     (defaultValues?.status as Status | undefined) ?? "TO_CHECK";
   const [status, setStatus] = useState<Status>(initialStatus);
 
+  const [projectBannerMsg, setProjectBannerMsg] = useState<string | null>(null);
+  const projectBannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showProjectBanner(msg: string) {
+    if (projectBannerTimer.current) clearTimeout(projectBannerTimer.current);
+    setProjectBannerMsg(msg);
+    projectBannerTimer.current = setTimeout(() => setProjectBannerMsg(null), 4000);
+  }
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -227,15 +236,15 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    // Check project membership before field validation so the toast always shows.
+    // Check project membership before field validation so the banner always shows.
     if (mode === "create" && !user?.isAdmin) {
       const trimmedProject = project.trim();
       if (projectNames.length === 0) {
-        toast(locale === "uk" ? "Вас не додано до жодного з проєктів" : "You are not a member of any project", "error");
+        showProjectBanner(locale === "uk" ? "Вас не додано до жодного з проєктів" : "You are not a member of any project");
         return;
       }
       if (trimmedProject && !projectNames.includes(trimmedProject)) {
-        toast(locale === "uk" ? `Проєкт "${trimmedProject}" не знайдено. Тільки адмін може створювати проєкти.` : `Project "${trimmedProject}" not found. Only admins can create projects.`, "error");
+        showProjectBanner(locale === "uk" ? `Проєкт "${trimmedProject}" не знайдено. Тільки адмін може створювати проєкти.` : `Project "${trimmedProject}" not found. Only admins can create projects.`);
         return;
       }
     }
@@ -274,6 +283,32 @@ export function ItemForm({ defaultValues, mode, itemId, onCreated }: ItemFormPro
 
   return (
     <>
+    {projectBannerMsg && (
+      <div
+        className={cn(
+          "fixed top-4 left-1/2 z-[9999] flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium",
+          "bg-rose-600 text-white border-rose-500/40 shadow-[0_4px_24px_rgba(239,68,68,0.35)]",
+          "-translate-x-1/2 transition-all duration-300 ease-out",
+          "opacity-100 translate-y-0 scale-100"
+        )}
+        style={{ maxWidth: "min(420px, calc(100vw - 2rem))", pointerEvents: "auto" }}
+        role="alert"
+      >
+        <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span className="flex-1 leading-snug">{projectBannerMsg}</span>
+        <button
+          type="button"
+          onClick={() => setProjectBannerMsg(null)}
+          className="flex-shrink-0 ml-1 opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    )}
     {newProjectPending && (
       <ConfirmDialog
         title={locale === "uk" ? "Проєкт не існує" : "Project not found"}
