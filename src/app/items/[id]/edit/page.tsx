@@ -163,6 +163,7 @@ export default function EditItemPage() {
             assignee: item.assignee ?? "",
             reviewer: item.reviewer ?? "",
             status: item.status,
+            priority: item.priority,
           }}
         />
       </div>
