@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendTelegramMessage } from "@/lib/telegram";
+import { sendTelegramMessage, itemLink } from "@/lib/telegram";
 
 export const runtime = "nodejs";
 
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
           });
           const text =
             `⏰ <b>Нагадування про дедлайн</b>\n\n` +
-            `Задача: <b>${item.title}</b>\n` +
+            `Задача: ${itemLink(item.id, item.title)}\n` +
             `Залишилось: <b>менше ${dayLabel(hours)}</b>\n` +
             `Дедлайн: ${deadlineStr}`;
           const ok = await sendTelegramMessage(user.settings.telegramChatId, text);

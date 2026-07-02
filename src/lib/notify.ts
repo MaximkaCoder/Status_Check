@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { sendTelegramMessage } from "@/lib/telegram";
+import { sendTelegramMessage, itemLink } from "@/lib/telegram";
 
 type NotifyEventType = "ASSIGNED_ASSIGNEE" | "ASSIGNED_REVIEWER" | "STATUS_CHANGED" | "NEW_COMMENT";
 
@@ -53,7 +53,7 @@ export async function notifyAssignees(
         "ASSIGNED_ASSIGNEE",
         itemId,
         itemTitle,
-        `📋 <b>Вас призначено виконавцем</b>\n\nЗадача: <b>${itemTitle}</b>`
+        `📋 <b>Вас призначено виконавцем</b>\n\nЗадача: ${itemLink(itemId, itemTitle)}`
       );
     }
   }
@@ -66,7 +66,7 @@ export async function notifyAssignees(
         "ASSIGNED_REVIEWER",
         itemId,
         itemTitle,
-        `👀 <b>Вас призначено рецензентом</b>\n\nЗадача: <b>${itemTitle}</b>`
+        `👀 <b>Вас призначено рецензентом</b>\n\nЗадача: ${itemLink(itemId, itemTitle)}`
       );
     }
   }
@@ -101,7 +101,7 @@ export async function notifyStatusChange(
       "STATUS_CHANGED",
       itemId,
       itemTitle,
-      `🔄 <b>Статус задачі змінено</b>\n\nЗадача: <b>${itemTitle}</b>\nНовий статус: <b>${statusLabels[newStatus] ?? newStatus}</b>`
+      `🔄 <b>Статус задачі змінено</b>\n\nЗадача: ${itemLink(itemId, itemTitle)}\nНовий статус: <b>${statusLabels[newStatus] ?? newStatus}</b>`
     );
   }
 }
@@ -125,7 +125,7 @@ export async function notifyNewComment(
       "NEW_COMMENT",
       itemId,
       itemTitle,
-      `💬 <b>Новий коментар</b>\n\nЗадача: <b>${itemTitle}</b>\nАвтор: ${commentAuthor}`
+      `💬 <b>Новий коментар</b>\n\nЗадача: ${itemLink(itemId, itemTitle)}\nАвтор: ${commentAuthor}`
     );
   }
 }
