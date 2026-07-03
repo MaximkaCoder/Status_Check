@@ -112,6 +112,12 @@ export function NotificationBell() {
         return `${uk ? "Статус змінено" : "Status changed"}: «${n.itemTitle}»`;
       case "DEADLINE_APPROACHING":
         return `${uk ? "Дедлайн завтра" : "Deadline tomorrow"}: «${n.itemTitle}»`;
+      case "NEW_COMMENT":
+        return `${uk ? "Новий коментар" : "New comment"}: «${n.itemTitle}»`;
+      case "MENTIONED":
+        return `${uk ? "Вас згадали в коментарі" : "You were mentioned"}: «${n.itemTitle}»`;
+      default:
+        return `«${n.itemTitle}»`;
     }
   }
 

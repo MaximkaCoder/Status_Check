@@ -24,6 +24,11 @@ export async function GET(request: NextRequest) {
   }
 
   const now = new Date();
+
+  // Purge soft-deleted items older than 30 days
+  const purged = await prisma.statusItem.deleteMany({
+    where: { deleted_at: { lt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) } },
+  });
   // The cron interval determines the reminder window so thresholds tile without
   // gaps or duplicate bursts. Vercel Hobby runs daily (24h); a self-hosted hourly
   // cron should set CRON_INTERVAL_HOURS=1 for precise sub-day reminders.
@@ -127,5 +132,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, created, sent, checked: items.length });
+  return NextResponse.json({ ok: true, created, sent, checked: items.length, purged: purged.count });
 }

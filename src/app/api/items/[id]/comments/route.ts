@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUnblockedSession as getSession } from "@/lib/auth";
-import { notifyNewComment } from "@/lib/notify";
+import { notifyNewComment, notifyMentioned } from "@/lib/notify";
+import { parseMentions } from "@/lib/mentions";
 
 async function canAccess(userId: string, userName: string, isAdmin: boolean, itemId: string) {
   const item = await prisma.statusItem.findUnique({ where: { id: itemId } });
@@ -55,7 +56,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   });
 
   if (item) {
-    await notifyNewComment(id, item.title, item.assignee, item.reviewer, session.name);
+    const allUsers = await prisma.user.findMany({ select: { name: true } });
+    const mentioned = parseMentions(text, allUsers.map((u) => u.name));
+    // Mentioned users get the direct ping; exclude them from the generic
+    // comment notification so nobody is notified twice.
+    await notifyMentioned(id, item.title, mentioned, session.name).catch(() => {});
+    await notifyNewComment(id, item.title, item.assignee, item.reviewer, session.name, mentioned).catch(() => {});
   }
 
   return NextResponse.json(comment, { status: 201 });

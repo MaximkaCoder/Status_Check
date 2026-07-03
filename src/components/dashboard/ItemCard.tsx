@@ -363,6 +363,18 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
             <span>{formatDateLocale(new Date(item.created_at), locale, monthsEn, monthsUkGen)}</span>
           </span>
 
+          {(item.subtaskCount ?? 0) > 0 && (
+            <span className={cn(
+              "flex items-center gap-1 text-[10px] font-semibold",
+              item.subtaskDone === item.subtaskCount ? "text-emerald-500" : "text-muted-foreground/60"
+            )}>
+              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              {item.subtaskDone}/{item.subtaskCount}
+            </span>
+          )}
+
         </div>
 
         {/* Comment badge — bottom-right of card */}

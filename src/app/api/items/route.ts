@@ -113,24 +113,41 @@ export async function GET(request: NextRequest) {
     const items = hasMore ? rows.slice(0, take) : rows;
     const nextCursor = hasMore ? items[items.length - 1].id : null;
 
-    // Attach comment stats (total + unread per current user) in one raw query
+    // Attach comment stats (total + unread per current user) and subtask progress
     if (items.length > 0) {
       const itemIds = items.map((i) => i.id);
-      const stats = await prisma.$queryRaw<Array<{ itemId: string; commentCount: number; unreadCount: number }>>`
-        SELECT
-          c."itemId",
-          COUNT(*)::int AS "commentCount",
-          COUNT(CASE WHEN c.created_at > COALESCE(ics.seen_at, '1970-01-01'::timestamptz) AND c."authorId" != ${session.userId} THEN 1 END)::int AS "unreadCount"
-        FROM comments c
-        LEFT JOIN item_comment_seen ics
-          ON ics."itemId" = c."itemId" AND ics."userId" = ${session.userId}
-        WHERE c."itemId" = ANY(${itemIds})
-        GROUP BY c."itemId", ics.seen_at
-      `;
+      const [stats, subtaskStats] = await Promise.all([
+        prisma.$queryRaw<Array<{ itemId: string; commentCount: number; unreadCount: number }>>`
+          SELECT
+            c."itemId",
+            COUNT(*)::int AS "commentCount",
+            COUNT(CASE WHEN c.created_at > COALESCE(ics.seen_at, '1970-01-01'::timestamptz) AND c."authorId" != ${session.userId} THEN 1 END)::int AS "unreadCount"
+          FROM comments c
+          LEFT JOIN item_comment_seen ics
+            ON ics."itemId" = c."itemId" AND ics."userId" = ${session.userId}
+          WHERE c."itemId" = ANY(${itemIds})
+          GROUP BY c."itemId", ics.seen_at
+        `,
+        prisma.$queryRaw<Array<{ itemId: string; subtaskCount: number; subtaskDone: number }>>`
+          SELECT
+            "itemId",
+            COUNT(*)::int AS "subtaskCount",
+            COUNT(CASE WHEN done THEN 1 END)::int AS "subtaskDone"
+          FROM subtasks
+          WHERE "itemId" = ANY(${itemIds})
+          GROUP BY "itemId"
+        `,
+      ]);
       const statsMap = new Map(stats.map((s) => [s.itemId, s]));
+      const subtaskMap = new Map(subtaskStats.map((s) => [s.itemId, s]));
       const enriched = items.map((item) => {
         const s = statsMap.get(item.id);
-        return s ? { ...item, commentCount: s.commentCount, unreadCount: s.unreadCount } : item;
+        const st = subtaskMap.get(item.id);
+        return {
+          ...item,
+          ...(s && { commentCount: s.commentCount, unreadCount: s.unreadCount }),
+          ...(st && { subtaskCount: st.subtaskCount, subtaskDone: st.subtaskDone }),
+        };
       });
       return NextResponse.json({ items: enriched, nextCursor });
     }

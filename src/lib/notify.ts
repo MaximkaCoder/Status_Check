@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendTelegramMessage, itemLink } from "@/lib/telegram";
 
-type NotifyEventType = "ASSIGNED_ASSIGNEE" | "ASSIGNED_REVIEWER" | "STATUS_CHANGED" | "NEW_COMMENT";
+type NotifyEventType = "ASSIGNED_ASSIGNEE" | "ASSIGNED_REVIEWER" | "STATUS_CHANGED" | "NEW_COMMENT" | "MENTIONED";
 
 async function deliverNotification(
   userId: string,
@@ -106,15 +106,37 @@ export async function notifyStatusChange(
   }
 }
 
+export async function notifyMentioned(
+  itemId: string,
+  itemTitle: string,
+  mentionedNames: string[],
+  commentAuthor: string
+): Promise<void> {
+  const names = [...new Set(mentionedNames)].filter((n) => n !== commentAuthor);
+
+  for (const name of names) {
+    const user = await prisma.user.findFirst({ where: { name, blocked: false }, select: { id: true } });
+    if (!user) continue;
+    await deliverNotification(
+      user.id,
+      "MENTIONED",
+      itemId,
+      itemTitle,
+      `📣 <b>Вас згадали в коментарі</b>\n\nЗадача: ${itemLink(itemId, itemTitle)}\nАвтор: ${commentAuthor}`
+    );
+  }
+}
+
 export async function notifyNewComment(
   itemId: string,
   itemTitle: string,
   assigneeName: string | null | undefined,
   reviewerName: string | null | undefined,
-  commentAuthor: string
+  commentAuthor: string,
+  excludeNames: string[] = []
 ): Promise<void> {
   const names = [...new Set([assigneeName, reviewerName].filter(Boolean) as string[])].filter(
-    (n) => n !== commentAuthor
+    (n) => n !== commentAuthor && !excludeNames.includes(n)
   );
 
   for (const name of names) {

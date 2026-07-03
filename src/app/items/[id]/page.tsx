@@ -109,6 +109,157 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+// ── Subtasks panel ──────────────────────────────────────────────────────────
+interface Subtask { id: string; title: string; done: boolean; order: number; }
+
+function SubtasksPanel({ itemId }: { itemId: string }) {
+  const { locale } = useLanguage();
+  const uk = locale === "uk";
+  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/items/${itemId}/subtasks`)
+      .then(r => r.ok ? r.json() : [])
+      .then((d: Subtask[]) => setSubtasks(d))
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [itemId]);
+
+  async function add() {
+    const title = newTitle.trim();
+    if (!title || adding) return;
+    setAdding(true);
+    try {
+      const r = await fetch(`/api/items/${itemId}/subtasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (r.ok) {
+        const s = await r.json();
+        setSubtasks(prev => [...prev, s]);
+        setNewTitle("");
+      }
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function toggle(s: Subtask) {
+    setSubtasks(prev => prev.map(x => x.id === s.id ? { ...x, done: !x.done } : x));
+    const r = await fetch(`/api/items/${itemId}/subtasks/${s.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ done: !s.done }),
+    });
+    if (!r.ok) setSubtasks(prev => prev.map(x => x.id === s.id ? { ...x, done: s.done } : x));
+  }
+
+  async function remove(s: Subtask) {
+    const snapshot = subtasks;
+    setSubtasks(prev => prev.filter(x => x.id !== s.id));
+    const r = await fetch(`/api/items/${itemId}/subtasks/${s.id}`, { method: "DELETE" });
+    if (!r.ok) setSubtasks(snapshot);
+  }
+
+  if (!loaded) return null;
+  const doneCount = subtasks.filter(s => s.done).length;
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+          {uk ? "Підзадачі" : "Subtasks"}
+        </p>
+        {subtasks.length > 0 && (
+          <span className="text-[10px] font-bold text-indigo-500">{doneCount}/{subtasks.length}</span>
+        )}
+      </div>
+
+      {subtasks.length > 0 && (
+        <div className="h-1.5 rounded-full bg-muted/60 dark:bg-white/[0.06] mb-3 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500 ease-out"
+            style={{ width: `${subtasks.length ? (doneCount / subtasks.length) * 100 : 0}%` }}
+          />
+        </div>
+      )}
+
+      <div className="space-y-1.5">
+        {subtasks.map(s => (
+          <div key={s.id} className="flex items-center gap-2.5 group/subtask rounded-lg px-2 py-1.5 -mx-2 hover:bg-muted/30 transition-colors">
+            <button
+              type="button"
+              onClick={() => toggle(s)}
+              className={cn(
+                "flex h-4.5 w-4.5 h-[18px] w-[18px] items-center justify-center rounded-md border-2 flex-shrink-0 cursor-pointer transition-all duration-150",
+                s.done
+                  ? "bg-indigo-500 border-indigo-500 text-white"
+                  : "border-border hover:border-indigo-400"
+              )}
+              aria-label={s.done ? "Undone" : "Done"}
+            >
+              {s.done && (
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+            <span className={cn(
+              "flex-1 text-sm leading-snug transition-all duration-150",
+              s.done ? "text-muted-foreground line-through" : "text-foreground"
+            )}>
+              {s.title}
+            </span>
+            <button
+              type="button"
+              onClick={() => remove(s)}
+              className="flex-shrink-0 opacity-0 group-hover/subtask:opacity-100 text-muted-foreground hover:text-rose-500 cursor-pointer transition-all duration-150"
+              aria-label="Delete subtask"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 mt-2">
+        <input
+          type="text"
+          value={newTitle}
+          onChange={e => setNewTitle(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+          placeholder={uk ? "Додати підзадачу..." : "Add a subtask..."}
+          maxLength={300}
+          className={cn(
+            "flex-1 rounded-lg border border-border/60 bg-muted/30 dark:bg-white/[0.04]",
+            "px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground",
+            "focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400",
+            "transition-all duration-150"
+          )}
+        />
+        <button
+          type="button"
+          onClick={add}
+          disabled={adding || !newTitle.trim()}
+          className={cn(
+            "flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold",
+            "bg-indigo-500 hover:bg-indigo-600 text-white",
+            "disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all duration-150"
+          )}
+        >
+          {uk ? "Додати" : "Add"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Comments panel ──────────────────────────────────────────────────────────
 function CommentsPanel({ itemId }: { itemId: string }) {
   const { t, locale } = useLanguage();
@@ -120,6 +271,43 @@ function CommentsPanel({ itemId }: { itemId: string }) {
   const [sendErr, setSendErr] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // @mention autocomplete
+  const [userNames, setUserNames] = useState<string[]>([]);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null); // text after "@", null = closed
+  const [mentionIdx, setMentionIdx] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/users").then(r => r.ok ? r.json() : []).then((d: { name: string }[]) => setUserNames(d.map(u => u.name))).catch(() => {});
+  }, []);
+
+  const mentionMatches = mentionQuery === null
+    ? []
+    : userNames.filter(n => n.toLowerCase().startsWith(mentionQuery.toLowerCase()) && n !== user?.name).slice(0, 5);
+
+  function updateMentionState(value: string, caret: number) {
+    const beforeCaret = value.slice(0, caret);
+    const at = beforeCaret.lastIndexOf("@");
+    if (at === -1 || (at > 0 && !/[\s]/.test(beforeCaret[at - 1]))) { setMentionQuery(null); return; }
+    const q = beforeCaret.slice(at + 1);
+    if (q.length > 30 || q.includes("\n")) { setMentionQuery(null); return; }
+    setMentionQuery(q);
+    setMentionIdx(0);
+  }
+
+  function pickMention(name: string) {
+    const el = textareaRef.current;
+    const caret = el ? el.selectionStart : text.length;
+    const beforeCaret = text.slice(0, caret);
+    const at = beforeCaret.lastIndexOf("@");
+    const next = text.slice(0, at) + "@" + name + " " + text.slice(caret);
+    setText(next);
+    setMentionQuery(null);
+    requestAnimationFrame(() => {
+      if (el) { el.focus(); const pos = at + name.length + 2; el.setSelectionRange(pos, pos); }
+    });
+  }
 
   const commentsRef = useRef<Comment[]>([]);
 
@@ -265,10 +453,48 @@ function CommentsPanel({ itemId }: { itemId: string }) {
             </span>
           )}
           <div className="flex-1 relative">
+            {mentionQuery !== null && mentionMatches.length > 0 && (
+              <div className={cn(
+                "absolute bottom-full left-0 mb-1.5 z-50 min-w-[180px]",
+                "rounded-xl border border-border/60 bg-white dark:bg-[#0f1029]",
+                "shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)]",
+                "py-1.5 overflow-hidden"
+              )}>
+                {mentionMatches.map((n, i) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onMouseDown={e => { e.preventDefault(); pickMention(n); }}
+                    onMouseEnter={() => setMentionIdx(i)}
+                    className={cn(
+                      "w-full text-left px-3 py-1.5 text-xs font-semibold flex items-center gap-2 cursor-pointer",
+                      i === mentionIdx
+                        ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50"
+                        : "text-foreground hover:bg-muted/40"
+                    )}
+                  >
+                    <span className={cn("inline-flex h-5 w-5 items-center justify-center rounded-full text-white text-[9px] font-bold bg-gradient-to-br flex-shrink-0", getGradient(n))}>
+                      {n.charAt(0).toUpperCase()}
+                    </span>
+                    {n}
+                  </button>
+                ))}
+              </div>
+            )}
             <textarea
+              ref={textareaRef}
               value={text}
-              onChange={e => setText(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+              onChange={e => { setText(e.target.value); updateMentionState(e.target.value, e.target.selectionStart); }}
+              onKeyDown={e => {
+                if (mentionQuery !== null && mentionMatches.length > 0) {
+                  if (e.key === "ArrowDown") { e.preventDefault(); setMentionIdx(i => Math.min(i + 1, mentionMatches.length - 1)); return; }
+                  if (e.key === "ArrowUp")   { e.preventDefault(); setMentionIdx(i => Math.max(i - 1, 0)); return; }
+                  if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); pickMention(mentionMatches[mentionIdx]); return; }
+                  if (e.key === "Escape") { setMentionQuery(null); return; }
+                }
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+              }}
+              onBlur={() => setTimeout(() => setMentionQuery(null), 150)}
               placeholder={t("commentPlaceholder")}
               rows={1}
               maxLength={2000}
@@ -550,6 +776,9 @@ export default function ViewItemPage() {
               </div>
             )}
           </div>
+
+          {/* Subtasks */}
+          <SubtasksPanel itemId={id} />
 
           {/* Files */}
           {files.length > 0 && (

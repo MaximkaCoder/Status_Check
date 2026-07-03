@@ -5,6 +5,8 @@ import type { StatusItem as PrismaStatusItem } from "@prisma/client";
 export type StatusItem = PrismaStatusItem & {
   commentCount?: number;
   unreadCount?: number;
+  subtaskCount?: number;
+  subtaskDone?: number;
 };
 
 // Shape returned by POST /api/ai/parse

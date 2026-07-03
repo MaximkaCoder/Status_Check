@@ -113,6 +113,28 @@ export function Header() {
             </Link>
           )}
 
+          {/* Archive link */}
+          {user && (
+            <Link
+              href="/archive"
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-xl",
+                "bg-white/40 dark:bg-white/[0.06]",
+                "border border-white/70 dark:border-white/[0.10]",
+                "text-slate-500 dark:text-white/50",
+                "hover:bg-white/60 dark:hover:bg-white/[0.10] hover:text-slate-700 dark:hover:text-white",
+                "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none",
+                "transition-all duration-150",
+                pathname.startsWith("/archive") && "text-indigo-500 dark:text-indigo-400"
+              )}
+              aria-label="Archive"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+            </Link>
+          )}
+
           {/* Notification bell */}
           {user && <NotificationBell />}
 

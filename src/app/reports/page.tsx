@@ -113,6 +113,18 @@ export default function ReportsPage() {
   const [data, setData] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [analytics, setAnalytics] = useState<{
+    trend: { weekStart: string; closed: number }[];
+    load: { name: string; open: number }[];
+    overdueByDept: { department: string; overdue: number }[];
+  } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/reports/analytics")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setAnalytics(d))
+      .catch(() => {});
+  }, []);
 
   const toggle = (name: string) => setExpanded(prev => {
     const next = new Set(prev);
@@ -191,6 +203,14 @@ export default function ReportsPage() {
               {uk ? "← До поточного тижня" : "← Back to current week"}
             </button>
           )}
+          <a
+            href="/api/reports/export"
+            download
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+          >
+            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            {uk ? "Експорт CSV (90 дн)" : "Export CSV (90d)"}
+          </a>
         </div>
       </div>
 
@@ -314,6 +334,73 @@ export default function ReportsPage() {
               })}
             </div>
           </div>
+
+          {/* Analytics */}
+          {analytics && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 animate-fade-in-up stagger-7">
+              {/* Closed per week trend */}
+              <div className="rounded-2xl border border-border/60 bg-card shadow-card p-4">
+                <p className="text-xs font-bold text-foreground mb-3">{uk ? "Закрито по тижнях" : "Closed per week"}</p>
+                <div className="flex items-end gap-1.5 h-28">
+                  {analytics.trend.map((w) => {
+                    const max = Math.max(...analytics.trend.map(x => x.closed), 1);
+                    return (
+                      <div key={w.weekStart} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                        <span className="text-[9px] font-bold text-muted-foreground tabular-nums">{w.closed || ""}</span>
+                        <div
+                          className="w-full rounded-t-md bg-gradient-to-t from-indigo-500 to-violet-400 transition-all duration-500"
+                          style={{ height: `${Math.max((w.closed / max) * 80, w.closed > 0 ? 6 : 2)}px`, opacity: w.closed > 0 ? 1 : 0.15 }}
+                        />
+                        <span className="text-[8px] text-muted-foreground/60 truncate w-full text-center">
+                          {w.weekStart.slice(5).replace("-", ".")}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Load per assignee */}
+              <div className="rounded-2xl border border-border/60 bg-card shadow-card p-4">
+                <p className="text-xs font-bold text-foreground mb-3">{uk ? "Навантаження (відкриті задачі)" : "Load (open tasks)"}</p>
+                <div className="space-y-2">
+                  {analytics.load.length === 0 && <p className="text-xs text-muted-foreground">{uk ? "Немає відкритих задач" : "No open tasks"}</p>}
+                  {analytics.load.map((r) => {
+                    const max = Math.max(...analytics.load.map(x => x.open), 1);
+                    return (
+                      <div key={r.name} className="flex items-center gap-2">
+                        <span className="text-[11px] font-medium text-foreground w-24 truncate flex-shrink-0">{r.name}</span>
+                        <div className="flex-1 h-2 rounded-full bg-muted/60 dark:bg-white/[0.06] overflow-hidden">
+                          <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-400 transition-all duration-500" style={{ width: `${(r.open / max) * 100}%` }} />
+                        </div>
+                        <span className="text-[11px] font-bold text-muted-foreground tabular-nums w-6 text-right flex-shrink-0">{r.open}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Overdue by department */}
+              <div className="rounded-2xl border border-border/60 bg-card shadow-card p-4">
+                <p className="text-xs font-bold text-foreground mb-3">{uk ? "Прострочені по департаментах" : "Overdue by department"}</p>
+                <div className="space-y-2">
+                  {analytics.overdueByDept.length === 0 && <p className="text-xs text-muted-foreground">{uk ? "Немає прострочених 🎉" : "No overdue items 🎉"}</p>}
+                  {analytics.overdueByDept.map((r) => {
+                    const max = Math.max(...analytics.overdueByDept.map(x => x.overdue), 1);
+                    return (
+                      <div key={r.department} className="flex items-center gap-2">
+                        <span className="text-[11px] font-medium text-foreground w-24 truncate flex-shrink-0">{r.department === "—" ? (uk ? "Без відділу" : "No dept") : r.department}</span>
+                        <div className="flex-1 h-2 rounded-full bg-muted/60 dark:bg-white/[0.06] overflow-hidden">
+                          <div className="h-full rounded-full bg-gradient-to-r from-rose-500 to-orange-400 transition-all duration-500" style={{ width: `${(r.overdue / max) * 100}%` }} />
+                        </div>
+                        <span className="text-[11px] font-bold text-muted-foreground tabular-nums w-6 text-right flex-shrink-0">{r.overdue}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       )}
