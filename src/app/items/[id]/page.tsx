@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { isPast, isToday, isTomorrow } from "date-fns";
@@ -575,20 +576,65 @@ function CommentsPanel({ itemId }: { itemId: string }) {
 // ── Main page ───────────────────────────────────────────────────────────────
 const INLINE_STATUSES = ["TO_CHECK", "EXPIRED", "DONE", "NOT_ACTUAL", "IDEAS_BACKLOG"] as const;
 
+// Dropdown rendered into document.body so no sibling stacking context
+// (animated cards, timeline) can paint above it. Anchored to trigger rect.
+function AnchoredDropdown({
+  anchorRef, onClose, children, width,
+}: {
+  anchorRef: React.RefObject<HTMLElement | null>;
+  onClose: () => void;
+  children: React.ReactNode;
+  width?: number;
+}) {
+  const dropRef = useRef<HTMLDivElement>(null);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    setRect(anchorRef.current?.getBoundingClientRect() ?? null);
+  }, [anchorRef]);
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      const t = e.target as Node;
+      if (dropRef.current?.contains(t)) return;
+      if (anchorRef.current?.contains(t)) return; // trigger toggles itself
+      onClose();
+    }
+    function onScrollOrResize() { onClose(); }
+    document.addEventListener("mousedown", onDown);
+    window.addEventListener("scroll", onScrollOrResize, true);
+    window.addEventListener("resize", onScrollOrResize);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      window.removeEventListener("scroll", onScrollOrResize, true);
+      window.removeEventListener("resize", onScrollOrResize);
+    };
+  }, [anchorRef, onClose]);
+
+  if (!rect || typeof window === "undefined") return null;
+  return createPortal(
+    <div
+      ref={dropRef}
+      className="fixed z-[9999] rounded-xl border border-border/60 bg-white dark:bg-[#0f1029] shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] overflow-hidden"
+      style={{
+        top: rect.bottom + 6,
+        left: Math.min(rect.left, window.innerWidth - (width ?? 176) - 8),
+        width,
+      }}
+    >
+      {children}
+    </div>,
+    document.body
+  );
+}
+
 // Click the status badge to change it inline (creator/assignee/reviewer/admin).
 function InlineStatusEditor({
   status, editable, onChange,
 }: { status: StatusItem["status"]; editable: boolean; onChange: (s: StatusItem["status"]) => void }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, [open]);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   const labels: Record<string, string> = {
     TO_CHECK: t("toCheck"), EXPIRED: t("expired"), DONE: t("done"),
@@ -598,26 +644,72 @@ function InlineStatusEditor({
   if (!editable) return <StatusBadge status={status} />;
 
   return (
-    <div ref={ref} className="relative inline-block">
-      <button type="button" onClick={() => setOpen(v => !v)} className="cursor-pointer inline-flex items-center gap-1 group/st" aria-label="Change status">
+    <>
+      <button ref={btnRef} type="button" onClick={() => setOpen(v => !v)} className="cursor-pointer inline-flex items-center gap-1" aria-label="Change status">
         <StatusBadge status={status} />
         <svg className={cn("h-3 w-3 text-muted-foreground transition-transform", open && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1.5 z-50 min-w-[160px] rounded-xl border border-border/60 bg-white dark:bg-[#0f1029] shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] py-1.5">
-          {INLINE_STATUSES.map((s) => (
-            <button key={s} type="button"
-              onClick={() => { setOpen(false); if (s !== status) onChange(s); }}
-              className={cn("w-full text-left px-3 py-2 text-xs font-semibold transition-colors", s === status ? "bg-muted/50" : "hover:bg-muted/40")}
-            >
-              {labels[s]}
-            </button>
-          ))}
-        </div>
+        <AnchoredDropdown anchorRef={btnRef} onClose={() => setOpen(false)} width={176}>
+          <div className="py-1.5">
+            {INLINE_STATUSES.map((s) => (
+              <button key={s} type="button"
+                onClick={() => { setOpen(false); if (s !== status) onChange(s); }}
+                className={cn("w-full text-left px-3 py-2 text-xs font-semibold transition-colors", s === status ? "bg-muted/50" : "hover:bg-muted/40")}
+              >
+                {labels[s]}
+              </button>
+            ))}
+          </div>
+        </AnchoredDropdown>
       )}
-    </div>
+    </>
+  );
+}
+
+// Click the priority badge to change it inline (creator/admin).
+function InlinePriorityEditor({
+  priority, editable, uk, onChange,
+}: { priority: Priority; editable: boolean; uk: boolean; onChange: (p: Priority) => void }) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const cfg = PRIORITY_DETAIL_CFG[priority];
+
+  const badge = (
+    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold", cfg.badge)}>
+      <span className={cn("h-2 w-2 rounded-full flex-shrink-0", cfg.dot)} />
+      {cfg.label(uk)}
+    </span>
+  );
+
+  if (!editable) return badge;
+
+  return (
+    <>
+      <button ref={btnRef} type="button" onClick={() => setOpen(v => !v)} className="cursor-pointer inline-flex items-center gap-1" aria-label="Change priority">
+        {badge}
+        <svg className={cn("h-3 w-3 text-muted-foreground transition-transform", open && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <AnchoredDropdown anchorRef={btnRef} onClose={() => setOpen(false)} width={160}>
+          <div className="py-1.5">
+            {(["LOW", "MEDIUM", "HIGH"] as Priority[]).map((p) => (
+              <button key={p} type="button"
+                onClick={() => { setOpen(false); if (p !== priority) onChange(p); }}
+                className={cn("w-full text-left px-3 py-2 text-xs font-semibold flex items-center gap-2 transition-colors", p === priority ? "bg-muted/50" : "hover:bg-muted/40")}
+              >
+                <span className={cn("h-2 w-2 rounded-full flex-shrink-0", PRIORITY_DETAIL_CFG[p].dot)} />
+                {PRIORITY_DETAIL_CFG[p].label(uk)}
+              </button>
+            ))}
+          </div>
+        </AnchoredDropdown>
+      )}
+    </>
   );
 }
 
@@ -627,14 +719,7 @@ function InlineUserField({
 }: { value: string | null; users: string[]; editable: boolean; placeholder: string; onChange: (name: string | null) => void }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, [open]);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   const matches = users.filter(u => u.toLowerCase().includes(q.toLowerCase()));
 
@@ -645,8 +730,8 @@ function InlineUserField({
   }
 
   return (
-    <div ref={ref} className="relative">
-      <button type="button" onClick={() => { setOpen(v => !v); setQ(""); }}
+    <>
+      <button ref={btnRef} type="button" onClick={() => { setOpen(v => !v); setQ(""); }}
         className="flex items-center gap-2 rounded-lg -mx-1.5 px-1.5 py-1 hover:bg-muted/40 transition-colors cursor-pointer group/uf">
         {value ? <><Avatar name={value} /><span className="text-sm font-medium text-foreground">{value}</span></>
                : <span className="text-sm text-muted-foreground italic">{placeholder}</span>}
@@ -655,7 +740,7 @@ function InlineUserField({
         </svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1.5 z-50 w-56 rounded-xl border border-border/60 bg-white dark:bg-[#0f1029] shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] overflow-hidden">
+        <AnchoredDropdown anchorRef={btnRef} onClose={() => setOpen(false)} width={224}>
           <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="..."
             className="w-full px-3 py-2 text-xs bg-muted/30 dark:bg-white/[0.04] border-b border-border/60 focus:outline-none text-foreground" />
           <div className="max-h-52 overflow-y-auto py-1">
@@ -673,9 +758,9 @@ function InlineUserField({
             ))}
             {matches.length === 0 && <p className="px-3 py-2 text-xs text-muted-foreground">—</p>}
           </div>
-        </div>
+        </AnchoredDropdown>
       )}
-    </div>
+    </>
   );
 }
 
@@ -705,11 +790,11 @@ export default function ViewItemPage() {
     else setItem(prev);
   }
 
-  async function patchField(field: "assignee" | "reviewer", name: string | null) {
+  async function patchField(field: "assignee" | "reviewer" | "priority", value: string | null) {
     const prev = item;
-    setItem((cur) => cur ? { ...cur, [field]: name } : cur);
+    setItem((cur) => cur ? { ...cur, [field]: value } : cur);
     const r = await fetch(`/api/items/${id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [field]: name }),
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [field]: value }),
     });
     if (r.ok) setItem(await r.json());
     else setItem(prev);
@@ -864,10 +949,12 @@ export default function ViewItemPage() {
 
             {item.priority && (
               <Field label={locale === "uk" ? "Пріоритет" : "Priority"}>
-                <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold", PRIORITY_DETAIL_CFG[item.priority as Priority].badge)}>
-                  <span className={cn("h-2 w-2 rounded-full flex-shrink-0", PRIORITY_DETAIL_CFG[item.priority as Priority].dot)} />
-                  {PRIORITY_DETAIL_CFG[item.priority as Priority].label(locale === "uk")}
-                </span>
+                <InlinePriorityEditor
+                  priority={item.priority as Priority}
+                  editable={canEdit}
+                  uk={locale === "uk"}
+                  onChange={(p) => patchField("priority", p)}
+                />
               </Field>
             )}
 
