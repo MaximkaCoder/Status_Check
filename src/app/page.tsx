@@ -58,7 +58,7 @@ export default function DashboardPage() {
   const { t, locale } = useLanguage();
   const { toast } = useToast();
 
-  const { items, loading, error, refresh, silentRefresh, removeItem, changeStatus } = useItems({
+  const { items, loading, loadingMore, hasMore, loadMore, error, refresh, silentRefresh, removeItem, changeStatus } = useItems({
     month: currentMonth,
     statuses: selectedStatuses,
   });
@@ -290,6 +290,21 @@ export default function DashboardPage() {
                 : "absolute inset-x-0 top-0 -translate-x-[103%] opacity-0 pointer-events-none"
             )}>
               <ItemList items={listItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+              {hasMore && !loading && (
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className={cn(
+                    "mx-auto flex items-center gap-2 px-5 py-2 rounded-full text-xs font-semibold",
+                    "border-2 border-border text-muted-foreground hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400",
+                    "transition-all duration-150 cursor-pointer disabled:opacity-50"
+                  )}
+                >
+                  {loadingMore && <span className="h-3 w-3 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin inline-block" />}
+                  {locale === "uk" ? "Завантажити ще" : "Load more"}
+                </button>
+              )}
             </div>
             {/* Board view — grouped by project */}
             <div className={cn(

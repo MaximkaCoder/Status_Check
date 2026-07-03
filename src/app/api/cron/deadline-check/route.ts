@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
     where: {
       deadline: { gt: now, lt: maxAhead },
       status: { notIn: ["DONE", "NOT_ACTUAL"] },
+      deleted_at: null,
     },
     select: { id: true, title: true, assignee: true, reviewer: true, deadline: true },
   });

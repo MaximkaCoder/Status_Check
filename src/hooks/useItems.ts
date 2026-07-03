@@ -20,6 +20,9 @@ interface UseItemsOptions {
 interface UseItemsReturn {
   items: StatusItem[];
   loading: boolean;
+  loadingMore: boolean;
+  hasMore: boolean;
+  loadMore: () => Promise<void>;
   error: string | null;
   refresh: () => void;
   silentRefresh: () => Promise<void>;
@@ -31,8 +34,16 @@ interface UseItemsReturn {
 export function useItems({ month, statuses }: UseItemsOptions): UseItemsReturn {
   const [items, setItems] = useState<StatusItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  const buildParams = useCallback((): GetItemsParams => {
+    const params: GetItemsParams = { month: format(month, "yyyy-MM") };
+    if (statuses.length > 0) params.status = statuses.join(",");
+    return params;
+  }, [month, statuses]);
 
   const fetchItems = useCallback(async () => {
     // Cancel any in-flight request
@@ -43,17 +54,11 @@ export function useItems({ month, statuses }: UseItemsOptions): UseItemsReturn {
     setLoading(true);
     setError(null);
 
-    const params: GetItemsParams = {
-      month: format(month, "yyyy-MM"),
-    };
-    if (statuses.length > 0) {
-      params.status = statuses.join(",");
-    }
-
     try {
-      const data = await getItems(params);
+      const data = await getItems(buildParams());
       if (!controller.signal.aborted) {
-        setItems(data);
+        setItems(data.items);
+        setNextCursor(data.nextCursor);
       }
     } catch (err) {
       if (!controller.signal.aborted) {
@@ -64,7 +69,24 @@ export function useItems({ month, statuses }: UseItemsOptions): UseItemsReturn {
         setLoading(false);
       }
     }
-  }, [month, statuses]);
+  }, [buildParams]);
+
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const data = await getItems({ ...buildParams(), cursor: nextCursor });
+      setItems((prev) => {
+        const seen = new Set(prev.map((i) => i.id));
+        return [...prev, ...data.items.filter((i) => !seen.has(i.id))];
+      });
+      setNextCursor(data.nextCursor);
+    } catch {
+      // keep current page; user can retry
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [nextCursor, loadingMore, buildParams]);
 
   useEffect(() => {
     fetchItems();
@@ -108,13 +130,12 @@ export function useItems({ month, statuses }: UseItemsOptions): UseItemsReturn {
 
   // Re-fetch without showing loading state (preserves scroll position)
   const silentRefresh = useCallback(async () => {
-    const params: GetItemsParams = { month: format(month, "yyyy-MM") };
-    if (statuses.length > 0) params.status = statuses.join(",");
     try {
-      const data = await getItems(params);
-      setItems(data);
+      const data = await getItems(buildParams());
+      setItems(data.items);
+      setNextCursor(data.nextCursor);
     } catch {}
-  }, [month, statuses]);
+  }, [buildParams]);
 
   // Prepend a newly created item (optimistic add)
   const addItemOptimistic = useCallback((item: StatusItem) => {
@@ -130,6 +151,9 @@ export function useItems({ month, statuses }: UseItemsOptions): UseItemsReturn {
   return {
     items,
     loading,
+    loadingMore,
+    hasMore: nextCursor !== null,
+    loadMore,
     error,
     refresh: fetchItems,
     silentRefresh,

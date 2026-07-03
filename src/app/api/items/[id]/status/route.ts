@@ -4,6 +4,7 @@ import { getUnblockedSession as getSession } from "@/lib/auth";
 import { UpdateStatusSchema } from "@/lib/validations";
 import { notifyStatusChange } from "@/lib/notify";
 import { logActivity } from "@/lib/activity";
+import { canChangeStatus } from "@/lib/permissions";
 
 type RouteParams = { params: { id: string } };
 
@@ -13,19 +14,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (!session) return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
 
     const existing = await prisma.statusItem.findUnique({ where: { id: params.id } });
-    if (!existing) {
+    if (!existing || existing.deleted_at) {
       return NextResponse.json({ error: "Item not found", code: "NOT_FOUND" }, { status: 404 });
     }
 
-    const isAdmin = session.isAdmin ?? false;
-    const isCreator = existing.creator_id
-      ? existing.creator_id === session.userId
-      : existing.creator_name === session.name;
-    const canModify = isAdmin ||
-      isCreator ||
-      existing.assignee === session.name ||
-      existing.reviewer === session.name;
-    if (!canModify) {
+    if (!canChangeStatus({ userId: session.userId, name: session.name, isAdmin: session.isAdmin ?? false }, existing)) {
       return NextResponse.json({ error: "You do not have permission to change this item's status", code: "FORBIDDEN" }, { status: 403 });
     }
 

@@ -40,14 +40,23 @@ async function apiFetch<T>(
 export interface GetItemsParams {
   status?: string; // comma-separated Status values
   month?: string;  // YYYY-MM
+  cursor?: string;
+  take?: number;
 }
 
-export async function getItems(params?: GetItemsParams): Promise<StatusItem[]> {
+export interface ItemsPage {
+  items: StatusItem[];
+  nextCursor: string | null;
+}
+
+export async function getItems(params?: GetItemsParams): Promise<ItemsPage> {
   const qs = new URLSearchParams();
   if (params?.status) qs.set("status", params.status);
   if (params?.month) qs.set("month", params.month);
+  if (params?.cursor) qs.set("cursor", params.cursor);
+  if (params?.take) qs.set("take", String(params.take));
   const query = qs.toString();
-  return apiFetch<StatusItem[]>(`/api/items${query ? `?${query}` : ""}`);
+  return apiFetch<ItemsPage>(`/api/items${query ? `?${query}` : ""}`);
 }
 
 export type Priority = "LOW" | "MEDIUM" | "HIGH";

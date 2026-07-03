@@ -5,6 +5,7 @@ import { getUnblockedSession as getSession } from "@/lib/auth";
 import { CreateItemSchema, GetItemsQuerySchema } from "@/lib/validations";
 import { notifyAssignees } from "@/lib/notify";
 import { logActivity } from "@/lib/activity";
+import { lookupUserByName } from "@/lib/user-lookup";
 
 // ---------------------------------------------------------------------------
 // Helper — run auto-expire in a single UPDATE query
@@ -14,6 +15,7 @@ async function autoExpireOverdue(): Promise<void> {
     where: {
       deadline: { lt: new Date() },
       status: { in: ["TO_CHECK"] },
+      deleted_at: null,
     },
     data: {
       status: "EXPIRED",
@@ -44,6 +46,8 @@ export async function GET(request: NextRequest) {
     }
 
     const { status: statusParam, month } = queryResult.data;
+    const take = Math.min(Math.max(Number(searchParams.get("take")) || 200, 1), 500);
+    const cursor = searchParams.get("cursor") ?? undefined;
 
     const session = await getSession();
     if (!session?.userId) {
@@ -54,7 +58,7 @@ export async function GET(request: NextRequest) {
     await autoExpireOverdue();
 
     // Build where clause
-    const where: Prisma.StatusItemWhereInput = {};
+    const where: Prisma.StatusItemWhereInput = { deleted_at: null };
 
     if (statusParam) {
       const statusValues = statusParam.split(",").map((s) => s.trim());
@@ -86,6 +90,10 @@ export async function GET(request: NextRequest) {
 
       const visibilityFilter: Prisma.StatusItemWhereInput = {
         OR: [
+          // ID match first; name match kept for rows created before the FK backfill
+          { creator_id: session.userId },
+          { assigneeId: session.userId },
+          { reviewerId: session.userId },
           { creator_name: session.name },
           { assignee: session.name },
           { reviewer: session.name },
@@ -95,10 +103,15 @@ export async function GET(request: NextRequest) {
       where.AND = [visibilityFilter];
     }
 
-    const items = await prisma.statusItem.findMany({
+    const rows = await prisma.statusItem.findMany({
       where,
-      orderBy: { deadline: "asc" },
+      orderBy: [{ deadline: "asc" }, { id: "asc" }],
+      take: take + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
+    const hasMore = rows.length > take;
+    const items = hasMore ? rows.slice(0, take) : rows;
+    const nextCursor = hasMore ? items[items.length - 1].id : null;
 
     // Attach comment stats (total + unread per current user) in one raw query
     if (items.length > 0) {
@@ -119,10 +132,10 @@ export async function GET(request: NextRequest) {
         const s = statsMap.get(item.id);
         return s ? { ...item, commentCount: s.commentCount, unreadCount: s.unreadCount } : item;
       });
-      return NextResponse.json(enriched);
+      return NextResponse.json({ items: enriched, nextCursor });
     }
 
-    return NextResponse.json(items);
+    return NextResponse.json({ items, nextCursor });
   } catch (error) {
     console.error("GET /api/items error:", error);
     return NextResponse.json({ error: "Internal server error", code: "SERVER_ERROR" }, { status: 500 });
@@ -156,11 +169,10 @@ export async function POST(request: NextRequest) {
     const session = await getSession();
     const resolvedName = session?.name ?? creator_name;
 
-    let department: string | null = null;
-    if (assignee) {
-      const u = await prisma.user.findFirst({ where: { name: assignee }, select: { department: { select: { name: true } } } });
-      department = u?.department?.name ?? null;
-    }
+    const [assigneeUser, reviewerUser] = await Promise.all([
+      lookupUserByName(assignee),
+      lookupUserByName(reviewer),
+    ]);
 
     const item = await prisma.statusItem.create({
       data: {
@@ -172,7 +184,9 @@ export async function POST(request: NextRequest) {
         project:  project  ?? null,
         assignee: assignee ?? null,
         reviewer: reviewer ?? null,
-        department,
+        assigneeId: assigneeUser?.id ?? null,
+        reviewerId: reviewerUser?.id ?? null,
+        department: assigneeUser?.department ?? null,
         priority: priority ?? "MEDIUM",
         status: "TO_CHECK",
       },

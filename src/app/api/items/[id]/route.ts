@@ -5,23 +5,16 @@ import { UpdateItemSchema } from "@/lib/validations";
 import type { StatusItem } from "@prisma/client";
 import { notifyAssignees } from "@/lib/notify";
 import { logActivity, type ActivityEntry } from "@/lib/activity";
+import { canModifyItem, canViewItemDirect, type SessionLike } from "@/lib/permissions";
+import { lookupUserByName } from "@/lib/user-lookup";
 
-async function canView(userId: string, userName: string, isAdmin: boolean, item: StatusItem): Promise<boolean> {
-  if (isAdmin) return true;
-  if (item.creator_name === userName || item.assignee === userName || item.reviewer === userName) return true;
-  if (item.project) {
-    const membership = await prisma.projectMember.findFirst({
-      where: { userId, project: { name: item.project } },
-    });
-    return !!membership;
-  }
-  return false;
-}
-
-function canModify(userId: string, userName: string, isAdmin: boolean, item: StatusItem): boolean {
-  if (isAdmin) return true;
-  if (item.creator_id) return item.creator_id === userId;
-  return item.creator_name === userName;
+async function canView(s: SessionLike, item: StatusItem): Promise<boolean> {
+  const direct = canViewItemDirect(s, item);
+  if (direct !== "project") return direct;
+  const membership = await prisma.projectMember.findFirst({
+    where: { userId: s.userId, project: { name: item.project! } },
+  });
+  return !!membership;
 }
 
 // ---------------------------------------------------------------------------
@@ -40,11 +33,11 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     const item = await prisma.statusItem.findUnique({ where: { id: params.id } });
-    if (!item) {
+    if (!item || item.deleted_at) {
       return NextResponse.json({ error: "Item not found", code: "NOT_FOUND" }, { status: 404 });
     }
 
-    const allowed = await canView(session.userId, session.name, session.isAdmin ?? false, item);
+    const allowed = await canView({ userId: session.userId, name: session.name, isAdmin: session.isAdmin ?? false }, item);
     if (!allowed) {
       return NextResponse.json({ error: "У вас немає доступу до цього завдання", code: "FORBIDDEN" }, { status: 403 });
     }
@@ -66,11 +59,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (!session) return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
 
     const existing = await prisma.statusItem.findUnique({ where: { id: params.id } });
-    if (!existing) {
+    if (!existing || existing.deleted_at) {
       return NextResponse.json({ error: "Item not found", code: "NOT_FOUND" }, { status: 404 });
     }
 
-    if (!canModify(session.userId, session.name, session.isAdmin ?? false, existing)) {
+    if (!canModifyItem({ userId: session.userId, name: session.name, isAdmin: session.isAdmin ?? false }, existing)) {
       return NextResponse.json({ error: "You do not have permission to edit this item", code: "FORBIDDEN" }, { status: 403 });
     }
 
@@ -99,14 +92,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ? { done_at: null, done_by: null }
         : {};
 
-    let departmentUpdate: { department: string | null } | undefined;
+    let assigneeUpdate: { assignee: string | null; assigneeId: string | null; department: string | null } | undefined;
     if (data.assignee !== undefined) {
-      if (data.assignee) {
-        const u = await prisma.user.findFirst({ where: { name: data.assignee }, select: { department: { select: { name: true } } } });
-        departmentUpdate = { department: u?.department?.name ?? null };
-      } else {
-        departmentUpdate = { department: null };
-      }
+      const u = await lookupUserByName(data.assignee);
+      assigneeUpdate = { assignee: data.assignee ?? null, assigneeId: u?.id ?? null, department: u?.department ?? null };
+    }
+    let reviewerUpdate: { reviewer: string | null; reviewerId: string | null } | undefined;
+    if (data.reviewer !== undefined) {
+      const u = await lookupUserByName(data.reviewer);
+      reviewerUpdate = { reviewer: data.reviewer ?? null, reviewerId: u?.id ?? null };
     }
 
     const updated = await prisma.statusItem.update({
@@ -118,10 +112,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(data.status !== undefined && { status: data.status }),
         ...(data.creator_name !== undefined && { creator_name: data.creator_name }),
         ...(data.project  !== undefined && { project:  data.project }),
-        ...(data.assignee !== undefined && { assignee: data.assignee }),
-        ...(data.reviewer !== undefined && { reviewer: data.reviewer }),
         ...(data.priority !== undefined && { priority: data.priority }),
-        ...departmentUpdate,
+        ...assigneeUpdate,
+        ...reviewerUpdate,
         ...doneFields,
       },
     });
@@ -183,15 +176,16 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     if (!session) return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
 
     const existing = await prisma.statusItem.findUnique({ where: { id: params.id } });
-    if (!existing) {
+    if (!existing || existing.deleted_at) {
       return NextResponse.json({ error: "Item not found", code: "NOT_FOUND" }, { status: 404 });
     }
 
-    if (!canModify(session.userId, session.name, session.isAdmin ?? false, existing)) {
+    if (!canModifyItem({ userId: session.userId, name: session.name, isAdmin: session.isAdmin ?? false }, existing)) {
       return NextResponse.json({ error: "You do not have permission to delete this item", code: "FORBIDDEN" }, { status: 403 });
     }
 
-    await prisma.statusItem.delete({ where: { id: params.id } });
+    // Soft delete — restorable from /archive, purged by cron after 30 days
+    await prisma.statusItem.update({ where: { id: params.id }, data: { deleted_at: new Date() } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(`DELETE /api/items/${params.id} error:`, error);

@@ -43,15 +43,15 @@ export async function GET(req: NextRequest) {
     comments,
   ] = await Promise.all([
     prisma.statusItem.findMany({
-      where: { done_at: { gte: start, lte: end } },
+      where: { done_at: { gte: start, lte: end }, deleted_at: null },
       select: { id: true, title: true, done_by: true, done_at: true, created_at: true, department: true, project: true },
       orderBy: { done_at: "desc" },
     }),
-    prisma.statusItem.count({ where: { created_at: { gte: start, lte: end } } }),
-    prisma.statusItem.count({ where: { done_at: { gte: pStart, lte: pEnd } } }),
-    prisma.statusItem.count({ where: { created_at: { gte: pStart, lte: pEnd } } }),
-    prisma.statusItem.count({ where: { status: "TO_CHECK", created_at: { gte: start, lte: end } } }),
-    prisma.statusItem.count({ where: { status: "EXPIRED", created_at: { gte: start, lte: end } } }),
+    prisma.statusItem.count({ where: { created_at: { gte: start, lte: end }, deleted_at: null } }),
+    prisma.statusItem.count({ where: { done_at: { gte: pStart, lte: pEnd }, deleted_at: null } }),
+    prisma.statusItem.count({ where: { created_at: { gte: pStart, lte: pEnd }, deleted_at: null } }),
+    prisma.statusItem.count({ where: { status: "TO_CHECK", created_at: { gte: start, lte: end }, deleted_at: null } }),
+    prisma.statusItem.count({ where: { status: "EXPIRED", created_at: { gte: start, lte: end }, deleted_at: null } }),
     prisma.itemActivity.findMany({
       where: { created_at: { gte: start, lte: end } },
       select: { userName: true },
