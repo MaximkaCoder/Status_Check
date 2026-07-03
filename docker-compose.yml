@@ -7,8 +7,12 @@ services:
     container_name: tasker-app
     restart: unless-stopped
     env_file: .env.production
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - proxy
+      - internal
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tasker.rule=Host(`tasker.semishan.pro`)"
@@ -17,6 +21,29 @@ services:
       - "traefik.http.services.tasker.loadbalancer.server.port=3000"
       - "traefik.docker.network=proxy"
 
+  db:
+    image: postgres:17-alpine
+    container_name: tasker-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tasker
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: tasker
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasker -d tasker"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
 networks:
   proxy:
     external: true
+  internal:
+    external: false
+
+volumes:
+  pgdata:
