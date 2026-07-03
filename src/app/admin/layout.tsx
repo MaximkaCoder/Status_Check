@@ -96,7 +96,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </>
       )}
 
-      <div className="animate-fade-in-up stagger-3">{children}</div>
+      {/* key={pathname} remounts the wrapper on tab switch so the fade-in replays */}
+      <div key={pathname} className="animate-fade-in-up stagger-3">{children}</div>
     </div>
   );
 }

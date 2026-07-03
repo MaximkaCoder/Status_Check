@@ -270,7 +270,7 @@ export default function AdminUsersPage() {
       ) : error ? (
         <p className="text-sm text-rose-600 px-6 py-8">{error}</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto animate-fade-in">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/60 bg-muted/30">
@@ -284,8 +284,12 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
-              {users.map((u) => (
-                <tr key={u.id} className={cn("transition-colors hover:bg-muted/20", u.blocked && "opacity-60")}>
+              {users.map((u, i) => (
+                <tr
+                  key={u.id}
+                  className={cn("transition-colors hover:bg-muted/20 animate-row-in", u.blocked && "opacity-60")}
+                  style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
+                >
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-2.5">
                       <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-white text-[11px] font-bold flex-shrink-0">

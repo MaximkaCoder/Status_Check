@@ -47,10 +47,14 @@ export default function AdminProjectsPage() {
           <div className="h-6 w-6 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
         </div>
       ) : (
-        <div className="divide-y divide-border/40">
+        <div className="divide-y divide-border/40 animate-fade-in">
           {items.length === 0 && <p className="text-sm text-muted-foreground px-6 py-8">{t("noProjects")}</p>}
-          {items.map((item) => (
-            <div key={item.id} className="flex items-center gap-3 px-6 py-3.5 hover:bg-muted/20 transition-colors">
+          {items.map((item, i) => (
+            <div
+              key={item.id}
+              className="flex items-center gap-3 px-6 py-3.5 hover:bg-muted/20 transition-colors animate-row-in"
+              style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
+            >
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex-shrink-0">
                 <svg className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />

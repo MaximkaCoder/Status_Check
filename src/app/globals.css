@@ -205,6 +205,12 @@
     opacity: 0;
   }
 
+  /* Row/list entrance: `backwards` fill so styles revert to natural after
+     the animation — safe for rows that carry their own opacity classes. */
+  .animate-row-in {
+    animation: fade-in-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
   /* Staggered delays for list items */
   .stagger-1  { animation-delay: 0ms; }
   .stagger-2  { animation-delay: 50ms; }
