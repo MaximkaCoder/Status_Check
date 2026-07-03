@@ -1,0 +1,58 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Setup SSH known hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          timeout: 600s
+          envs: GH_TOKEN
+          script: |
+            set -e
+            cd /opt/tasker
+
+            echo "=== Pulling latest code ==="
+            git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/Maksym-7growth/Tasker.git"
+            git fetch origin master
+            git reset --hard origin/master
+
+            echo "=== Building app ==="
+            docker compose --env-file .env.production build app
+
+            echo "=== Syncing database schema ==="
+            docker compose --env-file .env.production run --rm app npx prisma db push
+
+            echo "=== Restarting app ==="
+            docker compose --env-file .env.production up -d app
+
+            echo "=== Health check ==="
+            sleep 10
+            curl -sf -o /dev/null https://tasker.semishan.pro/login && echo "OK" || (echo "HEALTH CHECK FAILED" && docker logs --tail 50 tasker-app && exit 1)
