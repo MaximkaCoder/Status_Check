@@ -1,0 +1,22 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+    container_name: tasker-app
+    restart: unless-stopped
+    env_file: .env.production
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tasker.rule=Host(`tasker.semishan.pro`)"
+      - "traefik.http.routers.tasker.entrypoints=websecure"
+      - "traefik.http.routers.tasker.tls.certresolver=letsencrypt"
+      - "traefik.http.services.tasker.loadbalancer.server.port=3000"
+      - "traefik.docker.network=proxy"
+
+networks:
+  proxy:
+    external: true
