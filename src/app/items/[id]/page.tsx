@@ -12,6 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getItemById } from "@/lib/api-client";
 import { translations } from "@/lib/i18n";
+import { canChangeStatus, canModifyItem } from "@/lib/permissions";
 import type { StatusItem } from "@/lib/types";
 
 interface Comment {
@@ -35,6 +36,36 @@ function getGradient(name: string) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+
+// Render comment text with @mentions highlighted as chips. Longest name first
+// so "@Max Smal" wins over "@Max"; only known user names become chips.
+function renderCommentText(text: string, userNames: string[]): React.ReactNode {
+  if (!text.includes("@") || userNames.length === 0) return text;
+  const sorted = [...userNames].filter(Boolean).sort((a, b) => b.length - a.length);
+  const parts: React.ReactNode[] = [];
+  let rest = text;
+  let key = 0;
+  outer: while (rest.length > 0) {
+    const at = rest.indexOf("@");
+    if (at === -1) { parts.push(rest); break; }
+    if (at > 0) { parts.push(rest.slice(0, at)); rest = rest.slice(at); }
+    for (const name of sorted) {
+      if (rest.slice(1).startsWith(name)) {
+        parts.push(
+          <span key={key++} className="inline-flex items-center rounded-md px-1 font-semibold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/15">
+            @{name}
+          </span>
+        );
+        rest = rest.slice(1 + name.length);
+        continue outer;
+      }
+    }
+    // No known name after this @ — emit the "@" literally and move on
+    parts.push("@");
+    rest = rest.slice(1);
+  }
+  return parts;
 }
 
 function getAvatarColor(name: string): string {
@@ -432,7 +463,7 @@ function CommentsPanel({ itemId }: { itemId: string }) {
                       </button>
                     )}
                   </div>
-                  <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">{c.text}</p>
+                  <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">{renderCommentText(c.text, userNames)}</p>
                 </div>
               </div>
             );
@@ -542,6 +573,112 @@ function CommentsPanel({ itemId }: { itemId: string }) {
 }
 
 // ── Main page ───────────────────────────────────────────────────────────────
+const INLINE_STATUSES = ["TO_CHECK", "EXPIRED", "DONE", "NOT_ACTUAL", "IDEAS_BACKLOG"] as const;
+
+// Click the status badge to change it inline (creator/assignee/reviewer/admin).
+function InlineStatusEditor({
+  status, editable, onChange,
+}: { status: StatusItem["status"]; editable: boolean; onChange: (s: StatusItem["status"]) => void }) {
+  const { t } = useLanguage();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+
+  const labels: Record<string, string> = {
+    TO_CHECK: t("toCheck"), EXPIRED: t("expired"), DONE: t("done"),
+    NOT_ACTUAL: t("notActual"), IDEAS_BACKLOG: t("ideasBacklog"),
+  };
+
+  if (!editable) return <StatusBadge status={status} />;
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button type="button" onClick={() => setOpen(v => !v)} className="cursor-pointer inline-flex items-center gap-1 group/st" aria-label="Change status">
+        <StatusBadge status={status} />
+        <svg className={cn("h-3 w-3 text-muted-foreground transition-transform", open && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1.5 z-50 min-w-[160px] rounded-xl border border-border/60 bg-white dark:bg-[#0f1029] shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] py-1.5">
+          {INLINE_STATUSES.map((s) => (
+            <button key={s} type="button"
+              onClick={() => { setOpen(false); if (s !== status) onChange(s); }}
+              className={cn("w-full text-left px-3 py-2 text-xs font-semibold transition-colors", s === status ? "bg-muted/50" : "hover:bg-muted/40")}
+            >
+              {labels[s]}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Click assignee/reviewer to reassign inline (creator/admin only).
+function InlineUserField({
+  value, users, editable, placeholder, onChange,
+}: { value: string | null; users: string[]; editable: boolean; placeholder: string; onChange: (name: string | null) => void }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+
+  const matches = users.filter(u => u.toLowerCase().includes(q.toLowerCase()));
+
+  if (!editable) {
+    return value
+      ? <div className="flex items-center gap-2"><Avatar name={value} /><span className="text-sm font-medium text-foreground">{value}</span></div>
+      : <span className="text-sm text-muted-foreground">—</span>;
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => { setOpen(v => !v); setQ(""); }}
+        className="flex items-center gap-2 rounded-lg -mx-1.5 px-1.5 py-1 hover:bg-muted/40 transition-colors cursor-pointer group/uf">
+        {value ? <><Avatar name={value} /><span className="text-sm font-medium text-foreground">{value}</span></>
+               : <span className="text-sm text-muted-foreground italic">{placeholder}</span>}
+        <svg className="h-3 w-3 text-muted-foreground opacity-0 group-hover/uf:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1.5 z-50 w-56 rounded-xl border border-border/60 bg-white dark:bg-[#0f1029] shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] overflow-hidden">
+          <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="..."
+            className="w-full px-3 py-2 text-xs bg-muted/30 dark:bg-white/[0.04] border-b border-border/60 focus:outline-none text-foreground" />
+          <div className="max-h-52 overflow-y-auto py-1">
+            {value && (
+              <button type="button" onClick={() => { setOpen(false); onChange(null); }}
+                className="w-full text-left px-3 py-2 text-xs text-rose-500 hover:bg-muted/40 transition-colors">
+                ✕ {value}
+              </button>
+            )}
+            {matches.map(u => (
+              <button key={u} type="button" onClick={() => { setOpen(false); if (u !== value) onChange(u); }}
+                className={cn("w-full text-left px-3 py-2 text-xs font-medium flex items-center gap-2 transition-colors", u === value ? "bg-muted/50" : "hover:bg-muted/40")}>
+                <Avatar name={u} />{u}
+              </button>
+            ))}
+            {matches.length === 0 && <p className="px-3 py-2 text-xs text-muted-foreground">—</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ViewItemPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -552,6 +689,31 @@ export default function ViewItemPage() {
   const [files, setFiles] = useState<{ id: string; name: string; url: string; size: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userNames, setUserNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("/api/users").then(r => r.ok ? r.json() : []).then((d: { name: string }[]) => setUserNames(d.map(u => u.name))).catch(() => {});
+  }, []);
+
+  async function patchStatus(status: StatusItem["status"]) {
+    const prev = item;
+    setItem((cur) => cur ? { ...cur, status } : cur);
+    const r = await fetch(`/api/items/${id}/status`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }),
+    });
+    if (r.ok) setItem(await r.json());
+    else setItem(prev);
+  }
+
+  async function patchField(field: "assignee" | "reviewer", name: string | null) {
+    const prev = item;
+    setItem((cur) => cur ? { ...cur, [field]: name } : cur);
+    const r = await fetch(`/api/items/${id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [field]: name }),
+    });
+    if (r.ok) setItem(await r.json());
+    else setItem(prev);
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -611,10 +773,9 @@ export default function ViewItemPage() {
   const isPastDeadline = deadline ? (isPast(deadline) && item.status !== "DONE") : false;
   const avatarColor = getAvatarColor(item.creator_name);
 
-  const canEdit = user && (
-    user.isAdmin ||
-    (item.creator_id ? item.creator_id === user.userId : item.creator_name === user.name)
-  );
+  const sess = user ? { userId: user.userId, name: user.name, isAdmin: user.isAdmin } : null;
+  const canEdit = !!(sess && canModifyItem(sess, item));
+  const canStatus = !!(sess && canChangeStatus(sess, item));
 
   return (
     <div className="py-8 px-4 2xl:flex 2xl:gap-6 2xl:items-start 2xl:justify-center">
@@ -636,7 +797,7 @@ export default function ViewItemPage() {
               <h1 className="text-2xl font-extrabold tracking-tight text-foreground leading-tight break-words">
                 {item.title}
               </h1>
-              <div className="mt-1.5"><StatusBadge status={item.status} /></div>
+              <div className="mt-1.5"><InlineStatusEditor status={item.status} editable={canStatus} onChange={patchStatus} /></div>
             </div>
           </div>
 
@@ -723,21 +884,27 @@ export default function ViewItemPage() {
               </Field>
             )}
 
-            {item.assignee && (
+            {(item.assignee || canEdit) && (
               <Field label={t("assignee")}>
-                <div className="flex items-center gap-2">
-                  <Avatar name={item.assignee} />
-                  <span className="text-sm font-medium text-foreground">{item.assignee}</span>
-                </div>
+                <InlineUserField
+                  value={item.assignee}
+                  users={userNames}
+                  editable={canEdit}
+                  placeholder={locale === "uk" ? "Призначити..." : "Assign..."}
+                  onChange={(name) => patchField("assignee", name)}
+                />
               </Field>
             )}
 
-            {item.reviewer && (
+            {(item.reviewer || canEdit) && (
               <Field label={t("reviewer")}>
-                <div className="flex items-center gap-2">
-                  <Avatar name={item.reviewer} />
-                  <span className="text-sm font-medium text-foreground">{item.reviewer}</span>
-                </div>
+                <InlineUserField
+                  value={item.reviewer}
+                  users={userNames}
+                  editable={canEdit}
+                  placeholder={locale === "uk" ? "Призначити..." : "Assign..."}
+                  onChange={(name) => patchField("reviewer", name)}
+                />
               </Field>
             )}
 

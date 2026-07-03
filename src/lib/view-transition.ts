@@ -8,7 +8,10 @@ export function withViewTransition(update: () => void) {
   const doc = document as Document & {
     startViewTransition?: (cb: () => void) => void;
   };
-  if (doc.startViewTransition) {
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  if (doc.startViewTransition && !reduceMotion) {
     doc.startViewTransition(() => {
       flushSync(update);
     });
