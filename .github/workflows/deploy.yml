@@ -51,7 +51,9 @@ jobs:
             docker compose --env-file .env.production run --rm app npx prisma db push
 
             echo "=== Restarting app + cron ==="
-            docker compose --env-file .env.production up -d app cron
+            # --force-recreate so edits to .env.production are always reloaded,
+            # even when the image hash is unchanged.
+            docker compose --env-file .env.production up -d --force-recreate app cron
 
             echo "=== Health check ==="
             sleep 10
