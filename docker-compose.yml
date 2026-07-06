@@ -21,6 +21,35 @@ services:
       - "traefik.http.services.tasker.loadbalancer.server.port=3000"
       - "traefik.docker.network=proxy"
 
+  # Lightweight scheduler: hits the deadline-check endpoint on the internal
+  # network every CRON_INTERVAL_MINUTES (default 15). The endpoint is gap-free,
+  # so the interval only affects how promptly reminders arrive.
+  cron:
+    image: alpine:3.20
+    container_name: tasker-cron
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on:
+      app:
+        condition: service_started
+    networks:
+      - internal
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache curl >/dev/null 2>&1
+        INTERVAL=$${CRON_INTERVAL_MINUTES:-15}
+        echo "[cron] started, interval=$${INTERVAL}min"
+        while true; do
+          sleep $$((INTERVAL * 60))
+          if curl -fsS -m 60 -H "Authorization: Bearer $$CRON_SECRET" \
+               http://app:3000/api/cron/deadline-check >/dev/null; then
+            echo "[cron] $$(date -u +%H:%M) ok"
+          else
+            echo "[cron] $$(date -u +%H:%M) FAILED"
+          fi
+        done
+
   db:
     image: postgres:17-alpine
     container_name: tasker-db

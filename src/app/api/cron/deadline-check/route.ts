@@ -17,6 +17,13 @@ function dayLabel(hours: number): string {
   return `${days} ${word}`;
 }
 
+// Deadline reminders use a "due & unsent" model rather than a time window:
+// a threshold is DUE when the deadline is within that many hours, and it fires
+// once (deduped by a Notification row carrying thresholdHours). This is
+// gap-free regardless of how often the cron runs — a run that is late, or the
+// first run after downtime, still catches every due-but-unsent threshold. Run
+// the cron every ~15 min (see the cron sidecar in docker-compose) for timely
+// delivery; less frequent just means reminders arrive a little later.
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -29,16 +36,9 @@ export async function GET(request: NextRequest) {
   const purged = await prisma.statusItem.deleteMany({
     where: { deleted_at: { lt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) } },
   });
-  // The cron interval determines the reminder window so thresholds tile without
-  // gaps or duplicate bursts. Vercel Hobby runs daily (24h); a self-hosted hourly
-  // cron should set CRON_INTERVAL_HOURS=1 for precise sub-day reminders.
-  const intervalH = Number(process.env.CRON_INTERVAL_HOURS) || 24;
-  const intervalMs = intervalH * 60 * 60 * 1000;
 
-  // Find all items with upcoming deadlines (up to 1 week ahead)
-  const maxHours = 168;
-  const maxAhead = new Date(now.getTime() + maxHours * 60 * 60 * 1000);
-
+  // Items with an upcoming deadline (up to 1 week ahead)
+  const maxAhead = new Date(now.getTime() + 168 * 60 * 60 * 1000);
   const items = await prisma.statusItem.findMany({
     where: {
       deadline: { gt: now, lt: maxAhead },
@@ -62,13 +62,7 @@ export async function GET(request: NextRequest) {
         where: { name, blocked: false },
         select: {
           id: true,
-          settings: {
-            select: {
-              telegramChatId: true,
-              notifyVia: true,
-              deadlineHours: true,
-            },
-          },
+          settings: { select: { telegramChatId: true, notifyVia: true, deadlineHours: true } },
         },
       });
       if (!user) continue;
@@ -78,56 +72,51 @@ export async function GET(request: NextRequest) {
         : DEFAULT_THRESHOLDS
       ).slice().sort((a, b) => a - b); // ascending: most urgent first
 
+      // Which thresholds are already sent for this user+item?
+      const priorRows = await prisma.notification.findMany({
+        where: { userId: user.id, itemId: item.id, type: "DEADLINE_APPROACHING" },
+        select: { thresholdHours: true },
+      });
+      const alreadySent = new Set(priorRows.map((r) => r.thresholdHours));
+
+      // Thresholds that are due now (deadline within X hours) and not yet sent
+      const dueUnsent = thresholds.filter(
+        (h) => msUntilDeadline <= h * 60 * 60 * 1000 && !alreadySent.has(h),
+      );
+      if (dueUnsent.length === 0) continue;
+
+      // Notify once with the most urgent (smallest) due threshold's label...
+      const label = dueUnsent[0];
       const notifyVia = user.settings?.notifyVia ?? ["app"];
 
-      for (const hours of thresholds) {
-        const targetMs = hours * 60 * 60 * 1000;
-        // Fire once as the deadline descends past the threshold: it is now within
-        // `hours`, but was still beyond it at the previous cron run one interval ago.
-        const inWindow = msUntilDeadline <= targetMs && msUntilDeadline > targetMs - intervalMs;
-        if (!inWindow) continue;
-
-        // Dedup: one notification per user+item+threshold
-        const alreadySent = await prisma.notification.findFirst({
-          where: {
+      // ...but record ALL newly-due thresholds so stale ones can't fire later
+      // (e.g. after downtime both the 24h and 6h thresholds may be due at once).
+      // The Notification row is both the in-app item and the dedup marker, so it
+      // is always written — even for telegram-only users — to prevent re-sends.
+      for (const h of dueUnsent) {
+        await prisma.notification.create({
+          data: {
             userId: user.id,
-            itemId: item.id,
             type: "DEADLINE_APPROACHING",
-            thresholdHours: hours,
+            itemId: item.id,
+            itemTitle: item.title,
+            thresholdHours: h,
           },
         });
-        if (alreadySent) continue;
+        created++;
+      }
 
-        // In-app notification
-        if (notifyVia.includes("app") || notifyVia.length === 0) {
-          await prisma.notification.create({
-            data: {
-              userId: user.id,
-              type: "DEADLINE_APPROACHING",
-              itemId: item.id,
-              itemTitle: item.title,
-              thresholdHours: hours,
-            },
-          });
-          created++;
-        }
-
-        // Telegram notification
-        if (notifyVia.includes("telegram") && user.settings?.telegramChatId) {
-          const deadlineStr = item.deadline.toLocaleString("uk-UA", {
-            day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
-          });
-          const text =
-            `⏰ <b>Нагадування про дедлайн</b>\n\n` +
-            `Задача: ${itemLink(item.id, item.title)}\n` +
-            `Залишилось: <b>менше ${dayLabel(hours)}</b>\n` +
-            `Дедлайн: ${deadlineStr}`;
-          const ok = await sendTelegramMessage(user.settings.telegramChatId, text);
-          if (ok) sent++;
-        }
-
-        // One notification per item+user per cron run — stop after the most urgent threshold fires.
-        break;
+      if (notifyVia.includes("telegram") && user.settings?.telegramChatId) {
+        const deadlineStr = item.deadline.toLocaleString("uk-UA", {
+          day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+        });
+        const text =
+          `⏰ <b>Нагадування про дедлайн</b>\n\n` +
+          `Задача: ${itemLink(item.id, item.title)}\n` +
+          `Залишилось: <b>менше ${dayLabel(label)}</b>\n` +
+          `Дедлайн: ${deadlineStr}`;
+        const ok = await sendTelegramMessage(user.settings.telegramChatId, text);
+        if (ok) sent++;
       }
     }
   }

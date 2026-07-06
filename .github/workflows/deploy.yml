@@ -50,8 +50,8 @@ jobs:
             echo "=== Syncing database schema ==="
             docker compose --env-file .env.production run --rm app npx prisma db push
 
-            echo "=== Restarting app ==="
-            docker compose --env-file .env.production up -d app
+            echo "=== Restarting app + cron ==="
+            docker compose --env-file .env.production up -d app cron
 
             echo "=== Health check ==="
             sleep 10
