@@ -2,16 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { AuthShell, AuthLogo, AuthField, AuthPasswordField, AuthError, AuthSubmit } from "@/components/auth/AuthShell";
 
 export default function LoginPage() {
-  const router = useRouter();
   const { locale } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -23,6 +21,7 @@ export default function LoginPage() {
     submit:   locale === "uk" ? "Увійти" : "Sign in",
     noAcc:    locale === "uk" ? "Немає акаунту?" : "No account?",
     register: locale === "uk" ? "Зареєструватись" : "Register",
+    showPw:   locale === "uk" ? "Показати пароль" : "Show password",
   };
 
   async function handleSubmit(e: React.FormEvent) {
@@ -46,98 +45,54 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className={cn(
-        "w-full max-w-sm rounded-2xl p-8",
-        "bg-white/50 dark:bg-white/[0.05] backdrop-blur-xl",
-        "border border-white/70 dark:border-white/[0.10]",
-        "shadow-[0_8px_40px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,0.9)]",
-        "dark:shadow-[0_8px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)]"
-      )}>
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-3 mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-400 to-violet-500 shadow-[0_4px_14px_rgba(99,102,241,0.45)]">
-            <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-          </div>
-          <div className="text-center">
-            <h1 className="text-lg font-bold text-slate-800 dark:text-white">{label.title}</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{label.subtitle}</p>
-          </div>
+    <AuthShell>
+      <AuthLogo title={label.title} subtitle={label.subtitle} />
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="animate-fade-in-up stagger-2">
+          <AuthField
+            id="login-email"
+            label={label.email}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            icon={
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            }
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-white/70 mb-1.5">
-              {label.email}
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              className={cn(
-                "w-full rounded-xl px-3.5 py-2.5 text-sm",
-                "bg-white/70 dark:bg-white/[0.07]",
-                "border border-slate-200/80 dark:border-white/[0.12]",
-                "text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30",
-                "focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-300",
-                "transition-all duration-150"
-              )}
-            />
-          </div>
+        <div className="animate-fade-in-up stagger-3">
+          <AuthPasswordField
+            id="login-password"
+            label={label.password}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+            show={showPassword}
+            onToggleShow={() => setShowPassword(v => !v)}
+            toggleAria={label.showPw}
+          />
+        </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-white/70 mb-1.5">
-              {label.password}
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className={cn(
-                "w-full rounded-xl px-3.5 py-2.5 text-sm",
-                "bg-white/70 dark:bg-white/[0.07]",
-                "border border-slate-200/80 dark:border-white/[0.12]",
-                "text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30",
-                "focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-300",
-                "transition-all duration-150"
-              )}
-            />
-          </div>
+        {error && <AuthError message={error} />}
 
-          {error && (
-            <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{error}</p>
-          )}
+        <div className="animate-fade-in-up stagger-4">
+          <AuthSubmit loading={loading}>{label.submit}</AuthSubmit>
+        </div>
+      </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={cn(
-              "relative w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold overflow-hidden",
-              "bg-gradient-to-r from-indigo-500 to-violet-500 text-white",
-              "shadow-[0_4px_14px_rgba(99,102,241,0.45)]",
-              "hover:shadow-[0_6px_20px_rgba(99,102,241,0.55)]",
-              "transition-all duration-200 cursor-pointer group/btn",
-              "disabled:opacity-60 disabled:cursor-not-allowed"
-            )}
-          >
-            <span className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-violet-400 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
-            <span className="relative">{loading ? "..." : label.submit}</span>
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          {label.noAcc}{" "}
-          <Link href="/register" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline underline-offset-2">
-            {label.register}
-          </Link>
-        </p>
-      </div>
-    </div>
+      <p className="mt-6 text-center text-xs text-muted-foreground animate-fade-in-up stagger-5">
+        {label.noAcc}{" "}
+        <Link href="/register" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline underline-offset-2 transition-colors">
+          {label.register}
+        </Link>
+      </p>
+    </AuthShell>
   );
 }
