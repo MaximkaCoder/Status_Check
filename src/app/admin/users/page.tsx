@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface Department { id: string; name: string; }
 interface AdminUser {
@@ -191,12 +194,18 @@ function DeptPicker({ user, depts, busy, onChange, noDeptLabel, searchLabel, not
 }
 
 export default function AdminUsersPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const uk = locale === "uk";
+  const { user: me } = useAuth();
+  const { toast } = useToast();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [depts, setDepts] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmBulk, setConfirmBulk] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -212,6 +221,46 @@ export default function AdminUsersPage() {
   }
 
   useEffect(() => { load(); }, []);
+
+  // A user is selectable if it's not an admin and not the current account.
+  const isSelectable = (u: AdminUser) => !u.isAdmin && u.id !== me?.userId;
+  const selectableIds = users.filter(isSelectable).map(u => u.id);
+  const allSelected = selectableIds.length > 0 && selectableIds.every(id => selected.has(id));
+
+  function toggleOne(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(selectableIds));
+  }
+
+  async function bulkDelete() {
+    const ids = [...selected];
+    setBulkBusy(true);
+    try {
+      const r = await fetch("/api/admin/users/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (r.ok) {
+        toast(uk ? `Видалено користувачів: ${data.deleted}` : `Deleted ${data.deleted} users`, "success");
+        setSelected(new Set());
+        await load();
+      } else {
+        toast(data.error ?? (uk ? "Помилка видалення" : "Delete failed"), "error");
+      }
+    } finally {
+      setBulkBusy(false);
+      setConfirmBulk(false);
+    }
+  }
 
   async function toggleBlock(user: AdminUser) {
     setBusy(user.id);
@@ -256,11 +305,38 @@ export default function AdminUsersPage() {
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card shadow-card overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
-        <div>
-          <h2 className="text-base font-bold text-foreground">{t("usersPageTitle")}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{users.length} {t("accountsLabel")}</p>
-        </div>
+      <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border/60 min-h-[68px]">
+        {selected.size > 0 ? (
+          <>
+            <div className="flex items-center gap-2 animate-fade-in">
+              <span className="text-sm font-semibold text-foreground">
+                {uk ? `Вибрано: ${selected.size}` : `${selected.size} selected`}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelected(new Set())}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                {uk ? "Скинути" : "Clear"}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setConfirmBulk(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-500 hover:bg-rose-600 text-white shadow-[0_2px_8px_rgba(239,68,68,0.4)] transition-all cursor-pointer animate-fade-in"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              {uk ? "Видалити вибрані" : "Delete selected"}
+            </button>
+          </>
+        ) : (
+          <div>
+            <h2 className="text-base font-bold text-foreground">{t("usersPageTitle")}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{users.length} {t("accountsLabel")}</p>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -274,6 +350,16 @@ export default function AdminUsersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/60 bg-muted/30">
+                <th className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    disabled={selectableIds.length === 0}
+                    aria-label={uk ? "Вибрати всіх" : "Select all"}
+                    className="h-4 w-4 rounded border-border text-indigo-500 focus:ring-indigo-400/50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed accent-indigo-500"
+                  />
+                </th>
                 <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-6 py-3">{t("tableColName")}</th>
                 <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Email</th>
                 <th className="text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">{t("tableColRole")}</th>
@@ -287,9 +373,24 @@ export default function AdminUsersPage() {
               {users.map((u, i) => (
                 <tr
                   key={u.id}
-                  className={cn("transition-colors hover:bg-muted/20 animate-row-in", u.blocked && "opacity-60")}
+                  className={cn(
+                    "transition-colors animate-row-in",
+                    selected.has(u.id) ? "bg-indigo-50/60 dark:bg-indigo-500/[0.08]" : "hover:bg-muted/20",
+                    u.blocked && "opacity-60"
+                  )}
                   style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
                 >
+                  <td className="w-10 px-4 py-3.5">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(u.id)}
+                      onChange={() => toggleOne(u.id)}
+                      disabled={!isSelectable(u)}
+                      aria-label={uk ? `Вибрати ${u.name}` : `Select ${u.name}`}
+                      title={!isSelectable(u) ? (u.isAdmin ? t("cannotDeleteAdmin") : (uk ? "Це ви" : "This is you")) : undefined}
+                      className="h-4 w-4 rounded border-border text-indigo-500 focus:ring-indigo-400/50 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed accent-indigo-500"
+                    />
+                  </td>
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-2.5">
                       <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-white text-[11px] font-bold flex-shrink-0">
@@ -366,6 +467,19 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {confirmBulk && (
+        <ConfirmDialog
+          title={uk ? "Видалити вибраних користувачів?" : "Delete selected users?"}
+          description={uk
+            ? `${selected.size} користувач(ів) буде видалено безповоротно. Адміни та ваш акаунт пропускаються.`
+            : `${selected.size} user(s) will be permanently deleted. Admins and your own account are skipped.`}
+          confirmLabel={bulkBusy ? (uk ? "Видалення..." : "Deleting...") : (uk ? "Видалити" : "Delete")}
+          cancelLabel={uk ? "Скасувати" : "Cancel"}
+          onConfirm={bulkDelete}
+          onCancel={() => setConfirmBulk(false)}
+        />
       )}
     </div>
   );
