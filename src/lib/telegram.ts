@@ -6,8 +6,9 @@ function escapeHtml(s: string): string {
 }
 
 // Task title as a clickable link to the item page, safe for parse_mode HTML.
+// Base URL comes from NEXT_PUBLIC_APP_URL; trailing slash is trimmed.
 export function itemLink(itemId: string, title: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://status-check-henna.vercel.app";
+  const base = (process.env.NEXT_PUBLIC_APP_URL ?? "https://tasker.semishan.pro").replace(/\/$/, "");
   return `<a href="${base}/items/${itemId}"><b>${escapeHtml(title)}</b></a>`;
 }
 
