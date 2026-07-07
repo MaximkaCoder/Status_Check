@@ -8,6 +8,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { NotificationBell } from "./NotificationBell";
+import { MobileMenu } from "./MobileMenu";
 
 export function Header() {
   const pathname = usePathname();
@@ -65,15 +66,16 @@ export function Header() {
 
         {/* Nav */}
         <nav className="flex items-center gap-2" aria-label="Main navigation">
-          <ThemeToggle />
-          <LanguageSwitcher />
+          {/* Secondary actions collapse into MobileMenu below sm — hidden here to avoid overflow */}
+          <div className="hidden sm:block"><ThemeToggle /></div>
+          <div className="hidden sm:block"><LanguageSwitcher /></div>
 
           {/* Weekly reports link (admin only) */}
           {user?.isAdmin && (
             <Link
               href="/reports"
               className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-xl",
+                "hidden sm:flex h-8 w-8 items-center justify-center rounded-xl",
                 "bg-white/40 dark:bg-white/[0.06]",
                 "border border-white/70 dark:border-white/[0.10]",
                 "text-slate-500 dark:text-white/50",
@@ -95,7 +97,7 @@ export function Header() {
             <Link
               href="/admin"
               className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-xl",
+                "hidden sm:flex h-8 w-8 items-center justify-center rounded-xl",
                 "bg-white/40 dark:bg-white/[0.06]",
                 "border border-white/70 dark:border-white/[0.10]",
                 "text-slate-500 dark:text-white/50",
@@ -118,7 +120,7 @@ export function Header() {
             <Link
               href="/archive"
               className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-xl",
+                "hidden sm:flex h-8 w-8 items-center justify-center rounded-xl",
                 "bg-white/40 dark:bg-white/[0.06]",
                 "border border-white/70 dark:border-white/[0.10]",
                 "text-slate-500 dark:text-white/50",
@@ -162,7 +164,7 @@ export function Header() {
                 type="button"
                 onClick={logout}
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-xl",
+                  "hidden sm:flex h-8 w-8 items-center justify-center rounded-xl",
                   "bg-white/40 dark:bg-white/[0.06]",
                   "border border-white/70 dark:border-white/[0.10]",
                   "text-slate-500 dark:text-white/50",
@@ -177,6 +179,9 @@ export function Header() {
               </button>
             </div>
           )}
+
+          {/* Collapsed menu — mobile only, mirrors the icons hidden above */}
+          <MobileMenu />
 
           {/* Context-aware CTA — only when logged in and config exists */}
           {user && ctaConfig && <Link
