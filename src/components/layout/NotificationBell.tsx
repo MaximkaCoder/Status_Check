@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -37,14 +38,24 @@ export function NotificationBell() {
   const router = useRouter();
   const [open, setOpen] = useState(false);        // panel is mounted
   const [visible, setVisible] = useState(false);  // panel is animated in
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Position is computed fresh on each open, anchored to the bell's right
+  // edge but clamped so the panel never runs off either side of the
+  // viewport — the bell can sit anywhere in the header on narrow screens.
   const openPanel = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (rect) {
+      const width = Math.min(320, window.innerWidth - 16);
+      const left = Math.min(Math.max(rect.right - width, 8), window.innerWidth - width - 8);
+      setPos({ top: rect.bottom + 8, left, width });
+    }
     setOpen(true);
     requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
   }, []);
@@ -70,7 +81,8 @@ export function NotificationBell() {
     return () => clearInterval(id);
   }, [fetchNotifs]);
 
-  // Close on outside click
+  // Close on outside click or viewport resize (e.g. orientation change,
+  // which would otherwise leave the panel at a stale position)
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
@@ -82,7 +94,11 @@ export function NotificationBell() {
       }
     }
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    window.addEventListener("resize", closePanel);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      window.removeEventListener("resize", closePanel);
+    };
   }, [open, closePanel]);
 
   async function handleClick(n: Notification) {
@@ -155,12 +171,12 @@ export function NotificationBell() {
         )}
       </button>
 
-      {open && (
+      {open && pos && typeof window !== "undefined" && createPortal(
         <div
           ref={panelRef}
+          style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width }}
           className={cn(
-            "absolute right-0 top-10 z-50",
-            "w-80 rounded-2xl",
+            "z-[9999] rounded-2xl",
             "bg-white dark:bg-[#0f1029]",
             "border border-slate-200 dark:border-white/[0.10]",
             "shadow-[0_8px_32px_rgba(0,0,0,0.18),0_1px_0_rgba(255,255,255,0.9)]",
@@ -231,7 +247,8 @@ export function NotificationBell() {
               ))
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
