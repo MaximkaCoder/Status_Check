@@ -83,15 +83,29 @@ export async function emailDiagnostics(to: string): Promise<{
   }
 }
 
+// Converts the notification HTML lines to a plain-text alternative,
+// turning <a href="URL">label</a> into "label: URL" and stripping tags.
+function htmlLinesToText(lines: string[]): string {
+  return lines
+    .map((l) =>
+      l
+        .replace(/<a\s+href="([^"]+)"[^>]*>(.*?)<\/a>/gi, "$2: $1")
+        .replace(/<[^>]+>/g, "")
+        .trim(),
+    )
+    .join("\n");
+}
+
 // Turns a Telegram-style notification body (uses \n and <b>/<a> tags) into a
-// branded HTML email + a subject derived from its first line.
-export function notificationEmail(bodyHtml: string): { subject: string; html: string } {
+// branded HTML email + plain-text alternative + a subject from its first line.
+export function notificationEmail(bodyHtml: string): { subject: string; html: string; text: string } {
   const lines = bodyHtml.split("\n").map((l) => l.trim()).filter(Boolean);
   const firstLinePlain = (lines[0] ?? "Status Check")
     .replace(/<[^>]+>/g, "")          // strip tags
     .replace(/^[^\p{L}\d]+/u, "")     // strip leading emoji/space
     .trim();
   const subject = `${firstLinePlain} — Status Check`;
+  const text = htmlLinesToText(lines);
   const body = lines.join("<br>");
   const html = `
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:460px;margin:0 auto;padding:28px 24px;color:#0f172a">
@@ -102,7 +116,7 @@ export function notificationEmail(bodyHtml: string): { subject: string; html: st
     <div style="font-size:14px;line-height:1.7;color:#334155">${body}</div>
     <p style="font-size:12px;line-height:1.6;color:#94a3b8;margin:18px 0 0">Ви отримали цей лист, бо увімкнули email-сповіщення в налаштуваннях. / You enabled email notifications in your settings.</p>
   </div>`;
-  return { subject, html };
+  return { subject, html, text };
 }
 
 // Password-reset code email, bilingual (uk + en) so it reads for either locale.

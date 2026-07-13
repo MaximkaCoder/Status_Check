@@ -123,8 +123,8 @@ export async function GET(request: NextRequest) {
           if (ok) sent++;
         }
         if (notifyVia.includes("email") && user.email) {
-          const { subject, html } = notificationEmail(text);
-          const ok = await sendEmail({ to: user.email, subject, html });
+          const mail = notificationEmail(text);
+          const ok = await sendEmail({ to: user.email, subject: mail.subject, html: mail.html, text: mail.text });
           if (ok) sent++;
         }
       }

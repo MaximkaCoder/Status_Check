@@ -40,8 +40,8 @@ async function deliverNotification(
   if (notifyVia.includes("email")) {
     const u = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
     if (u?.email) {
-      const { subject, html } = notificationEmail(telegramText);
-      await sendEmail({ to: u.email, subject, html }).catch(() => {});
+      const { subject, html, text } = notificationEmail(telegramText);
+      await sendEmail({ to: u.email, subject, html, text }).catch(() => {});
     }
   }
 }
