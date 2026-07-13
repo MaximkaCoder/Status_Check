@@ -40,10 +40,12 @@ export async function getUnblockedSession(): Promise<SessionPayload | null> {
   if (!session) return null;
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { blocked: true },
+    select: { blocked: true, isAdmin: true },
   });
   if (!user || user.blocked) return null;
-  return session;
+  // Refresh isAdmin from the DB so role changes take effect immediately,
+  // without waiting for the user to re-login (JWT bakes in the old value).
+  return { ...session, isAdmin: user.isAdmin };
 }
 
 export function cookieName() {
