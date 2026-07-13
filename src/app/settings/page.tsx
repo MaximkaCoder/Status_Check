@@ -307,6 +307,16 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
+
+        <div className="h-px bg-border/40" />
+
+        {/* Email row */}
+        <Row label={t("channelEmail")} description={`${t("channelEmailDesc")} — ${user.email}`}>
+          <Toggle
+            checked={settings.notifyVia.includes("email")}
+            onChange={() => toggleChannel("email")}
+          />
+        </Row>
       </Section>
 
       {/* Events */}

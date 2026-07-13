@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendTelegramMessage, itemLink } from "@/lib/telegram";
+import { sendEmail, notificationEmail } from "@/lib/email";
 
 type NotifyEventType = "ASSIGNED_ASSIGNEE" | "ASSIGNED_REVIEWER" | "STATUS_CHANGED" | "NEW_COMMENT" | "MENTIONED";
 
@@ -34,6 +35,14 @@ async function deliverNotification(
 
   if (notifyVia.includes("telegram") && settings?.telegramChatId) {
     await sendTelegramMessage(settings.telegramChatId, telegramText);
+  }
+
+  if (notifyVia.includes("email")) {
+    const u = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+    if (u?.email) {
+      const { subject, html } = notificationEmail(telegramText);
+      await sendEmail({ to: u.email, subject, html }).catch(() => {});
+    }
   }
 }
 

@@ -83,6 +83,28 @@ export async function emailDiagnostics(to: string): Promise<{
   }
 }
 
+// Turns a Telegram-style notification body (uses \n and <b>/<a> tags) into a
+// branded HTML email + a subject derived from its first line.
+export function notificationEmail(bodyHtml: string): { subject: string; html: string } {
+  const lines = bodyHtml.split("\n").map((l) => l.trim()).filter(Boolean);
+  const firstLinePlain = (lines[0] ?? "Status Check")
+    .replace(/<[^>]+>/g, "")          // strip tags
+    .replace(/^[^\p{L}\d]+/u, "")     // strip leading emoji/space
+    .trim();
+  const subject = `${firstLinePlain} — Status Check`;
+  const body = lines.join("<br>");
+  const html = `
+  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:460px;margin:0 auto;padding:28px 24px;color:#0f172a">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+      <span style="display:inline-block;width:34px;height:34px;line-height:34px;text-align:center;border-radius:10px;background:linear-gradient(135deg,#818cf8,#8b5cf6);color:#fff;font-size:16px;font-weight:700">✓</span>
+      <b style="font-size:15px">Status Check</b>
+    </div>
+    <div style="font-size:14px;line-height:1.7;color:#334155">${body}</div>
+    <p style="font-size:12px;line-height:1.6;color:#94a3b8;margin:18px 0 0">Ви отримали цей лист, бо увімкнули email-сповіщення в налаштуваннях. / You enabled email notifications in your settings.</p>
+  </div>`;
+  return { subject, html };
+}
+
 // Password-reset code email, bilingual (uk + en) so it reads for either locale.
 export function resetCodeEmail(code: string): { subject: string; html: string; text: string } {
   const subject = "Код відновлення паролю / Password reset code — Status Check";

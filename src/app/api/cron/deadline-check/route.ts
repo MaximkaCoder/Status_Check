@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendTelegramMessage, itemLink } from "@/lib/telegram";
+import { sendEmail, notificationEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
         where: { name, blocked: false },
         select: {
           id: true,
+          email: true,
           settings: { select: { telegramChatId: true, notifyVia: true, deadlineHours: true } },
         },
       });
@@ -106,7 +108,7 @@ export async function GET(request: NextRequest) {
         created++;
       }
 
-      if (notifyVia.includes("telegram") && user.settings?.telegramChatId) {
+      if (notifyVia.includes("telegram") || notifyVia.includes("email")) {
         const deadlineStr = item.deadline.toLocaleString("uk-UA", {
           day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
         });
@@ -115,8 +117,16 @@ export async function GET(request: NextRequest) {
           `Задача: ${itemLink(item.id, item.title)}\n` +
           `Залишилось: <b>менше ${dayLabel(label)}</b>\n` +
           `Дедлайн: ${deadlineStr}`;
-        const ok = await sendTelegramMessage(user.settings.telegramChatId, text);
-        if (ok) sent++;
+
+        if (notifyVia.includes("telegram") && user.settings?.telegramChatId) {
+          const ok = await sendTelegramMessage(user.settings.telegramChatId, text);
+          if (ok) sent++;
+        }
+        if (notifyVia.includes("email") && user.email) {
+          const { subject, html } = notificationEmail(text);
+          const ok = await sendEmail({ to: user.email, subject, html });
+          if (ok) sent++;
+        }
       }
     }
   }
