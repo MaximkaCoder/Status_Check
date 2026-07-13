@@ -55,6 +55,30 @@ export async function sendEmail(opts: { to: string; subject: string; html: strin
   }
 }
 
+// Live SMTP diagnostic: verifies the connection and sends a test email,
+// returning the real error so it can be surfaced over HTTP (no server logs).
+export async function emailDiagnostics(to: string): Promise<{
+  configured: boolean; verified: boolean; sent: boolean;
+  host?: string; port?: number; from?: string; error?: string;
+}> {
+  const host = process.env.SMTP_HOST;
+  const port = Number(process.env.SMTP_PORT) || 587;
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const t = getTransport();
+  if (!t) return { configured: false, verified: false, sent: false, host, port, from };
+  try {
+    await t.verify();
+  } catch (e) {
+    return { configured: true, verified: false, sent: false, host, port, from, error: e instanceof Error ? e.message : String(e) };
+  }
+  try {
+    await t.sendMail({ from: from!, to, subject: "Status Check — SMTP test", text: "SMTP test OK", html: "<p>SMTP test OK ✓</p>" });
+    return { configured: true, verified: true, sent: true, host, port, from };
+  } catch (e) {
+    return { configured: true, verified: true, sent: false, host, port, from, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 // Password-reset code email, bilingual (uk + en) so it reads for either locale.
 export function resetCodeEmail(code: string): { subject: string; html: string; text: string } {
   const subject = "Код відновлення паролю / Password reset code — Status Check";
