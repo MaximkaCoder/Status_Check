@@ -10,7 +10,11 @@ function getTransport(): nodemailer.Transporter | null {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT) || 587;
   const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  // SMTP_PASS_B64 (base64) avoids shell/env-file mangling of special chars
+  // like "$" in the password; falls back to plain SMTP_PASS.
+  const pass = process.env.SMTP_PASS_B64
+    ? Buffer.from(process.env.SMTP_PASS_B64, "base64").toString("utf8")
+    : process.env.SMTP_PASS;
 
   if (!host || !user || !pass) {
     cached = null;
