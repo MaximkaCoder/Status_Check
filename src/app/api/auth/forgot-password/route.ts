@@ -15,24 +15,25 @@ function sixDigitCode(): string {
   return String(n);
 }
 
-// Always responds 200 with the same generic message — never reveals whether
-// an account exists for the given email (prevents enumeration).
+// Sends a reset code. By product decision this reports whether the email
+// exists (404 when not found) rather than a generic response — the team
+// prefers a clear "no such email" warning over enumeration-hardening.
 export async function POST(req: NextRequest) {
   let email: string | undefined;
   try { ({ email } = await req.json()); } catch { /* fall through */ }
 
-  const generic = NextResponse.json({ ok: true });
-
   const normalized = email?.trim().toLowerCase();
-  if (!normalized) return generic;
+  if (!normalized) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
   const user = await prisma.user.findUnique({ where: { email: normalized } });
-  if (!user || user.blocked) return generic;
+  if (!user || user.blocked) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
 
   // Cooldown: if an unexpired code was issued < 60s ago, don't resend
   if (user.resetCodeExpires) {
     const sentAt = user.resetCodeExpires.getTime() - CODE_TTL_MS;
-    if (Date.now() - sentAt < RESEND_COOLDOWN_MS) return generic;
+    if (Date.now() - sentAt < RESEND_COOLDOWN_MS) return NextResponse.json({ ok: true });
   }
 
   const code = sixDigitCode();
@@ -50,5 +51,5 @@ export async function POST(req: NextRequest) {
   const { subject, html, text } = resetCodeEmail(code);
   await sendEmail({ to: user.email, subject, html, text }).catch(() => {});
 
-  return generic;
+  return NextResponse.json({ ok: true });
 }

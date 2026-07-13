@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AuthShell, AuthLogo, AuthField, AuthPasswordField, AuthError, AuthSubmit } from "@/components/auth/AuthShell";
 
+type Step = "request" | "verify" | "reset";
+
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { locale } = useLanguage();
   const uk = locale === "uk";
 
-  const [step, setStep] = useState<"request" | "reset">("request");
+  const [step, setStep] = useState<Step>("request");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
@@ -22,20 +24,22 @@ export default function ForgotPasswordPage() {
   const label = {
     title:    uk ? "Відновлення паролю" : "Reset password",
     subReq:   uk ? "Введіть пошту — надішлемо код" : "Enter your email — we'll send a code",
-    subReset: uk ? `Код надіслано на ${email}` : `Code sent to ${email}`,
+    subVerify: uk ? `Код надіслано на ${email}` : `Code sent to ${email}`,
+    subReset: uk ? "Придумайте новий пароль" : "Set a new password",
     email:    uk ? "Електронна пошта" : "Email",
     code:     uk ? "Код з листа" : "Code from email",
     newPw:    uk ? "Новий пароль" : "New password",
     hint:     uk ? "Мінімум 8 символів" : "At least 8 characters",
     send:     uk ? "Надіслати код" : "Send code",
+    verify:   uk ? "Підтвердити код" : "Verify code",
     reset:    uk ? "Змінити пароль" : "Change password",
     back:     uk ? "← Назад до входу" : "← Back to sign in",
     resend:   uk ? "Надіслати код ще раз" : "Resend code",
     showPw:   uk ? "Показати пароль" : "Show password",
-    done:     uk ? "Пароль змінено. Увійдіть з новим паролем." : "Password changed. Sign in with your new password.",
-    sentNote: uk
-      ? "Якщо ця пошта є в системі — лист з кодом надіслано."
-      : "If that email exists in the system, a code has been sent.",
+    notFound: uk ? "Такої пошти немає в системі" : "No account with that email",
+    badCode:  uk ? "Невірний або застарілий код" : "Invalid or expired code",
+    tooMany:  uk ? "Забагато спроб. Запитайте новий код." : "Too many attempts. Request a new code.",
+    net:      uk ? "Помилка мережі" : "Network error",
   };
 
   async function requestCode(e: React.FormEvent) {
@@ -43,15 +47,38 @@ export default function ForgotPasswordPage() {
     setError("");
     setLoading(true);
     try {
-      await fetch("/api/auth/forgot-password", {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      // Always advance — response is intentionally generic (anti-enumeration)
+      if (res.status === 404) { setError(label.notFound); return; }
+      if (!res.ok) { setError(label.net); return; }
+      setStep("verify");
+    } catch {
+      setError(label.net);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/verify-reset-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code }),
+      });
+      if (!res.ok) {
+        setError(res.status === 429 ? label.tooMany : label.badCode);
+        return;
+      }
       setStep("reset");
     } catch {
-      setError(uk ? "Помилка мережі" : "Network error");
+      setError(label.net);
     } finally {
       setLoading(false);
     }
@@ -67,43 +94,43 @@ export default function ForgotPasswordPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code, password }),
       });
-      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(
-          res.status === 429
-            ? (uk ? "Забагато спроб. Запитайте новий код." : "Too many attempts. Request a new code.")
-            : (uk ? "Невірний або застарілий код" : "Invalid or expired code")
-        );
+        // Code expired between verify and submit → send back to the code step
+        setError(res.status === 429 ? label.tooMany : label.badCode);
+        setStep("verify");
         return;
       }
       router.replace("/login?reset=1");
     } catch {
-      setError(uk ? "Помилка мережі" : "Network error");
+      setError(label.net);
     } finally {
       setLoading(false);
     }
   }
 
+  const emailIcon = (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+  );
+  const codeIcon = (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+    </svg>
+  );
+
+  const subtitle = step === "request" ? label.subReq : step === "verify" ? label.subVerify : label.subReset;
+
   return (
     <AuthShell>
-      <AuthLogo title={label.title} subtitle={step === "request" ? label.subReq : label.subReset} />
+      <AuthLogo title={label.title} subtitle={subtitle} />
 
-      {step === "request" ? (
+      {step === "request" && (
         <form onSubmit={requestCode} className="space-y-4">
           <div className="animate-fade-in-up stagger-2">
             <AuthField
-              id="fp-email"
-              label={label.email}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              icon={
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              }
+              id="fp-email" label={label.email} type="email" value={email}
+              onChange={(e) => setEmail(e.target.value)} required autoComplete="email" icon={emailIcon}
             />
           </div>
           {error && <AuthError message={error} />}
@@ -111,44 +138,20 @@ export default function ForgotPasswordPage() {
             <AuthSubmit loading={loading}>{label.send}</AuthSubmit>
           </div>
         </form>
-      ) : (
-        <form onSubmit={resetPassword} className="space-y-4">
-          <p className="text-xs text-muted-foreground animate-fade-in">{label.sentNote}</p>
+      )}
+
+      {step === "verify" && (
+        <form onSubmit={verifyCode} className="space-y-4">
           <div className="animate-fade-in-up stagger-2">
             <AuthField
-              id="fp-code"
-              label={label.code}
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              required
-              icon={
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                </svg>
-              }
-            />
-          </div>
-          <div className="animate-fade-in-up stagger-3">
-            <AuthPasswordField
-              id="fp-password"
-              label={label.newPw}
-              hint={label.hint}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-              show={showPassword}
-              onToggleShow={() => setShowPassword((v) => !v)}
-              toggleAria={label.showPw}
+              id="fp-code" label={label.code} type="text" inputMode="numeric"
+              autoComplete="one-time-code" maxLength={6} value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} required icon={codeIcon}
             />
           </div>
           {error && <AuthError message={error} />}
-          <div className="animate-fade-in-up stagger-4">
-            <AuthSubmit loading={loading}>{label.reset}</AuthSubmit>
+          <div className="animate-fade-in-up stagger-3">
+            <AuthSubmit loading={loading}>{label.verify}</AuthSubmit>
           </div>
           <button
             type="button"
@@ -157,6 +160,22 @@ export default function ForgotPasswordPage() {
           >
             {label.resend}
           </button>
+        </form>
+      )}
+
+      {step === "reset" && (
+        <form onSubmit={resetPassword} className="space-y-4">
+          <div className="animate-fade-in-up stagger-2">
+            <AuthPasswordField
+              id="fp-password" label={label.newPw} hint={label.hint} value={password}
+              onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password"
+              show={showPassword} onToggleShow={() => setShowPassword((v) => !v)} toggleAria={label.showPw}
+            />
+          </div>
+          {error && <AuthError message={error} />}
+          <div className="animate-fade-in-up stagger-3">
+            <AuthSubmit loading={loading}>{label.reset}</AuthSubmit>
+          </div>
         </form>
       )}
 
