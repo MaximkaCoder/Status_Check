@@ -17,11 +17,20 @@ function getTransport(): nodemailer.Transporter | null {
     return null;
   }
 
+  // secure: implicit TLS on 465, STARTTLS otherwise — override with SMTP_SECURE.
+  const secure = process.env.SMTP_SECURE
+    ? process.env.SMTP_SECURE === "true"
+    : port === 465;
+  // Self-hosted mail servers (e.g. Stalwart) may present an internal or
+  // self-signed cert; set SMTP_TLS_REJECT_UNAUTHORIZED=false to accept it.
+  const rejectUnauthorized = process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== "false";
+
   cached = nodemailer.createTransport({
     host,
     port,
-    secure: port === 465, // implicit TLS on 465, STARTTLS otherwise
+    secure,
     auth: { user, pass },
+    tls: { rejectUnauthorized },
   });
   return cached;
 }
