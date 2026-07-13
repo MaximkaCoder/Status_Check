@@ -1,0 +1,70 @@
+import nodemailer from "nodemailer";
+
+// SMTP transport built lazily from env. Returns null when unconfigured so the
+// app runs fine without email set up — password reset simply stays inactive.
+let cached: nodemailer.Transporter | null | undefined;
+
+function getTransport(): nodemailer.Transporter | null {
+  if (cached !== undefined) return cached;
+
+  const host = process.env.SMTP_HOST;
+  const port = Number(process.env.SMTP_PORT) || 587;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  if (!host || !user || !pass) {
+    cached = null;
+    return null;
+  }
+
+  cached = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465, // implicit TLS on 465, STARTTLS otherwise
+    auth: { user, pass },
+  });
+  return cached;
+}
+
+export function isEmailConfigured(): boolean {
+  return getTransport() !== null;
+}
+
+export async function sendEmail(opts: { to: string; subject: string; html: string; text?: string }): Promise<boolean> {
+  const transport = getTransport();
+  if (!transport) {
+    console.warn("sendEmail skipped — SMTP not configured");
+    return false;
+  }
+  const from = process.env.SMTP_FROM || process.env.SMTP_USER!;
+  try {
+    await transport.sendMail({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text });
+    return true;
+  } catch (e) {
+    console.error("sendEmail failed:", e);
+    return false;
+  }
+}
+
+// Password-reset code email, bilingual (uk + en) so it reads for either locale.
+export function resetCodeEmail(code: string): { subject: string; html: string; text: string } {
+  const subject = "Код відновлення паролю / Password reset code — Status Check";
+  const text =
+    `Ваш код для відновлення паролю: ${code}\nКод дійсний 15 хвилин.\n\n` +
+    `Your password reset code: ${code}\nThe code is valid for 15 minutes.\n\n` +
+    `Якщо ви не запитували відновлення — проігноруйте цей лист.`;
+  const html = `
+  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:440px;margin:0 auto;padding:32px 24px;color:#0f172a">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="display:inline-block;width:48px;height:48px;line-height:48px;border-radius:14px;background:linear-gradient(135deg,#818cf8,#8b5cf6);color:#fff;font-size:22px;font-weight:700">✓</div>
+      <h1 style="font-size:18px;margin:12px 0 0">Status Check</h1>
+    </div>
+    <p style="font-size:14px;line-height:1.6;color:#334155;margin:0 0 8px">Код для відновлення паролю / Your password reset code:</p>
+    <div style="text-align:center;margin:20px 0">
+      <span style="display:inline-block;font-size:32px;font-weight:800;letter-spacing:8px;padding:16px 24px;border-radius:14px;background:#eef2ff;color:#4338ca">${code}</span>
+    </div>
+    <p style="font-size:13px;line-height:1.6;color:#64748b;margin:0">Код дійсний <b>15 хвилин</b>. / Valid for <b>15 minutes</b>.</p>
+    <p style="font-size:12px;line-height:1.6;color:#94a3b8;margin:16px 0 0">Якщо ви не запитували відновлення паролю, просто проігноруйте цей лист. / If you didn't request a password reset, ignore this email.</p>
+  </div>`;
+  return { subject, html, text };
+}

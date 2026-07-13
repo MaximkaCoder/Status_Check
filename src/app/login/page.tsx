@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AuthShell, AuthLogo, AuthField, AuthPasswordField, AuthError, AuthSubmit } from "@/components/auth/AuthShell";
 
 export default function LoginPage() {
   const { locale } = useLanguage();
+  const [justReset, setJustReset] = useState(false);
+  useEffect(() => {
+    setJustReset(new URLSearchParams(window.location.search).get("reset") === "1");
+  }, []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +26,8 @@ export default function LoginPage() {
     noAcc:    locale === "uk" ? "Немає акаунту?" : "No account?",
     register: locale === "uk" ? "Зареєструватись" : "Register",
     showPw:   locale === "uk" ? "Показати пароль" : "Show password",
+    forgot:   locale === "uk" ? "Забули пароль?" : "Forgot password?",
+    resetOk:  locale === "uk" ? "Пароль змінено. Увійдіть з новим паролем." : "Password changed. Sign in with your new password.",
   };
 
   async function handleSubmit(e: React.FormEvent) {
@@ -47,6 +53,15 @@ export default function LoginPage() {
   return (
     <AuthShell>
       <AuthLogo title={label.title} subtitle={label.subtitle} />
+
+      {justReset && !error && (
+        <div className="mb-4 flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-medium bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-200 backdrop-blur-xl animate-fade-in" role="status">
+          <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {label.resetOk}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="animate-fade-in-up stagger-2">
@@ -84,6 +99,12 @@ export default function LoginPage() {
 
         <div className="animate-fade-in-up stagger-4">
           <AuthSubmit loading={loading}>{label.submit}</AuthSubmit>
+        </div>
+
+        <div className="text-center animate-fade-in-up stagger-4">
+          <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+            {label.forgot}
+          </Link>
         </div>
       </form>
 
