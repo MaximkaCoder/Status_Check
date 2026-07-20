@@ -10,8 +10,11 @@ import { ItemList } from "@/components/dashboard/ItemList";
 import { BoardView } from "@/components/dashboard/BoardView";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useItems } from "@/hooks/useItems";
 import { StatsPanel } from "@/components/dashboard/StatsPanel";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { canModifyItem } from "@/lib/permissions";
 
 type Status = "TO_CHECK" | "EXPIRED" | "DONE" | "NOT_ACTUAL" | "IDEAS_BACKLOG";
 
@@ -57,11 +60,17 @@ export default function DashboardPage() {
 
   const { t, locale } = useLanguage();
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const { items, loading, loadingMore, hasMore, loadMore, error, refresh, silentRefresh, removeItem, changeStatus } = useItems({
+  const { items, loading, loadingMore, hasMore, loadMore, error, refresh, silentRefresh, removeItem, removeItems, changeStatus } = useItems({
     month: currentMonth,
     statuses: selectedStatuses,
   });
+
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   function handleDayClick(date: Date) {
     if (selectedDay && isSameDay(selectedDay, date)) {
@@ -130,6 +139,51 @@ export default function DashboardPage() {
       : displayedItems.filter((item) => item.status !== "DONE"),
     [displayedItems, selectedStatuses]
   );
+
+  const selectableIds = useMemo(() => {
+    if (!user) return [];
+    return listItems
+      .filter((item) => canModifyItem({ userId: user.userId, name: user.name, isAdmin: user.isAdmin }, item))
+      .map((item) => item.id);
+  }, [listItems, user]);
+
+  function enterSelectionMode() {
+    setSelectionMode(true);
+    setSelectedIds(new Set());
+  }
+
+  function exitSelectionMode() {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) =>
+      prev.size === selectableIds.length ? new Set() : new Set(selectableIds)
+    );
+  }
+
+  async function handleBulkDelete() {
+    setBulkDeleteConfirm(false);
+    setBulkDeleting(true);
+    try {
+      await removeItems(Array.from(selectedIds));
+    } catch {
+      toast(t("networkError"), "error");
+    } finally {
+      setBulkDeleting(false);
+      exitSelectionMode();
+    }
+  }
 
   const activeFilterCount = selectedStatuses.length + selectedProjects.length + selectedAssignees.length + selectedDepartments.length + selectedPriorities.length;
 
@@ -266,6 +320,81 @@ export default function DashboardPage() {
             </button>
           </div>
 
+          {/* Bulk selection toolbar — list view only */}
+          {viewMode === "list" && (
+            selectionMode ? (
+              <div className={cn(
+                "flex items-center justify-between gap-2 px-3.5 h-[50px] rounded-xl animate-fade-in-up",
+                "bg-white/40 dark:bg-white/[0.06]",
+                "border border-white/70 dark:border-white/[0.10]",
+                "shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-none"
+              )}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    type="button"
+                    onClick={toggleSelectAll}
+                    disabled={selectableIds.length === 0}
+                    className="flex-shrink-0 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:no-underline"
+                  >
+                    {selectedIds.size > 0 && selectedIds.size === selectableIds.length ? t("deselectAll") : t("selectAll")}
+                  </button>
+                  <span className="text-sm font-semibold text-foreground truncate">
+                    {selectedIds.size} {t("itemsSelected")}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={exitSelectionMode}
+                    className={cn(
+                      "inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold",
+                      "bg-white/40 dark:bg-white/[0.06] border border-white/70 dark:border-white/[0.10]",
+                      "text-slate-600 dark:text-white/70 hover:bg-white/60 dark:hover:bg-white/[0.10]",
+                      "transition-all duration-150 cursor-pointer"
+                    )}
+                  >
+                    {t("exitSelectMode")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBulkDeleteConfirm(true)}
+                    disabled={selectedIds.size === 0 || bulkDeleting}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white",
+                      "bg-rose-500/90 border border-rose-500/50 shadow-sm",
+                      "hover:bg-rose-600 transition-all duration-150 cursor-pointer",
+                      "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-rose-500/90"
+                    )}
+                  >
+                    <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    {t("deleteSelected")} ({selectedIds.size})
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-end animate-fade-in-up stagger-3">
+                <button
+                  type="button"
+                  onClick={enterSelectionMode}
+                  disabled={listItems.length === 0}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold",
+                    "bg-white/40 dark:bg-white/[0.06] border border-white/70 dark:border-white/[0.10]",
+                    "text-slate-600 dark:text-white/70 hover:bg-white/60 dark:hover:bg-white/[0.10]",
+                    "transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  )}
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {t("selectMode")}
+                </button>
+              </div>
+            )
+          )}
+
           {/* Error */}
           {error && (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-500/30 px-4 py-3 text-sm text-rose-700 dark:text-rose-300 flex items-center gap-3 animate-fade-in">
@@ -289,7 +418,15 @@ export default function DashboardPage() {
                 ? "relative opacity-100"
                 : "absolute inset-x-0 top-0 -translate-x-[103%] opacity-0 pointer-events-none"
             )}>
-              <ItemList items={listItems} loading={loading} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+              <ItemList
+                items={listItems}
+                loading={loading}
+                onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
+                selectionMode={selectionMode}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+              />
               {hasMore && !loading && (
                 <button
                   type="button"
@@ -328,6 +465,17 @@ export default function DashboardPage() {
       {/* Drawer — only on < xl */}
       <FilterDrawer open={filterOpen} onClose={() => setFilterOpen(false)} {...filterProps} />
 
+      {bulkDeleteConfirm && (
+        <ConfirmDialog
+          title={t("confirmBulkDelete")}
+          description={`${selectedIds.size} ${t("itemsSelected")}`}
+          confirmLabel={t("deleteSelected")}
+          cancelLabel={t("cancelBtn")}
+          variant="danger"
+          onConfirm={handleBulkDelete}
+          onCancel={() => setBulkDeleteConfirm(false)}
+        />
+      )}
 
     </div>
   );

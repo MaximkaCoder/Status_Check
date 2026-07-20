@@ -28,6 +28,9 @@ interface ItemCardProps {
   onStatusChange?: (id: string, status: Status) => Promise<void>;
   animationIndex?: number;
   animate?: boolean;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 function formatDateLocale(date: Date, locale: string, monthsEn: readonly string[], monthsUkGen: readonly string[]): string {
@@ -80,7 +83,7 @@ const STATUS_NEXT_DOTS: Record<Status, string> = {
   IDEAS_BACKLOG: "bg-violet-500",
 };
 
-export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange, animationIndex = 0, animate = true }: ItemCardProps) {
+export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange, animationIndex = 0, animate = true, selectionMode = false, selected = false, onToggleSelect }: ItemCardProps) {
   const router = useRouter();
   const { t, locale } = useLanguage();
   const { toast } = useToast();
@@ -184,26 +187,58 @@ export const ItemCard = memo(function ItemCard({ item, onDelete, onStatusChange,
         "hover:-translate-y-0.5 transition-all duration-200 cursor-pointer",
         animate && "animate-fade-in-up",
         animate && staggerClass,
-        statusMenuOpen && "z-10"
+        statusMenuOpen && "z-10",
+        selectionMode && canModify && selected && "ring-2 ring-indigo-500 dark:ring-indigo-400 border-indigo-400/60 dark:border-indigo-400/40"
       )}
-      onClick={() => router.push(`/items/${item.id}`)}
+      onClick={() => {
+        if (selectionMode && canModify) { onToggleSelect?.(item.id); return; }
+        router.push(`/items/${item.id}`);
+      }}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/items/${item.id}`); } }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          if (selectionMode && canModify) { onToggleSelect?.(item.id); return; }
+          router.push(`/items/${item.id}`);
+        }
+      }}
     >
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/40 to-transparent dark:from-white/[0.03] dark:to-transparent pointer-events-none" />
 
       <div className="relative p-4 space-y-2.5">
         {/* Title row */}
         <div className="flex items-start gap-2.5">
+          {selectionMode && canModify && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onToggleSelect?.(item.id); }}
+              className={cn(
+                "flex-shrink-0 h-5 w-5 mt-[1px] rounded-full border flex items-center justify-center",
+                "transition-all duration-150 cursor-pointer",
+                selected
+                  ? "bg-indigo-600 border-indigo-600 shadow-[0_2px_8px_rgba(99,102,241,0.4)]"
+                  : "bg-white/40 dark:bg-white/[0.06] border-white/70 dark:border-white/20 hover:border-indigo-400 dark:hover:border-indigo-400"
+              )}
+              aria-pressed={selected}
+              aria-label={selected ? "Deselect item" : "Select item"}
+            >
+              {selected && (
+                <svg className="h-3 w-3 text-white animate-scale-in" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          )}
+
           <span className={cn("h-2 w-2 rounded-full flex-shrink-0 mt-[5px]", STATUS_DOT[status])} aria-hidden="true" />
 
           <h3 className="text-sm font-bold text-foreground leading-snug break-words flex-1 min-w-0">
             {item.title}
           </h3>
 
-          {/* Action buttons — only for users with permission */}
-          {canModify && (
+          {/* Action buttons — only for users with permission, hidden while bulk-selecting */}
+          {canModify && !selectionMode && (
             <div className="flex gap-1 flex-shrink-0">
               <button
                 onClick={(e) => { e.stopPropagation(); router.push(`/items/${item.id}/edit`); }}

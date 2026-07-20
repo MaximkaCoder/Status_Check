@@ -13,6 +13,9 @@ interface ItemListProps {
   loading: boolean;
   onDelete: (id: string) => Promise<void>;
   onStatusChange?: (id: string, status: Status) => Promise<void>;
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
 function SkeletonCard({ index }: { index: number }) {
@@ -39,7 +42,7 @@ function SkeletonCard({ index }: { index: number }) {
   );
 }
 
-export const ItemList = memo(function ItemList({ items, loading, onDelete, onStatusChange }: ItemListProps) {
+export const ItemList = memo(function ItemList({ items, loading, onDelete, onStatusChange, selectionMode = false, selectedIds, onToggleSelect }: ItemListProps) {
   const { t } = useLanguage();
 
   if (loading) {
@@ -120,6 +123,9 @@ export const ItemList = memo(function ItemList({ items, loading, onDelete, onSta
               onDelete={onDelete}
               onStatusChange={onStatusChange}
               animationIndex={index}
+              selectionMode={selectionMode}
+              selected={selectedIds?.has(item.id) ?? false}
+              onToggleSelect={onToggleSelect}
             />
           </div>
         ))}

@@ -27,6 +27,7 @@ interface UseItemsReturn {
   refresh: () => void;
   silentRefresh: () => Promise<void>;
   removeItem: (id: string) => Promise<void>;
+  removeItems: (ids: string[]) => Promise<void>;
   changeStatus: (id: string, status: Status) => Promise<void>;
   addItemOptimistic: (item: StatusItem) => void;
 }
@@ -137,6 +138,18 @@ export function useItems({ month, statuses }: UseItemsOptions): UseItemsReturn {
     } catch {}
   }, [buildParams]);
 
+  // Optimistic bulk delete — on partial failure, resyncs from the server
+  const removeItems = useCallback(async (ids: string[]) => {
+    const idSet = new Set(ids);
+    setItems((prev) => prev.filter((item) => !idSet.has(item.id)));
+    const results = await Promise.allSettled(ids.map((id) => deleteItem(id)));
+    const failedCount = results.filter((r) => r.status === "rejected").length;
+    if (failedCount > 0) {
+      await silentRefresh();
+      throw new Error(`${failedCount} item(s) failed to delete`);
+    }
+  }, [silentRefresh]);
+
   // Prepend a newly created item (optimistic add)
   const addItemOptimistic = useCallback((item: StatusItem) => {
     setItems((prev) => {
@@ -158,6 +171,7 @@ export function useItems({ month, statuses }: UseItemsOptions): UseItemsReturn {
     refresh: fetchItems,
     silentRefresh,
     removeItem,
+    removeItems,
     changeStatus,
     addItemOptimistic,
   };
